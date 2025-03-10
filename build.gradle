@@ -63,7 +63,22 @@ allprojects {
 
 def moduleVersion = project.version.replace("-SNAPSHOT", "")
 
+subprojects {
+    configurations {
+        jbalTools
+        ballerinaStdLibs
+    }
+
+    dependencies {
+        /* JBallerina Tools */
+        jbalTools("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
+            transitive = false
+        }
+    }
+}
+
 tasks.register('build') {
+    dependsOn(':cdc-ballerina:build')
 }
 
 release {
