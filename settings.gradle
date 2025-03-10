@@ -32,8 +32,12 @@ plugins {
 
 rootProject.name = 'module-ballerinax-cdc'
 
+include ':checkstyle'
+include ':cdc-native'
 include ':cdc-ballerina'
 
+project(':checkstyle').projectDir = file("build-config${File.separator}checkstyle")
+project(':cdc-native').projectDir = file('native')
 project(':cdc-ballerina').projectDir = file("ballerina")
 
 gradleEnterprise {

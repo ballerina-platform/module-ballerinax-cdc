@@ -78,6 +78,7 @@ subprojects {
 }
 
 tasks.register('build') {
+    dependsOn(':cdc-native:build')
     dependsOn(':cdc-ballerina:build')
 }
 

@@ -13,3 +13,15 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
+import ballerina/jballerina.java as java;
+
+# Initializes the CDC module.
+isolated function init() {
+    setModule();
+}
+
+# Sets the module information for the CDC module.
+isolated function setModule() = @java:Method {
+    'class: "io.ballerina.lib.cdc.ModuleUtils"
+} external;

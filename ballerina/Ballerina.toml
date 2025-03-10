@@ -9,3 +9,9 @@ license = ["Apache-2.0"]
 
 [build-options]
 observabilityIncluded = true
+
+[[platform.java21.dependency]]
+groupId = "io.ballerina.lib.cdc"
+artifactId = "cdc-native-0.1.0-SNAPSHOT"
+version="0.1.0-SNAPSHOT"
+path = "../native/build/libs/cdc-native-0.1.0-SNAPSHOT.jar"

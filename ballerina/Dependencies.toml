@@ -8,9 +8,20 @@ dependencies-toml-version = "2"
 distribution-version = "2201.12.0"
 
 [[package]]
+org = "ballerina"
+name = "jballerina.java"
+version = "0.0.0"
+modules = [
+	{org = "ballerina", packageName = "jballerina.java", moduleName = "jballerina.java"}
+]
+
+[[package]]
 org = "ballerinax"
 name = "cdc"
 version = "0.1.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"}
+]
 modules = [
 	{org = "ballerinax", packageName = "cdc", moduleName = "cdc"}
 ]
