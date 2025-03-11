@@ -37,12 +37,14 @@ include ':cdc-native'
 include ':cdc-compiler-plugin'
 include ':cdc-ballerina'
 include ':cdc-compiler-plugin-tests'
+include ':cdc-examples'
 
 project(':checkstyle').projectDir = file("build-config${File.separator}checkstyle")
 project(':cdc-native').projectDir = file('native')
 project(':cdc-compiler-plugin').projectDir = file('compiler-plugin')
 project(':cdc-ballerina').projectDir = file("ballerina")
 project(':cdc-compiler-plugin-tests').projectDir = file('compiler-plugin-tests')
+project(':cdc-examples').projectDir = file("examples")
 
 gradleEnterprise {
     buildScan {

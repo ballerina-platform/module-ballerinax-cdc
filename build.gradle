@@ -82,6 +82,7 @@ tasks.register('build') {
     dependsOn(':cdc-compiler-plugin:build')
     dependsOn(':cdc-ballerina:build')
     dependsOn(':cdc-compiler-plugin-tests:test')
+    dependsOn(':cdc-examples:build')
 }
 
 release {
