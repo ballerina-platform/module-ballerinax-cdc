@@ -1,0 +1,6 @@
+[plugin]
+id = "cdc-compiler-plugin"
+class = "io.ballerina.lib.cdc.compiler.CdcCompilerPlugin"
+
+[[dependency]]
+path = "../compiler-plugin/build/libs/cdc-compiler-plugin-@project.version@.jar"
