@@ -1,0 +1,16 @@
+[package]
+org = "wso2"
+name = "postgresql_test"
+version = "0.1.0"
+distribution = "2201.12.2"
+
+[[dependency]]
+org="ballerinax"
+name="cdc"
+version="0.1.0"
+repository="local"
+
+[[platform.java21.dependency]]
+groupId="io.debezium"
+artifactId="debezium-connector-postgres"
+version="3.0.8.Final"
