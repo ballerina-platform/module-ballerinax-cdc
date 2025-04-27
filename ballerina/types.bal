@@ -79,6 +79,17 @@ public enum PostgreSQLLogicalDecodingPlugin {
     DECODERBUFS = "decoderbufs"
 }
 
+# The adapter implementation that the connector uses when it streams database changes. 
+#
+# + LOGMINER - The native Oracle LogMiner adapter
+# + OPENLOGREPLICATOR - The OpenLogReplicator adapter
+# + XSTREAM - The Oracle XStream API
+public enum OracleConnectionAdopter {
+    LOGMINER = "logminer",
+    OPENLOGREPLICATOR = "olr",
+    XSTREAM = "xstream"
+}
+
 # Represents a secure database connection configuration.
 #
 # + sslMode - The SSL mode to use for the connection
@@ -247,6 +258,30 @@ public type PostgresDatabaseConnection record {|
     string publicationName = "dbz_publication";
 |};
 
+# Represents the configuration for a Oracle CDC connector.
+#
+# + hostname - The hostname of the Oracle server
+# + port - The port number of the Oracle server
+# + url - JDBC url
+# + pdbName - Name of the Oracle pluggable database to connect to. Use this property with container database (CDB) installations only
+# + databaseName - The name of the Oracle database from which to stream the changes
+# + connectionAdopter - The adapter implementation that the connector uses when it streams database changes
+# + includedSchemas - A list of regular expressions matching fully-qualified schema identifiers to capture changes from
+# + excludedSchemas - A list of regular expressions matching fully-qualified schema identifiers to exclude from change capture
+# + tasksMax - The Oracle connector always uses a single task and therefore does not use this value, so the default is always acceptable
+public type OracleDatabaseConnection record {|
+    *DatabaseConnection;
+    string hostname = "localhost";
+    int port = 1521;
+    string url?;
+    string pdbName?;
+    string databaseName;
+    OracleConnectionAdopter connectionAdopter = LOGMINER;
+    string|string[] includedSchemas?;
+    string|string[] excludedSchemas?;
+    int tasksMax = 1;
+|};
+
 # Represents the base configuration for the CDC engine.
 #
 # + engineName - The name of the CDC engine
@@ -306,4 +341,14 @@ public type PostgresListenerConfiguration record {|
     *ListenerConfiguration;
     string connectorClass = "io.debezium.connector.postgresql.PostgresConnector";
     PostgresDatabaseConnection database;
+|};
+
+# Represents the configuration for an Oracle CDC connector.
+#
+# + connectorClass - The class name of the Oracle connector implementation to use
+# + database - The Oracle database connection configuration
+public type OracleListenerConfiguration record {|
+    *ListenerConfiguration;
+    string connectorClass = "io.debezium.connector.oracle.OracleConnector";
+    OracleDatabaseConnection database;
 |};
