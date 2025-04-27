@@ -70,6 +70,15 @@ public enum DecimalHandlingMode {
     STRING = "string"
 }
 
+# Represents the PostgreSQL logical decoding plugins.
+#
+# + PGOUTPUT - The standard logical decoding output plug-in in PostgreSQL 10+
+# + DECODERBUFS - A logical decoding plugin based on Protobuf and maintained by the Debezium community
+public enum PostgreSQLLogicalDecodingPlugin {
+    PGOUTPUT = "pgoutput",
+    DECODERBUFS = "decoderbufs"
+}
+
 # Represents a secure database connection configuration.
 #
 # + sslMode - The SSL mode to use for the connection
@@ -214,6 +223,30 @@ public type MsSqlDatabaseConnection record {|
     int tasksMax = 1;
 |};
 
+# Represents the configuration for a PostgreSQL CDC connector.
+#
+# + hostname - The hostname of the PostgreSQL server
+# + port - The port number of the PostgreSQL server
+# + databaseName - The name of the PostgreSQL database from which to stream the changes.
+# + includedSchemas - A list of regular expressions matching fully-qualified schema identifiers to capture changes from
+# + excludedSchemas - A list of regular expressions matching fully-qualified schema identifiers to exclude from change capture
+# + tasksMax - The PostgreSQL connector always uses a single task and therefore does not use this value, so the default is always acceptable
+# + pluginName - The name of the PostgreSQL logical decoding plug-in installed on the server
+# + slotName - The name of the PostgreSQL logical decoding slot
+# + publicationName - The name of the PostgreSQL publication created for streaming changes when using pgoutput.
+public type PostgresDatabaseConnection record {|
+    *DatabaseConnection;
+    string hostname = "localhost";
+    int port = 5432;
+    string databaseName;
+    string|string[] includedSchemas?;
+    string|string[] excludedSchemas?;
+    int tasksMax = 1;
+    PostgreSQLLogicalDecodingPlugin pluginName = PGOUTPUT;
+    string slotName = "debezium";
+    string publicationName = "dbz_publication";
+|};
+
 # Represents the base configuration for the CDC engine.
 #
 # + engineName - The name of the CDC engine
@@ -263,4 +296,14 @@ public type MsSqlListenerConfiguration record {|
     *ListenerConfiguration;
     string connectorClass = "io.debezium.connector.sqlserver.SqlServerConnector";
     MsSqlDatabaseConnection database;
+|};
+
+# Represents the configuration for a Postgres CDC connector.
+#
+# + connectorClass - The class name of the Postgres connector implementation to use
+# + database - The Postgres database connection configuration
+public type PostgresListenerConfiguration record {|
+    *ListenerConfiguration;
+    string connectorClass = "io.debezium.connector.postgresql.PostgresConnector";
+    PostgresDatabaseConnection database;
 |};

@@ -67,7 +67,12 @@ const string MSSQL_DATABASE_NAMES = "database.names";
 const string MSSQL_DATABASE_INSTANCE = "database.instance";
 const string MSSQL_DATABASE_ENCRYPT = "database.encrypt";
 
-isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration config) returns map<string> {
+const string POSTGRESQL_DATABASE_NAME = "database.dbname";
+const string POSTGRESQL_PLUGIN_NAME = "plugin.name";
+const string POSTGRESQL_SLOT_NAME = "slot.name";
+const string POSTGRESQL_PUBLICATION_NAME = "publication.name";
+
+isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration config) returns map<string> {
     map<string> configMap = {};
 
     // Common configurations
@@ -87,7 +92,7 @@ isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListener
 }
 
 // Populates common configurations shared across all databases
-isolated function populateCommonConfigurations(MySqlListenerConfiguration|MsSqlListenerConfiguration config, map<string> configMap) {
+isolated function populateCommonConfigurations(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration config, map<string> configMap) {
     configMap[NAME] = config.engineName;
     configMap[CONNECTOR_CLASS] = config.connectorClass;
     configMap[MAX_QUEUE_SIZE] = config.maxQueueSize.toString();
@@ -133,7 +138,7 @@ isolated function populateOffsetStorageConfigurations(FileOffsetStorage|KafkaOff
 }
 
 // Populates database-specific configurations
-isolated function populateDatabaseConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection connection, map<string> configMap) {
+isolated function populateDatabaseConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection connection, map<string> configMap) {
     configMap[DATABASE_HOSTNAME] = connection.hostname;
     configMap[DATABASE_PORT] = connection.port.toString();
     configMap[DATABASE_USER] = connection.username;
@@ -149,12 +154,14 @@ isolated function populateDatabaseConfigurations(MySqlDatabaseConnection|MsSqlDa
 
     if connection is MySqlDatabaseConnection {
         populateMySqlConfigurations(connection, configMap);
-    } else {
+    } else if connection is MsSqlDatabaseConnection {
         populateMsSqlConfigurations(connection, configMap);
+    } else {
+        populatePostgresConfigurations(connection, configMap);
     }
 }
 
-isolated function populateSslConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection connection, map<string> configMap) {
+isolated function populateSslConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection connection, map<string> configMap) {
     SecureDatabaseConnection? secure = connection.secure;
     if secure !is () {
         configMap[DATABASE_SSL_MODE] = secure.sslMode.toString();
@@ -174,7 +181,7 @@ isolated function populateSslConfigurations(MySqlDatabaseConnection|MsSqlDatabas
 }
 
 // Populates table and column inclusion/exclusion configurations
-isolated function populateTableAndColumnConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection connection, map<string> configMap) {
+isolated function populateTableAndColumnConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection connection, map<string> configMap) {
     string|string[]? includedTables = connection.includedTables;
     if includedTables !is () {
         configMap[TABLE_INCLUDE_LIST] = includedTables is string ? includedTables : string:'join(",", ...includedTables);
@@ -227,8 +234,17 @@ isolated function populateMsSqlConfigurations(MsSqlDatabaseConnection connection
     }
 }
 
+// Populates PostgreSQL-specific configurations
+isolated function populatePostgresConfigurations(PostgresDatabaseConnection connection, map<string> configMap) {
+    configMap[POSTGRESQL_DATABASE_NAME] = connection.databaseName;
+    populateSchemaConfigurations(connection, configMap);
+    configMap[POSTGRESQL_PLUGIN_NAME] = connection.pluginName;
+    configMap[POSTGRESQL_SLOT_NAME] = connection.slotName;
+    configMap[POSTGRESQL_PUBLICATION_NAME] = connection.publicationName;
+}
+
 // Populates schema inclusion/exclusion configurations
-isolated function populateSchemaConfigurations(MsSqlDatabaseConnection connection, map<string> configMap) {
+isolated function populateSchemaConfigurations(MsSqlDatabaseConnection|PostgresDatabaseConnection connection, map<string> configMap) {
     string|string[]? includedSchemas = connection.includedSchemas;
     if includedSchemas !is () {
         configMap[SCHEMA_INCLUDE_LIST] = includedSchemas is string ? includedSchemas : string:'join(",", ...includedSchemas);
