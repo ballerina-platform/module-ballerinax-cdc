@@ -1,0 +1,24 @@
+services:
+  oracle-db:
+    image: gayaldassanayake/oracle-enterprise:12.2.0.1
+    container_name: oracle-cdc
+    ports:
+      - "1521:1521" # Oracle database port
+      - "5500:5500" # Oracle Enterprise Manager port
+    environment:
+      - ORACLE_SID=ORCLCDB
+      - ORACLE_PDB=ORCLPDB1
+      - ORACLE_PWD=root123
+    volumes:
+      - oracle-data1:/opt/oracle/oradata/
+       - ./db-scripts/:/opt/oracle/scripts/startup/
+      # - ./setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    # # entrypoint: ["/bin/bash", "-c", "/docker-entrypoint-initdb.d/setup.sql"]
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus '/as sysdba'"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  oracle-data1:

@@ -1,0 +1,26 @@
+[package]
+org = "wso2"
+name = "oracle_detection"
+version = "0.1.0"
+distribution = "2201.12.2"
+
+[[dependency]]
+org="ballerinax"
+name="cdc"
+version="0.1.0"
+repository="local"
+
+[[platform.java21.dependency]]
+groupId="io.debezium"
+artifactId="debezium-connector-oracle"
+version="3.0.8.Final"
+
+[[platform.java21.dependency]]
+groupId="io.debezium"
+artifactId="debezium-ddl-parser"
+version="3.0.8.Final"
+
+[[platform.java21.dependency]]
+groupId = "org.antlr"
+artifactId = "antlr4-runtime"
+version = "4.10.1"
