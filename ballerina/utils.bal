@@ -63,7 +63,11 @@ const string MYSQL_DATABASE_SERVER_ID = "database.server.id";
 const string MYSQL_DATABASE_INCLUDE_LIST = "database.include.list";
 const string MYSQL_DATABASE_EXCLUDE_LIST = "database.exclude.list";
 
-isolated function getDebeziumProperties(MySqlListenerConfiguration config) returns map<string> {
+const string MSSQL_DATABASE_NAMES = "database.names";
+const string MSSQL_DATABASE_INSTANCE = "database.instance";
+const string MSSQL_DATABASE_ENCRYPT = "database.encrypt";
+
+isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration config) returns map<string> {
     map<string> configMap = {};
 
     // Common configurations
@@ -83,7 +87,7 @@ isolated function getDebeziumProperties(MySqlListenerConfiguration config) retur
 }
 
 // Populates common configurations shared across all databases
-isolated function populateCommonConfigurations(MySqlListenerConfiguration config, map<string> configMap) {
+isolated function populateCommonConfigurations(MySqlListenerConfiguration|MsSqlListenerConfiguration config, map<string> configMap) {
     configMap[NAME] = config.engineName;
     configMap[CONNECTOR_CLASS] = config.connectorClass;
     configMap[MAX_QUEUE_SIZE] = config.maxQueueSize.toString();
@@ -129,7 +133,7 @@ isolated function populateOffsetStorageConfigurations(FileOffsetStorage|KafkaOff
 }
 
 // Populates database-specific configurations
-isolated function populateDatabaseConfigurations(MySqlDatabaseConnection connection, map<string> configMap) {
+isolated function populateDatabaseConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection connection, map<string> configMap) {
     configMap[DATABASE_HOSTNAME] = connection.hostname;
     configMap[DATABASE_PORT] = connection.port.toString();
     configMap[DATABASE_USER] = connection.username;
@@ -142,10 +146,15 @@ isolated function populateDatabaseConfigurations(MySqlDatabaseConnection connect
 
     populateSslConfigurations(connection, configMap);
     populateTableAndColumnConfigurations(connection, configMap);
-    populateMySqlConfigurations(connection, configMap);
+
+    if connection is MySqlDatabaseConnection {
+        populateMySqlConfigurations(connection, configMap);
+    } else {
+        populateMsSqlConfigurations(connection, configMap);
+    }
 }
 
-isolated function populateSslConfigurations(MySqlDatabaseConnection connection, map<string> configMap) {
+isolated function populateSslConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection connection, map<string> configMap) {
     SecureDatabaseConnection? secure = connection.secure;
     if secure !is () {
         configMap[DATABASE_SSL_MODE] = secure.sslMode.toString();
@@ -165,7 +174,7 @@ isolated function populateSslConfigurations(MySqlDatabaseConnection connection, 
 }
 
 // Populates table and column inclusion/exclusion configurations
-isolated function populateTableAndColumnConfigurations(MySqlDatabaseConnection connection, map<string> configMap) {
+isolated function populateTableAndColumnConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection connection, map<string> configMap) {
     string|string[]? includedTables = connection.includedTables;
     if includedTables !is () {
         configMap[TABLE_INCLUDE_LIST] = includedTables is string ? includedTables : string:'join(",", ...includedTables);
@@ -199,6 +208,35 @@ isolated function populateMySqlConfigurations(MySqlDatabaseConnection connection
     string|string[]? excludedDatabases = connection.excludedDatabases;
     if excludedDatabases !is () {
         configMap[MYSQL_DATABASE_EXCLUDE_LIST] = excludedDatabases is string ? excludedDatabases : string:'join(",", ...excludedDatabases);
+    }
+}
+
+// Populates MSSQL-specific configurations
+isolated function populateMsSqlConfigurations(MsSqlDatabaseConnection connection, map<string> configMap) {
+    if connection.databaseInstance !is () {
+        configMap[MSSQL_DATABASE_INSTANCE] = connection.databaseInstance ?: "";
+    }
+
+    string|string[] databaseNames = connection.databaseNames;
+    configMap[MSSQL_DATABASE_NAMES] = databaseNames is string ? databaseNames : string:'join(",", ...databaseNames);
+
+    populateSchemaConfigurations(connection, configMap);
+
+    if connection.secure is () {
+        configMap[MSSQL_DATABASE_ENCRYPT] = "false";
+    }
+}
+
+// Populates schema inclusion/exclusion configurations
+isolated function populateSchemaConfigurations(MsSqlDatabaseConnection connection, map<string> configMap) {
+    string|string[]? includedSchemas = connection.includedSchemas;
+    if includedSchemas !is () {
+        configMap[SCHEMA_INCLUDE_LIST] = includedSchemas is string ? includedSchemas : string:'join(",", ...includedSchemas);
+    }
+
+    string|string[]? excludedSchemas = connection.excludedSchemas;
+    if excludedSchemas !is () {
+        configMap[SCHEMA_EXCLUDE_LIST] = excludedSchemas is string ? excludedSchemas : string:'join(",", ...excludedSchemas);
     }
 }
 

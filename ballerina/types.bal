@@ -194,6 +194,26 @@ public type MySqlDatabaseConnection record {|
     SecureDatabaseConnection secure = {};
 |};
 
+# Represents the configuration for an MSSQL database connection.
+#
+# + hostname - The hostname of the MSSQL server
+# + port - The port number of the MSSQL server
+# + databaseInstance - The name of the database instance
+# + databaseNames - A list of database names to capture changes from
+# + includedSchemas - A list of regular expressions matching fully-qualified schema identifiers to capture changes from
+# + excludedSchemas - A list of regular expressions matching fully-qualified schema identifiers to exclude from change capture
+# + tasksMax - The maximum number of tasks to create for this connector. If the `databaseNames` contains more than one element, you can increase the value of this property to a number less than or equal to the number of elements in the list
+public type MsSqlDatabaseConnection record {|
+    *DatabaseConnection;
+    string hostname = "localhost";
+    int port = 1433;
+    string databaseInstance?;
+    string|string[] databaseNames;
+    string|string[] includedSchemas?;
+    string|string[] excludedSchemas?;
+    int tasksMax = 1;
+|};
+
 # Represents the base configuration for the CDC engine.
 #
 # + engineName - The name of the CDC engine
@@ -233,4 +253,14 @@ public type MySqlListenerConfiguration record {|
     *ListenerConfiguration;
     string connectorClass = "io.debezium.connector.mysql.MySqlConnector";
     MySqlDatabaseConnection database;
+|};
+
+# Represents the configuration for an MSSQL CDC connector.
+#
+# + connectorClass - The class name of the MSSQL connector implementation to use
+# + database - The MSSQL database connection configuration
+public type MsSqlListenerConfiguration record {|
+    *ListenerConfiguration;
+    string connectorClass = "io.debezium.connector.sqlserver.SqlServerConnector";
+    MsSqlDatabaseConnection database;
 |};
