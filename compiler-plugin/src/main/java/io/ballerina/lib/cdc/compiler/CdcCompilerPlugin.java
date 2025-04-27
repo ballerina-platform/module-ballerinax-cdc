@@ -18,6 +18,8 @@
 
 package io.ballerina.lib.cdc.compiler;
 
+import io.ballerina.lib.cdc.compiler.codeaction.CdcCodeTemplate;
+import io.ballerina.lib.cdc.compiler.codeaction.CdcCodeTemplateWithTableName;
 import io.ballerina.projects.plugins.CompilerPlugin;
 import io.ballerina.projects.plugins.CompilerPluginContext;
 
@@ -28,5 +30,7 @@ public class CdcCompilerPlugin extends CompilerPlugin {
     @Override
     public void init(CompilerPluginContext compilerPluginContext) {
         compilerPluginContext.addCodeAnalyzer(new CdcCodeAnalyzer());
+        compilerPluginContext.addCodeAction(new CdcCodeTemplate());
+        compilerPluginContext.addCodeAction(new CdcCodeTemplateWithTableName());
     }
 }
