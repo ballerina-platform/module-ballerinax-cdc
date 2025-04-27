@@ -16,11 +16,16 @@
  * under the License.
  */
 
-module io.ballerina.lib.cdc.compiler {
-    requires io.ballerina.lang;
-    requires io.ballerina.parser;
-    requires io.ballerina.tools.api;
+package io.ballerina.lib.cdc.compiler;
 
-    exports io.ballerina.lib.cdc.compiler;
-    exports io.ballerina.lib.cdc.compiler.validator;
+import io.ballerina.compiler.syntax.tree.SyntaxKind;
+import io.ballerina.lib.cdc.compiler.validator.CdcServiceAnalysisTask;
+import io.ballerina.projects.plugins.CodeAnalysisContext;
+import io.ballerina.projects.plugins.CodeAnalyzer;
+
+public class CdcCodeAnalyzer extends CodeAnalyzer {
+    @Override
+    public void init(CodeAnalysisContext context) {
+        context.addSyntaxNodeAnalysisTask(new CdcServiceAnalysisTask(), SyntaxKind.SERVICE_DECLARATION);
+    }
 }
