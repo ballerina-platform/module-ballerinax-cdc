@@ -1,0 +1,4 @@
+[package]
+org = "cdc_test"
+name = "snippet_gen_2"
+version = "0.1.0"
