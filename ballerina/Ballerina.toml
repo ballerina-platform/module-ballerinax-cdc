@@ -10,8 +10,89 @@ license = ["Apache-2.0"]
 [build-options]
 observabilityIncluded = true
 
+[platform.java21]
+graalvmCompatible=true
+
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib.cdc"
 artifactId = "cdc-native-0.1.0-SNAPSHOT"
 version="0.1.0-SNAPSHOT"
 path = "../native/build/libs/cdc-native-0.1.0-SNAPSHOT.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-api"
+version = "3.0.8.Final"
+path = "./lib/debezium-api-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-core"
+version = "3.0.8.Final"
+path = "./lib/debezium-core-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-embedded"
+version = "3.0.8.Final"
+path = "./lib/debezium-embedded-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-storage-file"
+version = "3.0.8.Final"
+path = "./lib/debezium-storage-file-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-storage-kafka"
+version = "3.0.8.Final"
+path = "./lib/debezium-storage-kafka-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.kafka"
+artifactId = "kafka-clients"
+version = "3.9.0"
+path = "./lib/kafka-clients-3.9.0.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.kafka"
+artifactId = "connect-api"
+version = "3.9.0"
+path = "./lib/connect-api-3.9.0.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.kafka"
+artifactId = "connect-json"
+version = "3.9.0"
+path = "./lib/connect-json-3.9.0.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.kafka"
+artifactId = "connect-runtime"
+version = "3.9.0"
+path = "./lib/connect-runtime-3.9.0.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.fasterxml.jackson.core"
+artifactId = "jackson-core"
+version = "2.16.2"
+path = "./lib/jackson-core-2.16.2.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.fasterxml.jackson.core"
+artifactId = "jackson-module-afterburner"
+version = "2.16.2"
+path = "./lib/jackson-module-afterburner-2.16.2.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.fasterxml.jackson.core"
+artifactId = "jackson-annotations"
+version = "2.16.2"
+path = "./lib/jackson-annotations-2.16.2.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.fasterxml.jackson.core"
+artifactId = "jackson-databind"
+version = "2.16.2"
+path = "./lib/jackson-databind-2.16.2.jar"

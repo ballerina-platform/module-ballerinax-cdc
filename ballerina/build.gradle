@@ -52,10 +52,30 @@ ballerina {
     langVersion = ballerinaLangVersion
 }
 
+dependencies {
+    externalJars(group: 'io.debezium', name: 'debezium-api', version: debeziumVersion)
+    externalJars(group: 'io.debezium', name: 'debezium-core', version: debeziumVersion)
+    externalJars(group: 'io.debezium', name: 'debezium-embedded', version: debeziumVersion)
+    externalJars(group: 'io.debezium', name: 'debezium-storage-file', version: debeziumVersion)
+    externalJars(group: 'io.debezium', name: 'debezium-storage-kafka', version: debeziumVersion)
+
+    externalJars(group: 'org.apache.kafka', name: 'kafka-clients', version: kafkaVersion)
+    externalJars(group: 'org.apache.kafka', name: 'connect-api', version: kafkaVersion)
+    externalJars(group: 'org.apache.kafka', name: 'connect-json', version: kafkaVersion)
+    externalJars(group: 'org.apache.kafka', name: 'connect-runtime', version: kafkaVersion)
+
+    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: fasterxmlVersion)
+    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: fasterxmlVersion)
+    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: fasterxmlVersion)
+}
+
 tasks.register('updateTomlFiles') {
     doLast {
         def newBallerinaToml = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
         newBallerinaToml = newBallerinaToml.replace("@toml.version@", tomlVersion)
+        newBallerinaToml = newBallerinaToml.replace("@debezium.version@", debeziumVersion)
+        newBallerinaToml = newBallerinaToml.replace("@kafka.version@", kafkaVersion)
+        newBallerinaToml = newBallerinaToml.replace("@fasterxml.version@", fasterxmlVersion)
         ballerinaTomlFile.text = newBallerinaToml
 
         def newCompilerPluginToml = compilerPluginTomlFilePlaceHolder.text.replace("@project.version@", project.version)

@@ -10,8 +10,89 @@ license = ["Apache-2.0"]
 [build-options]
 observabilityIncluded = true
 
+[platform.java21]
+graalvmCompatible=true
+
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib.cdc"
 artifactId = "cdc-native-@project.version@"
 version="@project.version@"
 path = "../native/build/libs/cdc-native-@project.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-api"
+version = "@debezium.version@"
+path = "./lib/debezium-api-@debezium.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-core"
+version = "@debezium.version@"
+path = "./lib/debezium-core-@debezium.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-embedded"
+version = "@debezium.version@"
+path = "./lib/debezium-embedded-@debezium.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-storage-file"
+version = "@debezium.version@"
+path = "./lib/debezium-storage-file-@debezium.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-storage-kafka"
+version = "@debezium.version@"
+path = "./lib/debezium-storage-kafka-@debezium.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.kafka"
+artifactId = "kafka-clients"
+version = "@kafka.version@"
+path = "./lib/kafka-clients-@kafka.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.kafka"
+artifactId = "connect-api"
+version = "@kafka.version@"
+path = "./lib/connect-api-@kafka.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.kafka"
+artifactId = "connect-json"
+version = "@kafka.version@"
+path = "./lib/connect-json-@kafka.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.kafka"
+artifactId = "connect-runtime"
+version = "@kafka.version@"
+path = "./lib/connect-runtime-@kafka.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.fasterxml.jackson.core"
+artifactId = "jackson-core"
+version = "@fasterxml.version@"
+path = "./lib/jackson-core-@fasterxml.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.fasterxml.jackson.core"
+artifactId = "jackson-module-afterburner"
+version = "@fasterxml.version@"
+path = "./lib/jackson-module-afterburner-@fasterxml.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.fasterxml.jackson.core"
+artifactId = "jackson-annotations"
+version = "@fasterxml.version@"
+path = "./lib/jackson-annotations-@fasterxml.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.fasterxml.jackson.core"
+artifactId = "jackson-databind"
+version = "@fasterxml.version@"
+path = "./lib/jackson-databind-@fasterxml.version@.jar"

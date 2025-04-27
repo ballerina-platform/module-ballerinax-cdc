@@ -28,7 +28,17 @@ dependencies {
     checkstyle "com.puppycrawl.tools:checkstyle:${checkstylePluginVersion}"
 
     implementation group: 'org.ballerinalang', name: 'ballerina-runtime', version: "${ballerinaLangVersion}"
+    implementation group: 'io.ballerina.lib', name: 'data.jsondata-native', version: "${stdlibDataJsonDataVersion}"
 
+    implementation group: 'com.google.code.gson', name: 'gson', version: "${gsonVersion}"
+
+    implementation("io.debezium:debezium-api:${debeziumVersion}") {
+        transitive = false
+    }
+    implementation("io.debezium:debezium-embedded:${debeziumVersion}") {
+        transitive = false
+    }
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
 }
 
 def excludePattern = '**/module-info.java'

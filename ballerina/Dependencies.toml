@@ -5,7 +5,31 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.12.0"
+distribution-version = "2201.12.2"
+
+[[package]]
+org = "ballerina"
+name = "crypto"
+version = "2.9.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "time"}
+]
+modules = [
+	{org = "ballerina", packageName = "crypto", moduleName = "crypto"}
+]
+
+[[package]]
+org = "ballerina"
+name = "data.jsondata"
+version = "1.0.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "lang.object"}
+]
+modules = [
+	{org = "ballerina", packageName = "data.jsondata", moduleName = "data.jsondata"}
+]
 
 [[package]]
 org = "ballerina"
@@ -16,11 +40,60 @@ modules = [
 ]
 
 [[package]]
+org = "ballerina"
+name = "lang.object"
+version = "0.0.0"
+
+[[package]]
+org = "ballerina"
+name = "observe"
+version = "1.5.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"}
+]
+
+[[package]]
+org = "ballerina"
+name = "random"
+version = "1.7.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "time"}
+]
+modules = [
+	{org = "ballerina", packageName = "random", moduleName = "random"}
+]
+
+[[package]]
+org = "ballerina"
+name = "time"
+version = "2.7.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"}
+]
+
+[[package]]
+org = "ballerinai"
+name = "observe"
+version = "0.0.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "observe"}
+]
+modules = [
+	{org = "ballerinai", packageName = "observe", moduleName = "observe"}
+]
+
+[[package]]
 org = "ballerinax"
 name = "cdc"
 version = "0.1.0"
 dependencies = [
-	{org = "ballerina", name = "jballerina.java"}
+	{org = "ballerina", name = "crypto"},
+	{org = "ballerina", name = "data.jsondata"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "random"},
+	{org = "ballerinai", name = "observe"}
 ]
 modules = [
 	{org = "ballerinax", packageName = "cdc", moduleName = "cdc"}

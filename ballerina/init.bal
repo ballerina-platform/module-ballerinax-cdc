@@ -14,14 +14,23 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// Importing jsondata module for cdc native jar,
+// which facilitates creating Ballerina records from JSON events.
+import ballerina/data.jsondata as _;
 import ballerina/jballerina.java as java;
 
 # Initializes the CDC module.
 isolated function init() {
     setModule();
+    initializeLoggingConfigurations();
 }
 
 # Sets the module information for the CDC module.
 isolated function setModule() = @java:Method {
-    'class: "io.ballerina.lib.cdc.ModuleUtils"
+    'class: "io.ballerina.lib.cdc.utils.ModuleUtils"
+} external;
+
+# Sets io.debezium log levels to SEVERE
+isolated function initializeLoggingConfigurations() = @java:Method {
+    'class: "io.ballerina.lib.cdc.utils.ModuleUtils"
 } external;

@@ -18,5 +18,13 @@
 
 module io.ballerina.lib.cdc {
     requires io.ballerina.runtime;
+    requires io.ballerina.lib.data;
+    requires debezium.api;
+    requires debezium.embedded;
+    requires com.google.gson;
+    requires java.logging;
+
     exports io.ballerina.lib.cdc;
+    exports io.ballerina.lib.cdc.models;
+    exports io.ballerina.lib.cdc.utils;
 }

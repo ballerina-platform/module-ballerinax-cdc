@@ -15,10 +15,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.lib.cdc;
+package io.ballerina.lib.cdc.utils;
 
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.Module;
+
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+
+import static io.ballerina.runtime.api.constants.RuntimeConstants.ORG_NAME_SEPARATOR;
 
 /**
  * This class will hold module related utility functions.
@@ -26,6 +32,7 @@ import io.ballerina.runtime.api.Module;
 public class ModuleUtils {
 
     private static Module module = null;
+    private static String packageIdentifier;
 
     private ModuleUtils() {
     }
@@ -36,5 +43,19 @@ public class ModuleUtils {
 
     public static void setModule(Environment env) {
         module = env.getCurrentModule();
+        packageIdentifier = Constants.PACKAGE + ORG_NAME_SEPARATOR + Constants.MODULE +
+                Constants.COLON + module.getMajorVersion();
+    }
+
+    public static String getPackageIdentifier() {
+        return packageIdentifier;
+    }
+
+    public static void initializeLoggingConfigurations() {
+        // todo Need further investigation to see if we can disable only kafka and debezium logs
+        // Root logger
+        Logger rootLogger = LogManager.getLogManager().getLogger("");
+        // Set level to SEVERE
+        rootLogger.setLevel(Level.SEVERE);
     }
 }
