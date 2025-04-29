@@ -16,7 +16,7 @@
 import ballerina/log;
 import ballerina/os;
 import ballerinax/cdc;
-import ballerinax/cdc.mysql.driver as _;
+import niveathika/cdc.mysql.driver as _;
 import ballerinax/googleapis.gmail;
 
 configurable string refreshToken = os:getEnv("REFRESH_TOKEN");

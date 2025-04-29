@@ -16,7 +16,7 @@
 import ballerina/log;
 import ballerina/os;
 import ballerinax/cdc;
-import ballerinax/cdc.mssql.driver as _;
+import niveathika/cdc.mssql.driver as _;
 
 configurable string username = os:getEnv("DB_USERNAME");
 configurable string password = os:getEnv("DB_PASSWORD");

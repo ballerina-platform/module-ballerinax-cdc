@@ -17,7 +17,7 @@
 import ballerina/log;
 import ballerina/os;
 import ballerinax/cdc;
-import ballerinax/cdc.mysql.driver as _;
+import niveathika/cdc.mysql.driver as _;
 import ballerinax/redis;
 
 configurable string username = os:getEnv("DB_USERNAME");

@@ -9,9 +9,3 @@ org="ballerinax"
 name="cdc"
 version="0.1.0"
 repository="local"
-
-[[dependency]]
-org="ballerinax"
-name="cdc.mssql.driver"
-version="0.1.0"
-repository="local"
