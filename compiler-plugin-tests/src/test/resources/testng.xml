@@ -23,6 +23,7 @@
     <test name="CDC Compiler Plugin Tests">
         <classes>
             <class name="io.ballerina.lib.cdc.compiler.CompilerPluginTest"/>
+            <class name="io.ballerina.lib.cdc.compiler.CodeSnippetGenerationCodeActionTest"></class>
         </classes>
     </test>
 </suite>

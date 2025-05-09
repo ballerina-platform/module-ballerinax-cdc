@@ -6,7 +6,7 @@
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -15,12 +15,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package io.ballerina.lib.cdc.compiler;
 
-module io.ballerina.lib.cdc.compiler {
-    requires io.ballerina.lang;
-    requires io.ballerina.parser;
-    requires io.ballerina.tools.api;
+import io.ballerina.compiler.syntax.tree.SyntaxKind;
+import io.ballerina.lib.cdc.compiler.validator.CdcServiceAnalysisTask;
+import io.ballerina.projects.plugins.CodeAnalysisContext;
+import io.ballerina.projects.plugins.CodeAnalyzer;
 
-    exports io.ballerina.lib.cdc.compiler;
-    exports io.ballerina.lib.cdc.compiler.validator;
+public class CdcCodeAnalyzer extends CodeAnalyzer {
+    @Override
+    public void init(CodeAnalysisContext context) {
+        context.addSyntaxNodeAnalysisTask(new CdcServiceAnalysisTask(), SyntaxKind.SERVICE_DECLARATION);
+    }
 }
