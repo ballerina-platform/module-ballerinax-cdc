@@ -62,6 +62,7 @@ function testStartWithConflictingServices() returns error? {
     Error? result = mysqlListener.attach(service2);
     test:assertEquals(result is () ? "" : result.message(),
             "The 'cdc:ServiceConfig' annotation is mandatory when attaching multiple services to the 'cdc:Listener'.");
+    check mysqlListener.detach(service1);
 }
 
 @test:Config {}
@@ -86,34 +87,38 @@ function testStartWithServicesWithSameAnnotation() returns error? {
     error? result = mysqlListener.attach(service2);
     test:assertEquals(result is () ? "" : result.message(),
             "Multiple services cannot be used to receive events from the same table 'table1'.");
+    check mysqlListener.detach(service1);
 }
 
 @test:Config {
-    enable: false
 }
 function testAttachAfterStart() returns error? {
     MySqlListener mysqlListener = new ({
         database: {
-            username: "testUser",
-            password: "testPassword"
-        }
+            username,
+            password,
+            port
+        },
+        snapshotMode: NO_DATA
     });
     check mysqlListener.attach(testService);
     check mysqlListener.'start();
     error? result = mysqlListener.attach(testService);
     test:assertEquals(result is () ? "" : result.message(),
             "Cannot attach CDC service to the listener once it is running.");
+    check mysqlListener.immediateStop();
 }
 
 @test:Config {
-    enable: false
 }
 function testDetachAfterStart() returns error? {
     MySqlListener mysqlListener = new ({
         database: {
-            username: "testUser",
-            password: "testPassword"
-        }
+            username,
+            password,
+            port
+        },
+        snapshotMode: NO_DATA
     });
 
     check mysqlListener.attach(testService);
@@ -121,4 +126,5 @@ function testDetachAfterStart() returns error? {
     error? result = mysqlListener.detach(testService);
     test:assertEquals(result is () ? "" : result.message(),
             "Cannot detach a service from the listener once it is running.");
+    check mysqlListener.gracefulStop();
 }

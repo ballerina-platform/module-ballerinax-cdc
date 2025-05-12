@@ -96,3 +96,9 @@ groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-databind"
 version = "@fasterxml.version@"
 path = "./lib/jackson-databind-@fasterxml.version@.jar"
+
+[[dependency]]
+org="ballerinax"
+name="cdc.mysql.driver"
+version="0.1.0"
+repository="local"
