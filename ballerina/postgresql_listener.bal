@@ -37,13 +37,13 @@ public isolated class PostgreSqlListener {
     # + return - An error if the service cannot be attached, or `()` if successful
     public isolated function attach(Service s, string[]|string? name = ()) returns Error? {
         lock {
-	        if self.isStarted {
-	            return error OperationNotPermittedError("Cannot attach CDC service to the listener once it is running.");
-	        }
+            if self.isStarted {
+                return error OperationNotPermittedError("Cannot attach CDC service to the listener once it is running.");
+            }
         }
         check externAttach(self, s);
         lock {
-	        self.hasAttachedService = true;
+            self.hasAttachedService = true;
         }
     }
 
@@ -52,13 +52,13 @@ public isolated class PostgreSqlListener {
     # + return - An error if the listener cannot be started, or `()` if successful
     public isolated function 'start() returns Error? {
         lock {
-	        if !self.hasAttachedService {
-	            return error OperationNotPermittedError("Cannot start the listener without at least one attached service.");
-	        }
+            if !self.hasAttachedService {
+                return error OperationNotPermittedError("Cannot start the listener without at least one attached service.");
+            }
         }
         check externStart(self, self.config);
         lock {
-	        self.isStarted = true;
+            self.isStarted = true;
         }
     }
 
@@ -68,16 +68,16 @@ public isolated class PostgreSqlListener {
     # + return - An error if the service cannot be detached, or `()` if successful
     public isolated function detach(Service s) returns Error? {
         lock {
-	        if self.isStarted {
-	            return error OperationNotPermittedError("Cannot detach a service from the listener once it is running.");
-	        }
+            if self.isStarted {
+                return error OperationNotPermittedError("Cannot detach a service from the listener once it is running.");
+            }
             if !self.hasAttachedService {
                 return;
             }
         }
         boolean result = check externDetach(self, s);
         lock {
-	        self.hasAttachedService = result;
+            self.hasAttachedService = result;
         }
     }
 

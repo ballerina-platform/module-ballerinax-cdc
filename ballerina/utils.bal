@@ -77,7 +77,7 @@ const string ORACLE_URL = "database.url";
 const string ORACLE_PDB_NAME = "database.dbname";
 const string ORACLE_CONNECTION_ADAPTER = "database.connection.adapter";
 
-isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration|OracleListenerConfiguration config) returns map<string> & readonly{
+isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration|OracleListenerConfiguration config) returns map<string> & readonly {
     map<string> configMap = {};
 
     // Common configurations
