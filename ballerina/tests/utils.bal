@@ -16,7 +16,7 @@
 
 import ballerinax/cdc.mysql.driver as _;
 
-string username ="root";
+string username = "root";
 string password = "root";
 string database = "store_db";
 int port = 3307;
