@@ -174,7 +174,7 @@ public class Listener {
 
         try {
             CompletableFuture<EngineResult> comFuture = new CompletableFuture<>();
-            ExecutorService executor = Executors.newCachedThreadPool();
+            ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
             DebeziumEngine<ChangeEvent<String, String>> engine = create(Json.class)
                     .using(engineProperties)
                     .notifying(new BalChangeConsumer(serviceMap, environment.getRuntime()))
