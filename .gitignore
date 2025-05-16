@@ -62,3 +62,5 @@ examples/**/Config.toml
 
 # Environment files
 *.env
+
+examples/*/tmp
