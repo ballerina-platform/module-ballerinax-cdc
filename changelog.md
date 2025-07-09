@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Fix documentation
+
+## [1.0.3] - 2025-05-29
+
+### Changed
 - Fixed schema not included in service map key
 - Fix data binding error being invoked incorrectly
 - Fix payload member throwing null pointer exception
