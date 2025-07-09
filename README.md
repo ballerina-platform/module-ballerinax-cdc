@@ -37,11 +37,13 @@ Create a CDC listener for your MySQL database by specifying the connection detai
 
 ```ballerina
 listener mysql:CdcListener mysqlListener = new ({
-    hostname: "localhost",
-    port: 3306,
-    username: "username",
-    password: "password",
-    databaseInclude: ["inventory"]
+    database: {
+        hostname: "localhost",
+        port: 3306,
+        username: "username",
+        password: "password",
+        includedDatabases: ["inventory"]
+    }
 });
 ```
 
@@ -52,22 +54,22 @@ Implement a `cdc:Service` to handle database change events:
 ```ballerina
 service on mysqlListener {
 
-    remote function onRead(record {} after) returns error? {
+    remote function onRead(record {} after) returns cdc:Error? {
         // Handle the read event
         log:printInfo(`Record read: ${after}`);
     }
 
-    remote function onCreate(record {} after) returns error? {
+    remote function onCreate(record {} after) returns cdc:Error? {
         // Handle the create event
         log:printInfo(`Record created: ${after}`);
     }
 
-    remote function onUpdate(record {} before, record {} after) returns error? {
+    remote function onUpdate(record {} before, record {} after) returns cdc:Error? {
         // Handle the update event
         log:printInfo(`Record updated from: ${before}, to ${after}`);
     }
 
-    remote function onDelete(record {} before) returns error? {
+    remote function onDelete(record {} before) returns cdc:Error? {
         // Handle the delete event
         log:printInfo(`Record deleted: ${before}`);
     }
