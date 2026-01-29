@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/crypto;
+import ballerinax/kafka;
 
 # Represents the SSL modes for secure database connections.
 public enum SslMode {
@@ -104,11 +105,17 @@ public type FileInternalSchemaStorage record {|
 # + className - The class name of the Kafka schema history implementation to use
 # + topicName - The name of the Kafka topic to store schema history
 # + bootstrapServers - The list of Kafka bootstrap servers
+# + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, or SASL_SSL). Defaults to PLAINTEXT
+# + auth - SASL authentication credentials (mechanism, username, password). Required for SASL_PLAINTEXT and SASL_SSL
+# + secureSocket - SSL/TLS configuration with truststore and optional keystore for mutual TLS. Supports both JKS/PKCS12 truststores and PEM certificates
 public type KafkaInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.kafka.history.KafkaSchemaHistory";
     string topicName = "bal_cdc_internal_schema_history";
     string|string[] bootstrapServers;
+    kafka:SecurityProtocol securityProtocol = kafka:PROTOCOL_PLAINTEXT;
+    kafka:AuthenticationConfiguration auth?;
+    kafka:SecureSocket secureSocket?;
 |};
 
 # Represents the base configuration for offset storage.
@@ -137,6 +144,9 @@ public type FileOffsetStorage record {|
 # + topicName - The name of the Kafka topic to store offsets
 # + partitions - The number of partitions for the Kafka topic
 # + replicationFactor - The replication factor for the Kafka topic
+# + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, or SASL_SSL). Defaults to PLAINTEXT
+# + auth - SASL authentication credentials (mechanism, username, password). Required for SASL_PLAINTEXT and SASL_SSL
+# + secureSocket - SSL/TLS configuration with truststore and optional keystore for mutual TLS
 public type KafkaOffsetStorage record {|
     *OffsetStorage;
     string className = "org.apache.kafka.connect.storage.KafkaOffsetBackingStore";
@@ -144,6 +154,9 @@ public type KafkaOffsetStorage record {|
     string topicName = "bal_cdc_offsets";
     int partitions = 1;
     int replicationFactor = 2;
+    kafka:SecurityProtocol securityProtocol = kafka:PROTOCOL_PLAINTEXT;
+    kafka:AuthenticationConfiguration auth?;
+    kafka:SecureSocket secureSocket?;
 |};
 
 # Represents the base configuration for a database connection.
