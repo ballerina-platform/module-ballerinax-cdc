@@ -83,7 +83,8 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
 
     @Override
     public void handleBatch(List<ChangeEvent<String, String>> records,
-                            DebeziumEngine.RecordCommitter<ChangeEvent<String, String>> committer) {
+                            DebeziumEngine.RecordCommitter<ChangeEvent<String, String>> committer)
+            throws InterruptedException {
         for (ChangeEvent<String, String> record : records) {
             Service selectedService = null;
             try {
@@ -102,8 +103,10 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
                 Object returnValue = this.runtime.callMethod(selectedService.getService(), methodName, metaData,
                         processParameters(selectedService, methodName, payload));
                 handleReturnValue(returnValue);
+                committer.markProcessed(record);
             } catch (BError bError) {
                 handleError(selectedService, bError);
+                committer.markProcessed(record);
             } catch (Throwable e) {
                 // Catch unexpected exceptions to prevent the engine from stopping
                 // This ensures the library can log details of the issue without disrupting ongoing operations
@@ -113,8 +116,10 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
                 BError error = createError(EVENT_PROCESSING_ERROR, "Event Processing failed. " + e.getMessage(),
                         ErrorCreator.createError(e), detail);
                 handleError(selectedService, error);
+                committer.markProcessed(record);
             }
         }
+        committer.markBatchFinished();
     }
 
     private Service getSelectedService(Payload payload) {

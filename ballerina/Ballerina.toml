@@ -1,7 +1,7 @@
 [package]
 org = "ballerinax"
 name = "cdc"
-version = "1.0.3"
+version = "1.1.0"
 distribution = "2201.12.0"
 authors = ["Ballerina"]
 repository = "https://github.com/ballerina-platform/module-ballerinax-cdc"
@@ -15,9 +15,9 @@ graalvmCompatible=true
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib.cdc"
-artifactId = "cdc-native-1.0.3"
-version = "1.0.3"
-path = "../native/build/libs/cdc-native-1.0.3.jar"
+artifactId = "cdc-native-1.1.0-SNAPSHOT"
+version = "1.1.0-SNAPSHOT"
+path = "../native/build/libs/cdc-native-1.1.0-SNAPSHOT.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.debezium"
@@ -52,26 +52,26 @@ path = "./lib/debezium-storage-kafka-3.0.8.Final.jar"
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "kafka-clients"
-version = "3.9.0"
-path = "./lib/kafka-clients-3.9.0.jar"
+version = "3.9.1"
+path = "./lib/kafka-clients-3.9.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-api"
-version = "3.9.0"
-path = "./lib/connect-api-3.9.0.jar"
+version = "3.9.1"
+path = "./lib/connect-api-3.9.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-json"
-version = "3.9.0"
-path = "./lib/connect-json-3.9.0.jar"
+version = "3.9.1"
+path = "./lib/connect-json-3.9.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-runtime"
-version = "3.9.0"
-path = "./lib/connect-runtime-3.9.0.jar"
+version = "3.9.1"
+path = "./lib/connect-runtime-3.9.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"

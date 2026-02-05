@@ -82,6 +82,10 @@ subprojects {
 
         ballerinaStdLibs "io.ballerina.stdlib:crypto-ballerina:${stdlibCryptoVersion}"
         ballerinaStdLibs "io.ballerina.stdlib:random-ballerina:${stdlibRandomVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:log-ballerina:${stdlibLogVersion}"
+        ballerinaStdLibs "io.ballerina.lib:avro-ballerina:${stdlibAvroVersion}"
+
+        ballerinaStdLibs "io.ballerina.stdlib:uuid-ballerina:${stdlibUuidVersion}"
 
         ballerinaStdLibs "io.ballerina.lib:data.jsondata-ballerina:${stdlibDataJsonDataVersion}"
 
@@ -93,6 +97,10 @@ subprojects {
 
         ballerinaStdLibs "io.ballerina.stdlib:observe-ballerina:${observeVersion}"
         ballerinaStdLibs "io.ballerina:observe-ballerina:${observeInternalVersion}"
+
+        ballerinaStdLibs "io.ballerina.stdlib:kafka-ballerina:${kafkaLibVersion}"
+        ballerinaStdLibs "io.ballerina.lib:confluent.cavroserdes-ballerina:${confluentAvroSerDesVersion}"
+        ballerinaStdLibs "io.ballerina.lib:confluent.cregistry-ballerina:${confluentSchemaRegistryVersion}"
     }
 }
 
