@@ -69,7 +69,7 @@ public class Listener {
     public static final String COMP_CALLBACK_KEY = "CompletionCallback";
     public static final long DEFAULT_LIVENESS_INTERVAL_IN_MILLIS = 60000;
     public static final String LIVENESS_INTERVAL_KEY = "LivenessInterval";
-    public static final BString LIVENSS_INTERVAL_CONFIG_KEY = StringUtils.fromString("livenessInterval");
+    public static final BString LIVENESS_INTERVAL_CONFIG_KEY = StringUtils.fromString("livenessInterval");
     public static final String IS_STARTED_KEY = "isStarted";
     public static final String HAS_ATTACHED_SERVICE_KEY = "hasAttachedService";
     public static final String LISTENER_ID = "Id";
@@ -164,8 +164,8 @@ public class Listener {
             Properties engineProperties = populateEngineProperties(config);
 
             Long livenessInterval;
-            if (config.containsKey(LIVENSS_INTERVAL_CONFIG_KEY)) {
-                livenessInterval = ((BDecimal) config.get(LIVENSS_INTERVAL_CONFIG_KEY))
+            if (config.containsKey(LIVENESS_INTERVAL_CONFIG_KEY)) {
+                livenessInterval = ((BDecimal) config.get(LIVENESS_INTERVAL_CONFIG_KEY))
                         .decimalValue()
                         .multiply(BigDecimal.valueOf(1000))
                         .longValue();
@@ -276,20 +276,24 @@ public class Listener {
                 if (invoked) {
                     return false;
                 }
+            } else {
+                return false;
             }
 
             Object changeConsumer = listener.getNativeData(CHANGE_CONSUMER_KEY);
             if (changeConsumer != null) {
                 Optional<Instant> lastEventReceivedTime = ((BalChangeConsumer) changeConsumer)
                         .getLastEventReceivedTime();
-                if (lastEventReceivedTime.isPresent()) {
-                    Instant current = Instant.now();
-                    Instant lastEventReceived = lastEventReceivedTime.get();
-                    long diff = ChronoUnit.MILLIS.between(current, lastEventReceived);
-                    Object livenessInterval = listener.getNativeData(LIVENESS_INTERVAL_KEY);
-                    if (diff > ((Long) livenessInterval)) {
-                        return false;
-                    }
+                if (lastEventReceivedTime.isEmpty()) {
+                    return false;
+                }
+
+                Instant current = Instant.now();
+                Instant lastEventReceived = lastEventReceivedTime.get();
+                long diff = ChronoUnit.MILLIS.between(lastEventReceived, current);
+                Object livenessInterval = listener.getNativeData(LIVENESS_INTERVAL_KEY);
+                if (diff > ((Long) livenessInterval)) {
+                    return false;
                 }
             }
 
