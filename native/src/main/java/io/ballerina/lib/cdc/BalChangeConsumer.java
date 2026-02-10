@@ -41,10 +41,12 @@ import io.ballerina.runtime.api.values.BTypedesc;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.ballerina.lib.cdc.utils.Constants.ALLOW_DATA_PROJECTION;
 import static io.ballerina.lib.cdc.utils.Constants.BallerinaErrors.EVENT_PROCESSING_ERROR;
@@ -68,6 +70,7 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
     private final boolean isSingleServiceAttached;
     private final Service singleService;
     private final Runtime runtime;
+    private Instant lastEventReceivedTime;
 
     public BalChangeConsumer(Map<String, Service> serviceMap, Runtime runtime) {
         this.serviceMap = new HashMap<>(serviceMap);
@@ -85,6 +88,9 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
     public void handleBatch(List<ChangeEvent<String, String>> records,
                             DebeziumEngine.RecordCommitter<ChangeEvent<String, String>> committer)
             throws InterruptedException {
+        if (!records.isEmpty()) {
+            updateLastEventReceivedTime();
+        }
         for (ChangeEvent<String, String> record : records) {
             Service selectedService = null;
             try {
@@ -220,5 +226,13 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
         BMap<BString, Object> detail = getEventProcessingErrorDetail(payload.toString());
         return createError(EVENT_PROCESSING_ERROR, "Function '" + methodName + "' is not available.",
                 null, ValueCreator.createRecordValue(getModule(), EVENT_PROCESSING_ERROR_DETAIL, detail));
+    }
+
+    private void updateLastEventReceivedTime() {
+        lastEventReceivedTime = Instant.now();
+    }
+
+    public Optional<Instant> getLastEventReceivedTime() {
+        return Optional.ofNullable(lastEventReceivedTime);
     }
 }

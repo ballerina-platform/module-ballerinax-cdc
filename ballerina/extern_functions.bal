@@ -63,3 +63,13 @@ public isolated function externImmediateStop(Listener cdcListener) returns Error
     name: "immediateStop",
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
+
+
+# Checks whether the given CDC listener is live.
+#
+# + cdc - The CDC listener instance to be checked
+# + return - Returns `true` if the listener is considered live, `false` otherwise,
+# or an error if the liveness check fail
+public function isLive(Listener cdc) returns boolean|Error = @java:Method {
+    'class: "io.ballerina.lib.cdc.Listener"
+} external;

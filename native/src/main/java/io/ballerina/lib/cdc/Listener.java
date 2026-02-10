@@ -26,6 +26,7 @@ import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
+import io.ballerina.runtime.api.values.BDecimal;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
@@ -34,7 +35,11 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -60,6 +65,10 @@ public class Listener {
     public static final String TABLE_TO_SERVICE_MAP_KEY = "TABLE_TO_SERVICE_MAP";
     public static final String DEBEZIUM_ENGINE_KEY = "DEB_ENGINE";
     public static final String EXECUTOR_SERVICE_KEY = "ExecutorService";
+    public static final String CHANGE_CONSUMER_KEY = "ChangeConsumer";
+    public static final String COMP_CALLBACK_KEY = "CompletionCallback";
+    public static final String LIVENESS_INTERVAL_KEY = "LivenessInterval";
+    public static final BString LIVENSS_INTERVAL_CONFIG_KEY = StringUtils.fromString("livenessInterval");
     public static final String IS_STARTED_KEY = "isStarted";
     public static final String HAS_ATTACHED_SERVICE_KEY = "hasAttachedService";
     public static final String LISTENER_ID = "Id";
@@ -152,15 +161,21 @@ public class Listener {
             }
 
             Properties engineProperties = populateEngineProperties(config);
+            Long livenessInterval = ((BDecimal) config.get(LIVENSS_INTERVAL_CONFIG_KEY))
+                    .decimalValue()
+                    .multiply(BigDecimal.valueOf(1000))
+                    .longValue();
             @SuppressWarnings("unchecked")
             ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
                     .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
 
             CompletableFuture<EngineResult> comFuture = new CompletableFuture<>();
+            CdcCompletionCallback completionCallback = new CdcCompletionCallback();
+            BalChangeConsumer changeConsumer = new BalChangeConsumer(serviceMap, environment.getRuntime());
             ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
             DebeziumEngine<ChangeEvent<String, String>> engine = create(Json.class)
                     .using(engineProperties)
-                    .notifying(new BalChangeConsumer(serviceMap, environment.getRuntime()))
+                    .notifying(changeConsumer)
                     .using(new DebeziumEngine.ConnectorCallback() {
                         @Override
                         public void taskStarted() {
@@ -169,13 +184,7 @@ public class Listener {
                             comFuture.complete(result);
                         }
                     })
-                    .using((success, message, error) -> {
-                        EngineResult result = new EngineResult();
-                        result.success = success;
-                        result.message = message;
-                        result.error = error;
-                        comFuture.complete(result);
-                    })
+                    .using(completionCallback)
                     .build();
             executor.submit(engine);
 
@@ -183,10 +192,11 @@ public class Listener {
             if (engineResult.success) {
                 listener.addNativeData(DEBEZIUM_ENGINE_KEY, engine);
                 listener.addNativeData(EXECUTOR_SERVICE_KEY, executor);
+                listener.addNativeData(CHANGE_CONSUMER_KEY, changeConsumer);
+                listener.addNativeData(COMP_CALLBACK_KEY, completionCallback);
+                listener.addNativeData(LIVENESS_INTERVAL_KEY, livenessInterval);
             } else {
-                String errorMessage = engineResult.message != null ? engineResult.message
-                        : (engineResult.error != null ? engineResult.error.getMessage() : "Unknown error");
-                return createCdcError("Failed to start the Debezium engine: " + errorMessage);
+                return createCdcError("Failed to start the Debezium engine due to unknown error");
             }
             listener.addNativeData(IS_STARTED_KEY, true);
             return null;
@@ -242,6 +252,43 @@ public class Listener {
             return null;
         } catch (Exception e) {
             return createCdcError("Failed to stop the Debezium engine: " + e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static Object isLive(BObject listener) {
+        String id = getListenerId(listener);
+        ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
+
+        lock.lock();
+        try {
+            Object completionCallback = listener.getNativeData(COMP_CALLBACK_KEY);
+            if (completionCallback != null) {
+                boolean invoked = ((CdcCompletionCallback) completionCallback).isInvoked();
+                if (invoked) {
+                    return false;
+                }
+            }
+
+            Object changeConsumer = listener.getNativeData(CHANGE_CONSUMER_KEY);
+            if (changeConsumer != null) {
+                Optional<Instant> lastEventReceivedTime = ((BalChangeConsumer) changeConsumer)
+                        .getLastEventReceivedTime();
+                if (lastEventReceivedTime.isPresent()) {
+                    Instant current = Instant.now();
+                    Instant lastEventReceived = lastEventReceivedTime.get();
+                    long diff = ChronoUnit.MILLIS.between(current, lastEventReceived);
+                    Object livenessInterval = listener.getNativeData(LIVENESS_INTERVAL_KEY);
+                    if (diff > ((Long) livenessInterval)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        } catch (Exception e) {
+            return createCdcError("Failed to invoke the liveliness check for the Debezium engine: " + e.getMessage());
         } finally {
             lock.unlock();
         }
@@ -343,7 +390,5 @@ public class Listener {
     // Helper class to store result
     static class EngineResult {
         volatile boolean success = true;
-        volatile String message = null;
-        volatile Throwable error = null;
     }
 }
