@@ -67,6 +67,7 @@ public class Listener {
     public static final String EXECUTOR_SERVICE_KEY = "ExecutorService";
     public static final String CHANGE_CONSUMER_KEY = "ChangeConsumer";
     public static final String COMP_CALLBACK_KEY = "CompletionCallback";
+    public static final long DEFAULT_LIVENESS_INTERVAL_IN_MILLIS = 60000;
     public static final String LIVENESS_INTERVAL_KEY = "LivenessInterval";
     public static final BString LIVENSS_INTERVAL_CONFIG_KEY = StringUtils.fromString("livenessInterval");
     public static final String IS_STARTED_KEY = "isStarted";
@@ -161,10 +162,16 @@ public class Listener {
             }
 
             Properties engineProperties = populateEngineProperties(config);
-            Long livenessInterval = ((BDecimal) config.get(LIVENSS_INTERVAL_CONFIG_KEY))
-                    .decimalValue()
-                    .multiply(BigDecimal.valueOf(1000))
-                    .longValue();
+
+            Long livenessInterval;
+            if (config.containsKey(LIVENSS_INTERVAL_CONFIG_KEY)) {
+                livenessInterval = ((BDecimal) config.get(LIVENSS_INTERVAL_CONFIG_KEY))
+                        .decimalValue()
+                        .multiply(BigDecimal.valueOf(1000))
+                        .longValue();
+            } else {
+                livenessInterval = DEFAULT_LIVENESS_INTERVAL_IN_MILLIS;
+            }
             @SuppressWarnings("unchecked")
             ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
                     .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
