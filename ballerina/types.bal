@@ -674,11 +674,9 @@ public type Options record {|
     decimal queryTimeout = 60;
     HeartbeatConfiguration heartbeat?;
     SignalConfiguration signal?;
-    ExtendedSnapshotConfiguration extendedSnapshot?;
     TransactionMetadataConfiguration transactionMetadata?;
     ColumnTransformConfiguration columnTransform?;
     TopicConfiguration topicConfig?;
-    DataTypeConfiguration dataTypeConfig?;
     ErrorHandlingConfiguration errorHandling?;
     PerformanceConfiguration performance?;
     MonitoringConfiguration monitoring?;
@@ -696,6 +694,5 @@ public type ListenerConfiguration record {|
     string engineName = "ballerina-cdc-connector";
     FileInternalSchemaStorage|KafkaInternalSchemaStorage|MemoryInternalSchemaStorage|JdbcInternalSchemaStorage|RedisInternalSchemaStorage|AmazonS3InternalSchemaStorage|AzureBlobInternalSchemaStorage|RocketMQInternalSchemaStorage internalSchemaStorage = <FileInternalSchemaStorage>{};
     FileOffsetStorage|KafkaOffsetStorage|MemoryOffsetStorage|JdbcOffsetStorage|RedisOffsetStorage offsetStorage = <FileOffsetStorage>{};
-    Options options = {};
     decimal livenessInterval = 60.0;
 |};
