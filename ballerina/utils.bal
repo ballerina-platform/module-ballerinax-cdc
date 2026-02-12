@@ -605,6 +605,18 @@ public isolated function populateOptions(Options options, map<string> configMap)
     if guardrail is GuardrailConfiguration {
         populateGuardrailConfiguration(guardrail, configMap);
     }
+
+    // Process additional unmapped Debezium properties
+    map<string|int|boolean|decimal>? additionalProperties = options.additionalProperties;
+    if additionalProperties is map<string|int|boolean|decimal> {
+        foreach var [key, value] in additionalProperties.entries() {
+            if value is string {
+                configMap[key] = value;
+            } else if value is int || value is boolean || value is decimal {
+                configMap[key] = value.toString();
+            }
+        }
+    }
 }
 
 # Populates the database configurations in the given map.

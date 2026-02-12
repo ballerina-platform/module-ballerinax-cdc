@@ -275,19 +275,33 @@ public type RedisInternalSchemaStorage record {|
     boolean clusterEnabled = false;
 |};
 
+# Amazon S3-based schema history storage configuration.
+#
+# + className - Fully-qualified class name of the S3 schema history implementation
+# + accessKeyId - AWS access key ID for authentication
+# + secretAccessKey - AWS secret access key for authentication
+# + region - AWS region name where the S3 bucket is located
+# + bucketName - Name of the S3 bucket to store schema history
+# + objectName - Name of the object (file) within the S3 bucket
+# + endpoint - Custom S3 endpoint URL (optional, for S3-compatible storage)
 public type AmazonS3InternalSchemaStorage record {|
-    // *SchemaHistoryInternal;
     string className = "io.debezium.storage.s3.history.S3SchemaHistory";
     string accessKeyId?;
-    string secretAcessKey?;
+    string secretAccessKey?;
     string region?;
     string bucketName;
     string objectName;
-    string Endpoint?;
+    string endpoint?;
 |};
 
+# Azure Blob Storage-based schema history storage configuration.
+#
+# + className - Fully-qualified class name of the Azure Blob schema history implementation
+# + connectionString - Azure Storage connection string for authentication
+# + accountName - Azure Storage account name
+# + containerName - Name of the Azure Blob container to store schema history
+# + blobName - Name of the blob (file) within the container
 public type AzureBlobInternalSchemaStorage record {|
-    // *SchemaHistoryInternal;
     string className = "io.debezium.storage.azure.blob.history.AzureBlobSchemaHistory";
     string connectionString;
     string accountName;
@@ -295,8 +309,18 @@ public type AzureBlobInternalSchemaStorage record {|
     string blobName;
 |};
 
+# RocketMQ-based schema history storage configuration.
+#
+# + className - Fully-qualified class name of the RocketMQ schema history implementation
+# + topicName - Name of the RocketMQ topic to store schema history
+# + nameServerAddress - Address of the RocketMQ name server
+# + aclEnabled - Whether Access Control List (ACL) authentication is enabled
+# + accessKey - Access key for ACL authentication
+# + secretKey - Secret key for ACL authentication
+# + recoveryAttempts - Maximum number of recovery attempts when reading schema history
+# + recoveryPollInterval - Interval in seconds between recovery poll attempts
+# + storeRecordTimeout - Timeout in seconds for storing schema history records
 public type RocketMQInternalSchemaStorage record {|
-    // *SchemaHistoryInternal;
     string className = "io.debezium.storage.rocketmq.history.RocketMQSchemaHistory";
     string topicName;
     string nameServerAddress;
@@ -428,30 +452,32 @@ public type JdbcOffsetStorage record {|
     string tableDelete?;
 |};
 
-# Represents heartbeat configuration for maintaining connection liveness.
+# Heartbeat configuration for maintaining connection liveness and preventing idle connection termination.
 #
-# + intervalMs - The interval in seconds between heartbeat messages (0 = disabled)
-# + actionQuery - Optional SQL query to execute with each heartbeat
+# + interval - Interval in seconds between heartbeat messages (0 = disabled)
+# + actionQuery - Optional SQL query to execute with each heartbeat for keeping connections active
 public type HeartbeatConfiguration record {|
     decimal interval = 0.0;
     string actionQuery?;
 |};
 
-# Represents signal configuration for control operations.
+# Base signal configuration for ad-hoc snapshots and runtime control operations.
 #
-# + enabledChannels - The list of enabled signal channels
-# + dataCollection - The data collection (table) for source signals
+# + enabledChannels - List of enabled signal channels (source, kafka, file, jmx)
+# + dataCollection - Fully-qualified name of the database table for source-based signals
 public type CommonSignalConfiguration record {|
     SignalChannel[] enabledChannels = [SOURCE];
     string dataCollection?;
 |};
 
-# Represents Kafka signal configuration.
+# Kafka-based signal configuration for ad-hoc snapshot and runtime commands.
 #
-# + topic - The Kafka topic name for signals
-# + bootstrapServers - The Kafka bootstrap servers
-# + groupId - The consumer group ID
-# + consumerProperties - Additional Kafka consumer properties
+# + topic - Kafka topic name for signal messages
+# + bootstrapServers - Kafka bootstrap servers for signal consumer
+# + groupId - Consumer group ID for reading signal messages
+# + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL)
+# + auth - SASL authentication configuration for Kafka signal consumer
+# + secureSocket - SSL/TLS configuration for Kafka signal consumer
 public type KafkaSignalConfiguration record {|
     *CommonSignalConfiguration;
     string topic?;
@@ -462,48 +488,49 @@ public type KafkaSignalConfiguration record {|
     kafka:SecureSocket secureSocket?;
 |};
 
-# Represents file signal configuration.
+# File-based signal configuration for ad-hoc snapshot and runtime commands.
 #
-# + filePath - The path to the signal file
+# + filePath - Path to the signal file that is monitored for changes
 public type FileSignalConfiguration record {|
     *CommonSignalConfiguration;
     string filePath = "file-signals.txt";
 |};
 
+# Signal configuration supporting either file-based or Kafka-based signaling.
 public type SignalConfiguration FileSignalConfiguration|KafkaSignalConfiguration;
 
-# Represents incremental snapshot configuration.
+# Incremental snapshot configuration for non-blocking snapshots with chunked processing.
 #
-# + chunkSize - The maximum number of rows per chunk
-# + watermarkingStrategy - The watermarking strategy to use
-# + allowSchemaChanges - Whether to allow schema changes during snapshots
+# + chunkSize - Number of rows per incremental snapshot chunk (smaller = less memory, more overhead)
+# + watermarkingStrategy - Watermarking strategy for chunk boundaries (insert_insert or insert_delete)
+# + allowSchemaChanges - Whether to allow DDL schema changes during incremental snapshot
 public type IncrementalSnapshotConfiguration record {|
     int chunkSize = 1024;
     IncrementalSnapshotWatermarkingStrategy watermarkingStrategy = INSERT_INSERT;
     boolean allowSchemaChanges = false;
 |};
 
-# Represents extended snapshot configuration.
+# Extended snapshot configuration for fine-tuning snapshot behavior.
 #
-# + delay - Delay in seconds before starting snapshot
-# + fetchSize - The number of rows to fetch in each batch
-# + maxThreads - Maximum number of threads for parallel snapshots
-# + includeCollectionList - List of collections to include in snapshot
-# + incrementalConfig - Incremental snapshot configuration
-public type ExtendedSnapshotConfiguration record {
+# + delay - Delay in seconds before starting snapshot (useful for coordinating with other systems)
+# + fetchSize - Number of rows to fetch per database round trip during snapshot
+# + maxThreads - Maximum number of threads for parallel snapshot operations
+# + includeCollectionList - Regex patterns for tables/collections to include in snapshot
+# + incrementalConfig - Incremental snapshot configuration for chunked snapshots
+public type ExtendedSnapshotConfiguration record {|
     decimal delay?;
     int fetchSize?;
     int maxThreads = 1;
     string|string[] includeCollectionList?;
     IncrementalSnapshotConfiguration incrementalConfig?;
-};
+|};
 
-# Represents extended snapshot configuration for relational databases.
-# 
-# + isolationMode - The transaction isolation mode for snapshots
-# + lockingMode - The locking mode for snapshots
-# + selectStatementOverrides - Custom SELECT statements for specific tables
-# + queryMode - The query mode for snapshots
+# Extended snapshot configuration for relational databases with transaction control.
+#
+# + isolationMode - Transaction isolation level during snapshots (serializable, repeatable_read, etc.)
+# + lockingMode - Table locking strategy during snapshots (exclusive, shared, minimal, none)
+# + selectStatementOverrides - Custom SELECT statements per table for filtering snapshot data
+# + queryMode - Query strategy for snapshots (select_all or custom)
 public type RelationalExtendedSnapshotConfiguration record {|
     *ExtendedSnapshotConfiguration;
     SnapshotIsolationMode isolationMode?;
@@ -512,120 +539,128 @@ public type RelationalExtendedSnapshotConfiguration record {|
     SnapshotQueryMode queryMode?;
 |};
 
-# Represents transaction metadata configuration.
+# Transaction metadata configuration for tracking transaction boundaries in change events.
 #
-# + enabled - Whether transaction metadata is enabled
-# + topic - The topic name for transaction metadata
+# + enabled - Whether to emit BEGIN/END transaction events and add transaction IDs to change events
+# + topic - Topic name suffix for transaction metadata events (full topic: <prefix>.<topic>)
 public type TransactionMetadataConfiguration record {|
     boolean enabled = false;
     string topic = "transaction";
 |};
 
-# Represents column hash mask configuration.
+# Column hash mask configuration for irreversibly hashing sensitive column values.
 #
-# + algorithm - The hash algorithm to use
-# + columns - The columns to apply the hash mask to
-# + salt - Optional salt for hashing
+# + algorithm - Hash algorithm to use (e.g., SHA-256, MD5)
+# + salt - Optional salt value to add to the hash for additional security
+# + regexPatterns - Regex patterns matching fully-qualified column names to hash
 public type ColumnHashMask record {|
     string algorithm;
     string salt?;
     string|string[] regexPatterns;
 |};
 
+# Column character mask configuration for replacing column values with asterisks.
+#
+# + length - Number of asterisk characters to use as replacement
+# + regexPatterns - Regex patterns matching fully-qualified column names to mask
 public type ColumnCharMask record {|
     int length;
     string|string[] regexPatterns;
 |};
 
+# Column truncation configuration for limiting string column length.
+#
+# + length - Maximum character length to truncate strings to
+# + regexPatterns - Regex patterns matching fully-qualified column names to truncate
 public type ColumnTruncate record {|
     int length;
     string|string[] regexPatterns;
 |};
 
-# Represents column transformation configuration.
+# Column transformation configuration for masking and redacting sensitive data.
 #
-# + maskWithHash - Hash-based masking configurations
-# + maskWithChars - Character-based masking (column -> replacement chars)
-# + truncateToChars - Truncation configurations (column -> max length)
+# + maskWithHash - Hash-based masking for irreversible obfuscation of column values
+# + maskWithChars - Character-based masking for replacing values with asterisks
+# + truncateToChars - Truncation for limiting string column lengths
 public type ColumnTransformConfiguration record {|
     ColumnHashMask[] maskWithHash?;
     ColumnCharMask[] maskWithChars?;
     ColumnTruncate[] truncateToChars?;
 |};
 
-# Represents topic naming configuration.
+# Topic naming configuration for controlling logical identifiers in change events.
 #
-# + prefix - The topic prefix
-# + delimiter - The delimiter character between prefix and table name
-# + namingStrategy - The fully-qualified class name of the topic naming strategy
+# + prefix - Logical server name prefix for all topic names (typically database server name)
+# + delimiter - Delimiter between topic name components (default: ".")
+# + namingStrategy - Fully-qualified class name of custom topic naming strategy implementation
 public type TopicConfiguration record {|
     string prefix?;
     string delimiter = ".";
     string namingStrategy = "io.debezium.schema.SchemaTopicNamingStrategy";
 |};
 
-# Represents data type handling configuration.
+# Data type handling configuration for binary and temporal value representation.
 #
-# + binaryHandlingMode - How to encode binary data
-# + timePrecisionMode - How to represent time values
+# + binaryHandlingMode - How to encode binary column data (bytes, base64, hex)
+# + timePrecisionMode - How to represent temporal values (adaptive, connect, microseconds, etc.)
 # + includeSchemaChanges - Whether to include schema change events
 public type DataTypeConfiguration record {
     BinaryHandlingMode binaryHandlingMode = BYTES;
     TimePrecisionMode timePrecisionMode = ADAPTIVE;
 };
 
-# Represents error handling configuration.
+# Error handling configuration for connector failure and recovery behavior.
 #
-# + maxRetries - Maximum number of retries for errors (-1 = infinite)
-# + retriableRestartWait - Wait time before retrying in seconds
-# + tombstonesOnDelete - Whether to emit tombstone events on delete
+# + maxRetries - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = no retries)
+# + retriableRestartWait - Wait time in seconds before restarting connector after retriable error
+# + tombstonesOnDelete - Whether to emit tombstone (null value) events after delete events
 public type ErrorHandlingConfiguration record {|
     int maxRetries = -1;
     decimal retriableRestartWait = 10.0;
     boolean tombstonesOnDelete = true;
 |};
 
-# Represents performance tuning configuration.
+# Performance tuning configuration for throughput and resource optimization.
 #
-# + maxQueueSizeInBytes - Maximum queue size in bytes (0 = use record count)
-# + pollInterval - Polling interval in seconds
-# + queryFetchSize - Number of rows to fetch per query
+# + maxQueueSizeInBytes - Maximum queue size in bytes for memory-based backpressure (0 = unlimited)
+# + pollInterval - Interval in seconds between polling database for new change events
+# + queryFetchSize - Number of rows to fetch per database round trip (balances memory vs network)
 public type PerformanceConfiguration record {|
     int maxQueueSizeInBytes = 0;
     decimal pollInterval = 0.5;
     int queryFetchSize?;
 |};
 
-# Represents monitoring configuration.
+# Monitoring configuration for custom MBean object name tags.
 #
-# + customMetricTags - Custom tags for metrics
+# + customMetricTags - Key-value pairs for custom metric tags (format: key1=value1,key2=value2)
 public type MonitoringConfiguration record {|
     string customMetricTags?;
 |};
 
-# Represents guardrail configuration.
+# Guardrail configuration for preventing accidental capture of too many tables.
 #
-# + maxCollections - Maximum number of collections to monitor (0 = unlimited)
-# + limitAction - Action to take when limit is reached
+# + maxCollections - Maximum number of tables/collections to capture (0 = unlimited)
+# + limitAction - Action when limit exceeded (fail or warn)
 public type GuardrailConfiguration record {|
     int maxCollections = 0;
     GuardrailLimitAction limitAction = WARN;
 |};
 
-# Represents the base configuration for a database connection.
+# Base database connection configuration for all CDC connectors.
 #
-# + connectorClass - The class name of the database connector implementation to use
-# + hostname - The hostname of the database server
-# + port - The port number of the database server
-# + username - The username for the database connection
-# + password - The password for the database connection
-# + connectTimeout - The connection timeout in seconds
-# + tasksMax - The maximum number of tasks that should be created for this connector
-# + secure - The secure connection configuration
-# + includedTables - A list of regular expressions matching fully-qualified table identifiers to capture changes from (should not be used alongside tableExclude)
-# + excludedTables - A list of regular expressions matching fully-qualified table identifiers to exclude from change capture (should not be used alongside tableInclude)
-# + includedColumns - A list of regular expressions matching fully-qualified column identifiers to capture changes from (should not be used alongside columnExclude)
-# + excludedColumns - A list of regular expressions matching fully-qualified column identifiers to exclude from change capture (should not be used alongside columnInclude)
+# + connectorClass - Fully-qualified class name of the Debezium connector implementation
+# + hostname - Database server hostname or IP address
+# + port - Database server port number
+# + username - Database username for authentication
+# + password - Database password for authentication
+# + connectTimeout - Connection timeout in seconds
+# + tasksMax - Maximum number of connector tasks (most connectors use single task)
+# + secure - SSL/TLS secure connection configuration
+# + includedTables - Regex patterns for tables to capture (mutually exclusive with excludedTables)
+# + excludedTables - Regex patterns for tables to exclude (mutually exclusive with includedTables)
+# + includedColumns - Regex patterns for columns to capture (mutually exclusive with excludedColumns)
+# + excludedColumns - Regex patterns for columns to exclude (mutually exclusive with includedColumns)
 public type DatabaseConnection record {|
     string connectorClass;
     string hostname;
@@ -641,25 +676,26 @@ public type DatabaseConnection record {|
     string|string[] excludedColumns?;
 |};
 
-# Provides a set of additional configurations related to the cdc connection.
+# Common CDC options for all database connectors (generic configuration).
 #
-# + snapshotMode - The mode for capturing snapshots
-# + eventProcessingFailureHandlingMode - The mode for handling event processing failures
-# + skippedOperations - The list of operations to skip
-# + skipMessagesWithoutChange - Whether to skip messages without changes
-# + decimalHandlingMode - The mode for handling decimal values from the database
-# + maxQueueSize - The maximum size of the queue for events
-# + maxBatchSize - The maximum size of the batch for events
-# + queryTimeout - Specifies the time, in seconds, that the connector waits for a query to complete. Set the value to 0 (zero) to remove the timeout
-# + heartbeat - Heartbeat configuration
-# + signal - Signal configuration
-# + transactionMetadata - Transaction metadata configuration
-# + columnTransform - Column transformation configuration
-# + topicConfig - Topic naming configuration
-# + errorHandling - Error handling configuration
+# + snapshotMode - Snapshot capture mode (initial, always, when_needed, etc.)
+# + eventProcessingFailureHandlingMode - How to handle event processing failures (fail, warn, skip)
+# + skippedOperations - List of database operations to skip (e.g., truncate)
+# + skipMessagesWithoutChange - Whether to skip events without actual data changes
+# + decimalHandlingMode - How to represent decimal values (precise, double, string)
+# + maxQueueSize - Maximum number of events in internal queue (backpressure control)
+# + maxBatchSize - Maximum number of events per batch
+# + queryTimeout - Database query timeout in seconds (0 = no timeout)
+# + heartbeat - Heartbeat configuration for connection keep-alive
+# + signal - Signal configuration for ad-hoc snapshots and control operations
+# + transactionMetadata - Transaction boundary event configuration
+# + columnTransform - Column masking and transformation configuration
+# + topicConfig - Topic naming and routing configuration
+# + errorHandling - Error handling and retry configuration
 # + performance - Performance tuning configuration
 # + monitoring - Monitoring configuration
 # + guardrail - Guardrail configuration
+# + additionalProperties - Additional Debezium connector properties not explicitly mapped (passed through as-is)
 public type Options record {
     SnapshotMode snapshotMode = INITIAL;
     EventProcessingFailureHandlingMode eventProcessingFailureHandlingMode = WARN;
@@ -678,6 +714,7 @@ public type Options record {
     PerformanceConfiguration performance?;
     MonitoringConfiguration monitoring?;
     GuardrailConfiguration guardrail?;
+    map<string|int|boolean|decimal> additionalProperties?;
 };
 
 # Represents the base configuration for the CDC engine.
