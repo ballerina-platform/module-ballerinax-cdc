@@ -490,13 +490,13 @@ public type IncrementalSnapshotConfiguration record {|
 # + maxThreads - Maximum number of threads for parallel snapshots
 # + includeCollectionList - List of collections to include in snapshot
 # + incrementalConfig - Incremental snapshot configuration
-public type ExtendedSnapshotConfiguration record {|
+public type ExtendedSnapshotConfiguration record {
     decimal delay?;
     int fetchSize?;
     int maxThreads = 1;
     string|string[] includeCollectionList?;
     IncrementalSnapshotConfiguration incrementalConfig?;
-|};
+};
 
 # Represents extended snapshot configuration for relational databases.
 # 
@@ -569,10 +569,10 @@ public type TopicConfiguration record {|
 # + binaryHandlingMode - How to encode binary data
 # + timePrecisionMode - How to represent time values
 # + includeSchemaChanges - Whether to include schema change events
-public type DataTypeConfiguration record {|
+public type DataTypeConfiguration record {
     BinaryHandlingMode binaryHandlingMode = BYTES;
     TimePrecisionMode timePrecisionMode = ADAPTIVE;
-|};
+};
 
 # Represents error handling configuration.
 #
@@ -653,17 +653,14 @@ public type DatabaseConnection record {|
 # + queryTimeout - Specifies the time, in seconds, that the connector waits for a query to complete. Set the value to 0 (zero) to remove the timeout
 # + heartbeat - Heartbeat configuration
 # + signal - Signal configuration
-# + extendedSnapshot - Extended snapshot configuration
 # + transactionMetadata - Transaction metadata configuration
 # + columnTransform - Column transformation configuration
 # + topicConfig - Topic naming configuration
-# + dataTypeConfig - Data type handling configuration
 # + errorHandling - Error handling configuration
 # + performance - Performance tuning configuration
 # + monitoring - Monitoring configuration
 # + guardrail - Guardrail configuration
-# + schemaHistoryExtended - Extended schema history configuration
-public type Options record {|
+public type Options record {
     SnapshotMode snapshotMode = INITIAL;
     EventProcessingFailureHandlingMode eventProcessingFailureHandlingMode = WARN;
     Operation[] skippedOperations = [TRUNCATE];
@@ -681,14 +678,13 @@ public type Options record {|
     PerformanceConfiguration performance?;
     MonitoringConfiguration monitoring?;
     GuardrailConfiguration guardrail?;
-|};
+};
 
 # Represents the base configuration for the CDC engine.
 #
 # + engineName - The name of the CDC engine
 # + internalSchemaStorage - The internal schema history configuration
 # + offsetStorage - The offset storage configuration
-# + options - The additional options for the CDC engine
 # + livenessInterval - Time interval (in seconds) used to evaluate the liveness of the CDC listener
 public type ListenerConfiguration record {|
     string engineName = "ballerina-cdc-connector";

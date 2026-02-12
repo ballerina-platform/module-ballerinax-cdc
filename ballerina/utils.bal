@@ -142,6 +142,12 @@ const string SNAPSHOT_FETCH_SIZE = "snapshot.fetch.size";
 const string SNAPSHOT_MAX_THREADS = "snapshot.max.threads";
 const string SNAPSHOT_INCLUDE_COLLECTION_LIST = "snapshot.include.collection.list";
 
+// Relational database extended snapshot properties
+const string SNAPSHOT_ISOLATION_MODE = "snapshot.isolation.mode";
+const string SNAPSHOT_LOCKING_MODE = "snapshot.locking.mode";
+const string SNAPSHOT_SELECT_STATEMENT_OVERRIDES = "snapshot.select.statement.overrides";
+const string SNAPSHOT_QUERY_MODE = "snapshot.query.mode";
+
 // Incremental snapshot properties
 const string INCREMENTAL_SNAPSHOT_CHUNK_SIZE = "incremental.snapshot.chunk.size";
 const string INCREMENTAL_SNAPSHOT_WATERMARKING_STRATEGY = "incremental.snapshot.watermarking.strategy";
@@ -545,7 +551,7 @@ isolated function populateOffsetSecureSocketConfigurations(kafka:SecureSocket se
     }
 }
 
-isolated function populateOptions(Options options, map<string> configMap) {
+public isolated function populateOptions(Options options, map<string> configMap) {
     configMap[MAX_QUEUE_SIZE] = options.maxQueueSize.toString();
     configMap[MAX_BATCH_SIZE] = options.maxBatchSize.toString();
     configMap[EVENT_PROCESSING_FAILURE_HANDLING_MODE] = options.eventProcessingFailureHandlingMode;
@@ -835,6 +841,38 @@ public isolated function populateExtendedSnapshotConfiguration(ExtendedSnapshotC
     IncrementalSnapshotConfiguration? incrementalConfig = config.incrementalConfig;
     if incrementalConfig is IncrementalSnapshotConfiguration {
         populateIncrementalSnapshotConfiguration(incrementalConfig, configMap);
+    }
+}
+
+# Populates relational database extended snapshot configuration properties.
+#
+# + config - relational extended snapshot configuration
+# + configMap - map to populate with relational snapshot properties
+public isolated function populateRelationalExtendedSnapshotConfiguration(RelationalExtendedSnapshotConfiguration config, map<string> configMap) {
+    // First populate the common extended snapshot properties
+    populateExtendedSnapshotConfiguration(config, configMap);
+
+    // Then populate relational-specific properties
+    SnapshotIsolationMode? isolationMode = config.isolationMode;
+    if isolationMode is SnapshotIsolationMode {
+        configMap[SNAPSHOT_ISOLATION_MODE] = isolationMode;
+    }
+
+    SnapshotLockingMode? lockingMode = config.lockingMode;
+    if lockingMode is SnapshotLockingMode {
+        configMap[SNAPSHOT_LOCKING_MODE] = lockingMode;
+    }
+
+    string|string[]? selectStatementOverrides = config.selectStatementOverrides;
+    if selectStatementOverrides is string {
+        configMap[SNAPSHOT_SELECT_STATEMENT_OVERRIDES] = selectStatementOverrides;
+    } else if selectStatementOverrides is string[] {
+        configMap[SNAPSHOT_SELECT_STATEMENT_OVERRIDES] = string:'join(",", ...selectStatementOverrides);
+    }
+
+    SnapshotQueryMode? queryMode = config.queryMode;
+    if queryMode is SnapshotQueryMode {
+        configMap[SNAPSHOT_QUERY_MODE] = queryMode;
     }
 }
 
