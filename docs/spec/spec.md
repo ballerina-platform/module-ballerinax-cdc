@@ -313,8 +313,8 @@ listener cdc:Listener mssqlCdc = ...;
 // HTTP-based liveness probe
 service on new http:Listener(...) {
 
-    resource function get liveness() returns http:Ok|http:ServiceUnavailable {
-        boolean isLive = cdc:isLive(mssqlCdc);
+    resource function get liveness() returns http:Ok|http:ServiceUnavailable|error {
+        boolean isLive = check cdc:isLive(mssqlCdc);
         if isLive {
             return http:OK;
         }
