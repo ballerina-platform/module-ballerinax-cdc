@@ -388,6 +388,9 @@ public class Listener {
     private static Properties populateEngineProperties(BMap<BString, Object> config) {
         Properties engineProperties = new Properties();
         for (Map.Entry<BString, Object> configEntry : config.entrySet()) {
+            if (configEntry.getKey().equals(LIVENESS_INTERVAL_CONFIG_KEY)) {
+                continue;
+            }
             engineProperties.setProperty(configEntry.getKey().getValue(), configEntry.getValue().toString());
         }
         return engineProperties;
