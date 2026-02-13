@@ -67,8 +67,8 @@ public class Listener {
     public static final String EXECUTOR_SERVICE_KEY = "ExecutorService";
     public static final String CHANGE_CONSUMER_KEY = "ChangeConsumer";
     public static final String COMP_CALLBACK_KEY = "CompletionCallback";
-    public static final long DEFAULT_LIVENESS_INTERVAL_IN_MILLIS = 60000;
     public static final String LIVENESS_INTERVAL_KEY = "LivenessInterval";
+    public static final String LISTENER_START_TIME_KEY = "ListenerStartTime";
     public static final BString LIVENESS_INTERVAL_CONFIG_KEY = StringUtils.fromString("livenessInterval");
     public static final String IS_STARTED_KEY = "isStarted";
     public static final String HAS_ATTACHED_SERVICE_KEY = "hasAttachedService";
@@ -162,16 +162,10 @@ public class Listener {
             }
 
             Properties engineProperties = populateEngineProperties(config);
-
-            Long livenessInterval;
-            if (config.containsKey(LIVENESS_INTERVAL_CONFIG_KEY)) {
-                livenessInterval = ((BDecimal) config.get(LIVENESS_INTERVAL_CONFIG_KEY))
-                        .decimalValue()
-                        .multiply(BigDecimal.valueOf(1000))
-                        .longValue();
-            } else {
-                livenessInterval = DEFAULT_LIVENESS_INTERVAL_IN_MILLIS;
-            }
+            Long livenessInterval = ((BDecimal) config.get(LIVENESS_INTERVAL_CONFIG_KEY))
+                    .decimalValue()
+                    .multiply(BigDecimal.valueOf(1000))
+                    .longValue();
             @SuppressWarnings("unchecked")
             ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
                     .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
@@ -202,6 +196,7 @@ public class Listener {
                 listener.addNativeData(CHANGE_CONSUMER_KEY, changeConsumer);
                 listener.addNativeData(COMP_CALLBACK_KEY, completionCallback);
                 listener.addNativeData(LIVENESS_INTERVAL_KEY, livenessInterval);
+                listener.addNativeData(LISTENER_START_TIME_KEY, Instant.now());
             } else {
                 return createCdcError("Failed to start the Debezium engine due to unknown error");
             }
@@ -280,6 +275,19 @@ public class Listener {
                 return false;
             }
 
+            Long livenessInterval = (Long) listener.getNativeData(LIVENESS_INTERVAL_KEY);
+
+            Object listenerStartTime = listener.getNativeData(LISTENER_START_TIME_KEY);
+            if (listenerStartTime != null) {
+                Instant current = Instant.now();
+                long diff = ChronoUnit.MILLIS.between((Instant) listenerStartTime, current);
+                if (diff < livenessInterval) {
+                    return true;
+                }
+            } else {
+                return false;
+            }
+
             Object changeConsumer = listener.getNativeData(CHANGE_CONSUMER_KEY);
             if (changeConsumer != null) {
                 Optional<Instant> lastEventReceivedTime = ((BalChangeConsumer) changeConsumer)
@@ -291,8 +299,7 @@ public class Listener {
                 Instant current = Instant.now();
                 Instant lastEventReceived = lastEventReceivedTime.get();
                 long diff = ChronoUnit.MILLIS.between(lastEventReceived, current);
-                Object livenessInterval = listener.getNativeData(LIVENESS_INTERVAL_KEY);
-                if (diff > ((Long) livenessInterval)) {
+                if (diff > livenessInterval) {
                     return false;
                 }
             }
