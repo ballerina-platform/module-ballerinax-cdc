@@ -14,5 +14,4 @@ jobs:
     uses: ballerina-platform/ballerina-library/.github/workflows/build-timestamp-master-template.yml@main
     secrets: inherit
     with:
-      repo-name: module-ballerinax-cdc
       additional-build-flags: -x :cdc-examples:build
