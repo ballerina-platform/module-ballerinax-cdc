@@ -73,3 +73,8 @@ public isolated function externImmediateStop(Listener cdcListener) returns Error
 public isolated function isLive(Listener cdc) returns boolean|Error = @java:Method {
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
+
+public isolated function externGetAdditionalConfigKeys(Options options, typedesc<Options> optionsSubType) returns string[] = @java:Method {
+    name: "getAdditionalConfigKeys",
+    'class: "io.ballerina.lib.cdc.utils.Utils"
+} external;

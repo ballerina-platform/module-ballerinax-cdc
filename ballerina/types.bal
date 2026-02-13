@@ -132,20 +132,6 @@ public enum GuardrailLimitAction {
     WARN = "warn"
 }
 
-# Represents publication autocreate modes (PostgreSQL).
-public enum PublicationAutocreateMode {
-    ALL_TABLES = "all_tables",
-    DISABLED = "disabled",
-    FILTERED = "filtered"
-}
-
-# Represents LSN flush modes (PostgreSQL).
-public enum LsnFlushMode {
-    MANUAL = "manual",
-    CONNECTOR = "connector",
-    CONNECTOR_AND_DRIVER = "connector_and_driver"
-}
-
 # Represents a secure database connection configuration.
 #
 # + sslMode - The SSL mode to use for the connection
@@ -517,13 +503,13 @@ public type IncrementalSnapshotConfiguration record {|
 # + maxThreads - Maximum number of threads for parallel snapshot operations
 # + includeCollectionList - Regex patterns for tables/collections to include in snapshot
 # + incrementalConfig - Incremental snapshot configuration for chunked snapshots
-public type ExtendedSnapshotConfiguration record {|
+public type ExtendedSnapshotConfiguration record {
     decimal delay?;
     int fetchSize?;
     int maxThreads = 1;
     string|string[] includeCollectionList?;
     IncrementalSnapshotConfiguration incrementalConfig?;
-|};
+};
 
 # Extended snapshot configuration for relational databases with transaction control.
 #
@@ -695,7 +681,6 @@ public type DatabaseConnection record {|
 # + performance - Performance tuning configuration
 # + monitoring - Monitoring configuration
 # + guardrail - Guardrail configuration
-# + additionalProperties - Additional Debezium connector properties not explicitly mapped (passed through as-is)
 public type Options record {
     SnapshotMode snapshotMode = INITIAL;
     EventProcessingFailureHandlingMode eventProcessingFailureHandlingMode = WARN;
@@ -714,7 +699,6 @@ public type Options record {
     PerformanceConfiguration performance?;
     MonitoringConfiguration monitoring?;
     GuardrailConfiguration guardrail?;
-    map<string|int|boolean|decimal> additionalProperties?;
 };
 
 # Represents the base configuration for the CDC engine.
