@@ -215,9 +215,11 @@ public type Options record {|
 # + internalSchemaStorage - The internal schema history configuration
 # + offsetStorage - The offset storage configuration
 # + options - The additional options for the CDC engine
+# + livenessInterval - Time interval (in seconds) used to evaluate the liveness of the CDC listener
 public type ListenerConfiguration record {|
     string engineName = "ballerina-cdc-connector";
     FileInternalSchemaStorage|KafkaInternalSchemaStorage internalSchemaStorage = {};
     FileOffsetStorage|KafkaOffsetStorage offsetStorage = {};
     Options options = {};
+    decimal livenessInterval = 60.0;
 |};

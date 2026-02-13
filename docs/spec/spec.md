@@ -40,6 +40,7 @@ The conforming implementation of the specification is released and included in t
         - [2.2.4.5 `onTruncate`](#2245-ontruncate)
         - [2.2.4.6 `onError`](#2246-onerror)
       - [2.2.5 Service Configuration](#225-service-configuration)
+    - [2.2 Using health checks](#23-using-health-checks) 
   - [3. Errors](#3-errors)
     - [3.1 Service Error Handling](#31-service-error-handling)
           - [Example: `onCreate` Throwing an Error](#example-oncreate-throwing-an-error)
@@ -288,6 +289,39 @@ remote function onError(cdc:Error e) {
 #### 2.2.5 Service Configuration
 
 The `cdc:ServiceConfig` annotation can be used to provide additional configurations to the CDC service. These configurations are described in the [Service Configuration](#41-service-config) section.
+
+### 2.3 Using health checks
+
+In a distributed deployment, health checks are essential for monitoring the state of the CDC listener and enabling automated recovery mechanisms. If the listener becomes unhealthy, the orchestrator (e.g., Kubernetes) can restart the service based on the reported health status.
+
+To support this, the `isLive` function is provided to determine the liveness of a given CDC listener instance.
+
+```ballerina
+# Checks whether the given CDC listener is live.
+#
+# + cdc - The CDC listener instance to be checked
+# + return - Returns `true` if the listener is considered live, `false` otherwise,
+#            or an error if the liveness check fails
+public function isLive(cdc: Listener cdc) returns boolean|Error;
+```
+
+The following example demonstrates how the `isLive` function can be integrated with an HTTP-based liveness probe:
+
+```ballerina
+listener cdc:Listener mssqlCdc = ...;
+
+// HTTP-based liveness probe
+service on new http:Listener(...) {
+
+    resource function get liveness() returns http:Ok|http:ServiceUnavailable|error {
+        boolean isLive = check cdc:isLive(mssqlCdc);
+        if isLive {
+            return http:OK;
+        }
+        return http:SERVICE_UNAVAILABLE;
+    }
+}
+```
 
 ## 3. Errors
 

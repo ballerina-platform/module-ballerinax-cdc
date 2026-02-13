@@ -41,7 +41,7 @@ public isolated function externDetach(Listener cdcListener, Service cdcService) 
 # + cdcListener - the cdc listener object
 # + config - the configuration map containing debezium properties
 # + return - an error if the listener cannot be started, or `()` if successful
-public isolated function externStart(Listener cdcListener, map<string> config) returns Error? = @java:Method {
+public isolated function externStart(Listener cdcListener, map<anydata> config) returns Error? = @java:Method {
     name: "start",
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
@@ -61,5 +61,15 @@ public isolated function externGracefulStop(Listener cdcListener) returns Error?
 # + return - an error if the listener cannot be stopped, or `()` if successful
 public isolated function externImmediateStop(Listener cdcListener) returns Error? = @java:Method {
     name: "immediateStop",
+    'class: "io.ballerina.lib.cdc.Listener"
+} external;
+
+
+# Checks whether the given CDC listener is live.
+#
+# + cdc - The CDC listener instance to be checked
+# + return - Returns `true` if the listener is considered live, `false` otherwise,
+# or an error if the liveness check fail
+public function isLive(Listener cdc) returns boolean|Error = @java:Method {
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
