@@ -551,7 +551,7 @@ isolated function populateOffsetSecureSocketConfigurations(kafka:SecureSocket se
     }
 }
 
-public isolated function populateOptions(Options options, map<string> configMap) {
+public isolated function populateOptions(Options options, map<string> configMap, typedesc<Options> optionsSubType) {
     configMap[MAX_QUEUE_SIZE] = options.maxQueueSize.toString();
     configMap[MAX_BATCH_SIZE] = options.maxBatchSize.toString();
     configMap[EVENT_PROCESSING_FAILURE_HANDLING_MODE] = options.eventProcessingFailureHandlingMode;
@@ -606,17 +606,7 @@ public isolated function populateOptions(Options options, map<string> configMap)
         populateGuardrailConfiguration(guardrail, configMap);
     }
 
-    // Process additional unmapped Debezium properties
-    map<string|int|boolean|decimal>? additionalProperties = options.additionalProperties;
-    if additionalProperties is map<string|int|boolean|decimal> {
-        foreach var [key, value] in additionalProperties.entries() {
-            if value is string {
-                configMap[key] = value;
-            } else if value is int || value is boolean || value is decimal {
-                configMap[key] = value.toString();
-            }
-        }
-    }
+    populateAdditionalConfigurations(options, configMap, optionsSubType);
 }
 
 # Populates the database configurations in the given map.
@@ -765,7 +755,7 @@ public isolated function populateSignalConfiguration(SignalConfiguration config,
         if secureSocket is kafka:SecureSocket {
             populateSignalKafkaSecureSocketConfigurations(secureSocket, configMap);
         }
-    } else if config is FileSignalConfiguration {
+    } else {
         configMap[SIGNAL_FILE] = config.filePath;
     }
 }
@@ -1128,7 +1118,7 @@ public isolated function populateS3SchemaHistoryConfiguration(AmazonS3InternalSc
         configMap[SCHEMA_HISTORY_INTERNAL_S3_ACCESS_KEY_ID] = accessKeyId;
     }
 
-    string? secretAccessKey = storage.secretAcessKey;
+    string? secretAccessKey = storage.secretAccessKey;
     if secretAccessKey is string {
         configMap[SCHEMA_HISTORY_INTERNAL_S3_SECRET_ACCESS_KEY] = secretAccessKey;
     }
@@ -1141,7 +1131,7 @@ public isolated function populateS3SchemaHistoryConfiguration(AmazonS3InternalSc
     configMap[SCHEMA_HISTORY_INTERNAL_S3_BUCKET_NAME] = storage.bucketName;
     configMap[SCHEMA_HISTORY_INTERNAL_S3_OBJECT_NAME] = storage.objectName;
 
-    string? endpoint = storage.Endpoint;
+    string? endpoint = storage.endpoint;
     if endpoint is string {
         configMap[SCHEMA_HISTORY_INTERNAL_S3_ENDPOINT] = endpoint;
     }
@@ -1272,3 +1262,13 @@ public isolated function populateJdbcOffsetStorageConfiguration(JdbcOffsetStorag
         configMap[OFFSET_STORAGE_JDBC_TABLE_DELETE] = tableDelete;
     }
 }
+
+isolated function populateAdditionalConfigurations(Options options, map<string> configMap, typedesc<Options> optionsSubType) {
+    string[] additionalConfigKeys = getAdditionalConfigKeys(options, optionsSubType);
+    foreach string option in additionalConfigKeys {
+        string value = options[option].toBalString();
+        configMap[option] = value;
+    }
+}
+
+isolated function getAdditionalConfigKeys(Options options, typedesc<Options> optionsSubType) returns string[] => externGetAdditionalConfigKeys(options, optionsSubType);
