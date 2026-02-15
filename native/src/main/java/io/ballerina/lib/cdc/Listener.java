@@ -61,15 +61,16 @@ import static io.debezium.engine.DebeziumEngine.create;
  * This class contains utility functions for the cdc:Listener object.
  */
 public class Listener {
+    private static final String CHANGE_CONSUMER_KEY = "ChangeConsumer";
+    private static final String COMP_CALLBACK_KEY = "CompletionCallback";
+    private static final String LIVENESS_INTERVAL_KEY = "LivenessInterval";
+    private static final String LISTENER_START_TIME_KEY = "ListenerStartTime";
+    private static final BString LIVENESS_INTERVAL_CONFIG_KEY = StringUtils.fromString("livenessInterval");
+    private static final long DEFAULT_LIVENESS_INTERVAL_MILLIS = 60000;
 
     public static final String TABLE_TO_SERVICE_MAP_KEY = "TABLE_TO_SERVICE_MAP";
     public static final String DEBEZIUM_ENGINE_KEY = "DEB_ENGINE";
     public static final String EXECUTOR_SERVICE_KEY = "ExecutorService";
-    public static final String CHANGE_CONSUMER_KEY = "ChangeConsumer";
-    public static final String COMP_CALLBACK_KEY = "CompletionCallback";
-    public static final String LIVENESS_INTERVAL_KEY = "LivenessInterval";
-    public static final String LISTENER_START_TIME_KEY = "ListenerStartTime";
-    public static final BString LIVENESS_INTERVAL_CONFIG_KEY = StringUtils.fromString("livenessInterval");
     public static final String IS_STARTED_KEY = "isStarted";
     public static final String HAS_ATTACHED_SERVICE_KEY = "hasAttachedService";
     public static final String LISTENER_ID = "Id";
@@ -162,10 +163,17 @@ public class Listener {
             }
 
             Properties engineProperties = populateEngineProperties(config);
-            Long livenessInterval = ((BDecimal) config.get(LIVENESS_INTERVAL_CONFIG_KEY))
-                    .decimalValue()
-                    .multiply(BigDecimal.valueOf(1000))
-                    .longValue();
+
+            Long livenessInterval;
+            if (config.containsKey(LIVENESS_INTERVAL_CONFIG_KEY)) {
+                livenessInterval = ((BDecimal) config.get(LIVENESS_INTERVAL_CONFIG_KEY))
+                        .decimalValue()
+                        .multiply(BigDecimal.valueOf(1000))
+                        .longValue();
+            } else {
+                livenessInterval = DEFAULT_LIVENESS_INTERVAL_MILLIS;
+            }
+
             @SuppressWarnings("unchecked")
             ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
                     .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
