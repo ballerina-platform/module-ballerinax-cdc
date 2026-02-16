@@ -176,9 +176,9 @@ public type KafkaInternalSchemaStorage record {|
     string topicName = "bal_cdc_internal_schema_history";
     string|string[] bootstrapServers;
     decimal recoveryPollInterval = 0.1;
-    int recoveryAttempts = 10;
-    decimal queryTimeout = 0.0003;
-    decimal createTimeout = 0.003;
+    int recoveryAttempts = 100;
+    decimal queryTimeout = 0.003;
+    decimal createTimeout = 0.03;
     kafka:SecurityProtocol securityProtocol = kafka:PROTOCOL_PLAINTEXT;
     kafka:AuthenticationConfiguration auth?;
     kafka:SecureSocket secureSocket?;
@@ -189,7 +189,7 @@ public type KafkaInternalSchemaStorage record {|
 # + className - The class name of the memory schema history implementation to use
 public type MemoryInternalSchemaStorage record {|
     *SchemaHistoryInternal;
-    string className = "io.debezium.storage.memory.history.MemorySchemaHistory";
+    string className = "io.debezium.relational.history.MemorySchemaHistory";
 |};
 
 # Represents the JDBC-based schema history configuration.
@@ -234,7 +234,7 @@ public type JdbcInternalSchemaStorage record {|
 # + connectionTimeoutMs - Connection timeout in milliseconds
 # + socketTimeoutMs - Socket timeout in milliseconds
 public type RedisInternalSchemaStorage record {|
-    // *SchemaHistoryInternal; // TODO: can we remove this?
+    *SchemaHistoryInternal;
     string className = "io.debezium.storage.redis.history.RedisSchemaHistory";
     string key = "metadata:debezium:schema_history";
     string address;
@@ -271,6 +271,7 @@ public type RedisInternalSchemaStorage record {|
 # + objectName - Name of the object (file) within the S3 bucket
 # + endpoint - Custom S3 endpoint URL (optional, for S3-compatible storage)
 public type AmazonS3InternalSchemaStorage record {|
+    *SchemaHistoryInternal;
     string className = "io.debezium.storage.s3.history.S3SchemaHistory";
     string accessKeyId?;
     string secretAccessKey?;
@@ -288,6 +289,7 @@ public type AmazonS3InternalSchemaStorage record {|
 # + containerName - Name of the Azure Blob container to store schema history
 # + blobName - Name of the blob (file) within the container
 public type AzureBlobInternalSchemaStorage record {|
+    *SchemaHistoryInternal;
     string className = "io.debezium.storage.azure.blob.history.AzureBlobSchemaHistory";
     string connectionString;
     string accountName;
@@ -307,7 +309,8 @@ public type AzureBlobInternalSchemaStorage record {|
 # + recoveryPollInterval - Interval in seconds between recovery poll attempts
 # + storeRecordTimeout - Timeout in seconds for storing schema history records
 public type RocketMQInternalSchemaStorage record {|
-    string className = "io.debezium.storage.rocketmq.history.RocketMQSchemaHistory";
+    *SchemaHistoryInternal;
+    string className = "io.debezium.storage.rocketmq.history.RocketMqSchemaHistory";
     string topicName;
     string nameServerAddress;
     boolean aclEnabled = false;
@@ -537,11 +540,11 @@ public type TransactionMetadataConfiguration record {|
 # Column hash mask configuration for irreversibly hashing sensitive column values.
 #
 # + algorithm - Hash algorithm to use (e.g., SHA-256, MD5)
-# + salt - Optional salt value to add to the hash for additional security
+# + salt - Salt value to add to the hash for additional security
 # + regexPatterns - Regex patterns matching fully-qualified column names to hash
 public type ColumnHashMask record {|
     string algorithm;
-    string salt?;
+    string salt;
     string|string[] regexPatterns;
 |};
 
@@ -576,11 +579,9 @@ public type ColumnTransformConfiguration record {|
 
 # Topic naming configuration for controlling logical identifiers in change events.
 #
-# + prefix - Logical server name prefix for all topic names (typically database server name)
 # + delimiter - Delimiter between topic name components (default: ".")
 # + namingStrategy - Fully-qualified class name of custom topic naming strategy implementation
 public type TopicConfiguration record {|
-    string prefix?;
     string delimiter = ".";
     string namingStrategy = "io.debezium.schema.SchemaTopicNamingStrategy";
 |};

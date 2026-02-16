@@ -163,7 +163,7 @@ const string COLUMN_MASK_WITH = "column.mask.with";
 const string COLUMN_TRUNCATE_TO = "column.truncate.to";
 
 // Topic configuration properties
-const string TOPIC_PREFIX_PROP = "topic.prefix";
+const string TOPIC_PREFIX = "topic.prefix";
 const string TOPIC_DELIMITER = "topic.delimiter";
 const string TOPIC_NAMING_STRATEGY = "topic.naming.strategy";
 
@@ -176,7 +176,7 @@ const string ERRORS_MAX_RETRIES = "errors.max.retries";
 const string ERRORS_RETRY_DELAY_INITIAL_MS = "errors.retry.delay.initial.ms";
 
 // Performance properties
-const string MAX_QUEUE_SIZE_IN_BYTES = "max.queue.size.in.bytes";
+const string MAX_QUEUE_SIZE_IN_BYTES = "max.queue.size.in.bytes"; // TODO: what is this? is it different from max.queue.size?
 const string POLL_INTERVAL_MS = "poll.interval.ms";
 const string QUERY_FETCH_SIZE = "query.fetch.size";
 
@@ -317,6 +317,7 @@ isolated function populateSchemaHistoryConfigurations(
     map<string> configMap
 ) {
     configMap[SCHEMA_HISTORY_INTERNAL] = schemaHistoryInternal.className;
+    configMap[TOPIC_PREFIX] = schemaHistoryInternal.topicPrefix;
 
     if schemaHistoryInternal is KafkaInternalSchemaStorage {
         populateKafkaSchemaHistoryConfiguration(schemaHistoryInternal, configMap);
@@ -906,11 +907,9 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
     if maskWithHash is ColumnHashMask[] {
         foreach var mask in maskWithHash {
             string|string[] patterns = mask.regexPatterns;
-            string patternStr = patterns is string ? patterns : string:'join(",", ...patterns);
-            string hashKey = string `${COLUMN_MASK_HASH_WITH}.${mask.algorithm}.${patternStr}`;
-
-            string? salt = mask.salt;
-            configMap[hashKey] = salt is string ? salt : "";
+            string patternStr = patterns is string ? patterns : string:'join(", ", ...patterns);
+            string hashKey = string `column.mask.hash.v2.${mask.algorithm}.with.salt.${mask.salt}`;
+            configMap[hashKey] = patternStr;
         }
     }
 
@@ -918,9 +917,10 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
     if maskWithChars is ColumnCharMask[] {
         foreach var mask in maskWithChars {
             string|string[] patterns = mask.regexPatterns;
-            string patternStr = patterns is string ? patterns : string:'join(",", ...patterns);
-            string maskKey = string `${COLUMN_MASK_WITH}.${mask.length}.${patternStr}`;
-            configMap[maskKey] = "*";
+            string patternStr = patterns is string ? patterns : string:'join(", ", ...patterns);
+            // Format: column.mask.with.<length>.chars = <pattern>
+            string maskKey = string `column.mask.with.${mask.length}.chars`;
+            configMap[maskKey] = patternStr;
         }
     }
 
@@ -928,9 +928,9 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
     if truncateToChars is ColumnTruncate[] {
         foreach var truncate in truncateToChars {
             string|string[] patterns = truncate.regexPatterns;
-            string patternStr = patterns is string ? patterns : string:'join(",", ...patterns);
-            string truncateKey = string `${COLUMN_TRUNCATE_TO}.${truncate.length}.${patternStr}`;
-            configMap[truncateKey] = "";
+            string patternStr = patterns is string ? patterns : string:'join(", ", ...patterns);
+            string truncateKey = string `column.truncate.to.${truncate.length}.chars`;
+            configMap[truncateKey] = patternStr;
         }
     }
 }
@@ -940,11 +940,6 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
 # + config - topic configuration
 # + configMap - map to populate with topic properties
 public isolated function populateTopicConfiguration(TopicConfiguration config, map<string> configMap) {
-    string? prefix = config.prefix;
-    if prefix is string {
-        configMap[TOPIC_PREFIX_PROP] = prefix;
-    }
-
     configMap[TOPIC_DELIMITER] = config.delimiter;
     configMap[TOPIC_NAMING_STRATEGY] = config.namingStrategy;
 }
@@ -1265,9 +1260,13 @@ public isolated function populateJdbcOffsetStorageConfiguration(JdbcOffsetStorag
 
 isolated function populateAdditionalConfigurations(Options options, map<string> configMap, typedesc<Options> optionsSubType) {
     string[] additionalConfigKeys = getAdditionalConfigKeys(options, optionsSubType);
-    foreach string option in additionalConfigKeys {
-        string value = options[option].toBalString();
-        configMap[option] = value;
+    foreach string key in additionalConfigKeys {
+        anydata value = options[key];
+        if value !is string {
+            log:printError(string `Invalid additional configuration type for option ${key}: ${value.toBalString()}, Only string values are allowed.`);
+            continue;
+        }
+        configMap[key] = value;
     }
 }
 
