@@ -31,8 +31,7 @@ public isolated class MockListener {
         populateDebeziumProperties({
                                        engineName: config.engineName,
                                        offsetStorage: config.offsetStorage,
-                                       internalSchemaStorage: config.internalSchemaStorage,
-                                       options: config.options
+                                       internalSchemaStorage: config.internalSchemaStorage
                                    }, debeziumConfigs);
         populateDatabaseConfigurations({
                                            connectorClass: config.database.connectorClass,
@@ -48,6 +47,8 @@ public isolated class MockListener {
                                            includedColumns: config.database.includedColumns,
                                            excludedColumns: config.database.excludedColumns
                                        }, debeziumConfigs);
+        populateMySqlConfigurations(config.database, configMap);
+        populateMySqlOptions(config.options, configMap);
         debeziumConfigs["database.server.id"] = "100000";
         map<anydata> listenerConfigs = {
             ...debeziumConfigs
@@ -99,8 +100,15 @@ const string MYSQL_DATABASE_SERVER_ID = "database.server.id";
 const string MYSQL_DATABASE_INCLUDE_LIST = "database.include.list";
 const string MYSQL_DATABASE_EXCLUDE_LIST = "database.exclude.list";
 
+// MySQL-specific options (mimics actual MySQL module)
+public type MySqlOptions record {|
+    *Options;
+    // MySQL-specific options can be added here
+|};
+
 public type MySqlListenerConfiguration record {|
     MySqlDatabaseConnection database;
+    MySqlOptions options = {};
     *ListenerConfiguration;
 |};
 
@@ -129,4 +137,12 @@ isolated function populateMySqlConfigurations(MySqlDatabaseConnection connection
     if excludedDatabases !is () {
         configMap[MYSQL_DATABASE_EXCLUDE_LIST] = excludedDatabases is string ? excludedDatabases : string:'join(",", ...excludedDatabases);
     }
+}
+
+// Populates MySQL-specific options
+isolated function populateMySqlOptions(MySqlOptions options, map<string> configMap) {
+    // Populate common options from cdc module
+    populateOptions(options, configMap, typeof options);
+
+    // MySQL-specific options would be populated here if any
 }
