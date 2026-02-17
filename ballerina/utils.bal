@@ -176,7 +176,7 @@ const string ERRORS_MAX_RETRIES = "errors.max.retries";
 const string ERRORS_RETRY_DELAY_INITIAL_MS = "errors.retry.delay.initial.ms";
 
 // Performance properties
-const string MAX_QUEUE_SIZE_IN_BYTES = "max.queue.size.in.bytes";
+const string MAX_QUEUE_SIZE_IN_BYTES = "max.queue.size.in.bytes"; // TODO: what is this? is it different from max.queue.size?
 const string POLL_INTERVAL_MS = "poll.interval.ms";
 const string QUERY_FETCH_SIZE = "query.fetch.size";
 

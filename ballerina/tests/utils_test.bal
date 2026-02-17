@@ -30,7 +30,6 @@ public type SampleDBOptions record {|
 // Sample database listener configuration for testing
 public type SampleDBListenerConfiguration record {|
     *ListenerConfiguration;
-    DatabaseConnection database;
     SampleDBOptions options = {};
 |};
 
@@ -65,6 +64,10 @@ function testGetDebeziumProperties() {
         "schema.history.internal.kafka.topic": "bal_cdc_internal_schema_history",
         "schema.history.internal.producer.security.protocol": "PLAINTEXT",
         "schema.history.internal.consumer.security.protocol": "PLAINTEXT",
+        "schema.history.internal.kafka.recovery.poll.interval.ms": "100",
+        "schema.history.internal.kafka.recovery.attempts": "100",
+        "schema.history.internal.kafka.query.timeout.ms": "3",
+        "schema.history.internal.kafka.create.timeout.ms": "30",
         "offset.storage": "org.apache.kafka.connect.storage.KafkaOffsetBackingStore",
         "offset.flush.interval.ms": "60000",
         "offset.flush.timeout.ms": "5000",
@@ -77,7 +80,7 @@ function testGetDebeziumProperties() {
         "database.query.timeout.ms": "60000"
     };
 
-    ListenerConfiguration config = {
+    SampleDBListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: ""
         },
@@ -89,6 +92,7 @@ function testGetDebeziumProperties() {
     map<string> actualProperties = {};
     // Call the function to test
     populateDebeziumProperties(config, actualProperties);
+    populateSampleDBOptions(config.options, actualProperties);
 
     // Validate the returned properties
     test:assertEquals(actualProperties, expectedProperties, msg = "Debezium properties do not match the expected values.");

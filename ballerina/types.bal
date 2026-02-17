@@ -176,9 +176,9 @@ public type KafkaInternalSchemaStorage record {|
     string topicName = "bal_cdc_internal_schema_history";
     string|string[] bootstrapServers;
     decimal recoveryPollInterval = 0.1;
-    int recoveryAttempts = 10;
-    decimal queryTimeout = 0.0003;
-    decimal createTimeout = 0.003;
+    int recoveryAttempts = 100;
+    decimal queryTimeout = 0.003;
+    decimal createTimeout = 0.03;
     kafka:SecurityProtocol securityProtocol = kafka:PROTOCOL_PLAINTEXT;
     kafka:AuthenticationConfiguration auth?;
     kafka:SecureSocket secureSocket?;
