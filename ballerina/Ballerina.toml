@@ -15,9 +15,9 @@ graalvmCompatible=true
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib.cdc"
-artifactId = "cdc-native-1.2.1-SNAPSHOT"
-version = "1.2.1-SNAPSHOT"
-path = "../native/build/libs/cdc-native-1.2.1-SNAPSHOT.jar"
+artifactId = "cdc-native-1.2.1"
+version = "1.2.1"
+path = "../native/build/libs/cdc-native-1.2.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.debezium"
