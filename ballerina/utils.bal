@@ -176,7 +176,7 @@ const string ERRORS_MAX_RETRIES = "errors.max.retries";
 const string ERRORS_RETRY_DELAY_INITIAL_MS = "errors.retry.delay.initial.ms";
 
 // Performance properties
-const string MAX_QUEUE_SIZE_IN_BYTES = "max.queue.size.in.bytes"; // TODO: what is this? is it different from max.queue.size?
+const string MAX_QUEUE_SIZE_IN_BYTES = "max.queue.size.in.bytes";
 const string POLL_INTERVAL_MS = "poll.interval.ms";
 const string QUERY_FETCH_SIZE = "query.fetch.size";
 
@@ -320,10 +320,7 @@ public isolated function populateListenerProperties(ListenerConfiguration config
     listenerConfigMap["livenessInterval"] = config.livenessInterval;
 }
 
-isolated function populateSchemaHistoryConfigurations(
-    FileInternalSchemaStorage|KafkaInternalSchemaStorage|MemoryInternalSchemaStorage|
-    JdbcInternalSchemaStorage|RedisInternalSchemaStorage|AmazonS3InternalSchemaStorage|
-    AzureBlobInternalSchemaStorage|RocketMQInternalSchemaStorage schemaHistoryInternal,
+isolated function populateSchemaHistoryConfigurations(InternalSchemaStorage schemaHistoryInternal,
     map<string> configMap
 ) {
     configMap[SCHEMA_HISTORY_INTERNAL] = schemaHistoryInternal.className;
@@ -735,9 +732,9 @@ public isolated function populateSignalConfiguration(SignalConfiguration config,
     }
 
     if config is KafkaSignalConfiguration {
-        string? topic = config.topic;
-        if topic is string {
-            configMap[SIGNAL_KAFKA_TOPIC] = topic;
+        string? topicName = config.topicName;
+        if topicName is string {
+            configMap[SIGNAL_KAFKA_TOPIC] = topicName;
         }
 
         string|string[]? bootstrapServers = config.bootstrapServers;
@@ -767,7 +764,7 @@ public isolated function populateSignalConfiguration(SignalConfiguration config,
             populateSignalKafkaSecureSocketConfigurations(secureSocket, configMap);
         }
     } else {
-        configMap[SIGNAL_FILE] = config.filePath;
+        configMap[SIGNAL_FILE] = config.fileName;
     }
 }
 
@@ -905,7 +902,7 @@ public isolated function populateIncrementalSnapshotConfiguration(IncrementalSna
 # + configMap - map to populate with transaction metadata properties
 public isolated function populateTransactionMetadataConfiguration(TransactionMetadataConfiguration config, map<string> configMap) {
     configMap[PROVIDE_TRANSACTION_METADATA] = config.enabled.toString();
-    configMap[TRANSACTION_TOPIC] = config.topic;
+    configMap[TRANSACTION_TOPIC] = config.topicName;
 }
 
 # Populates column transformation configuration properties.
@@ -968,7 +965,7 @@ public isolated function populateDataTypeConfiguration(DataTypeConfiguration con
 # + config - error handling configuration
 # + configMap - map to populate with error handling properties
 public isolated function populateErrorHandlingConfiguration(ErrorHandlingConfiguration config, map<string> configMap) {
-    configMap[ERRORS_MAX_RETRIES] = config.maxRetries.toString();
+    configMap[ERRORS_MAX_RETRIES] = config.maxRetryAttempts.toString();
     configMap[ERRORS_RETRY_DELAY_INITIAL_MS] = getMillisecondValueOf(config.retriableRestartWait);
     configMap[TOMBSTONES_ON_DELETE] = config.tombstonesOnDelete.toString();
 }
@@ -978,7 +975,7 @@ public isolated function populateErrorHandlingConfiguration(ErrorHandlingConfigu
 # + config - performance configuration
 # + configMap - map to populate with performance properties
 public isolated function populatePerformanceConfiguration(PerformanceConfiguration config, map<string> configMap) {
-    configMap[MAX_QUEUE_SIZE_IN_BYTES] = config.maxQueueSize.toString();
+    configMap[MAX_QUEUE_SIZE_IN_BYTES] = config.maxQueueSizeInBytes.toString();
     configMap[POLL_INTERVAL_MS] = getMillisecondValueOf(config.pollInterval);
 
     int? queryFetchSize = config.queryFetchSize;
@@ -1014,7 +1011,7 @@ public isolated function populateGuardrailConfiguration(GuardrailConfiguration c
 public isolated function populateJdbcSchemaHistoryConfiguration(JdbcInternalSchemaStorage storage, map<string> configMap) {
     configMap[SCHEMA_HISTORY_INTERNAL_JDBC_URL] = storage.url;
 
-    string? user = storage.user;
+    string? user = storage.username;
     if user is string {
         configMap[SCHEMA_HISTORY_INTERNAL_JDBC_USER] = user;
     }
@@ -1057,7 +1054,7 @@ public isolated function populateRedisSchemaHistoryConfiguration(RedisInternalSc
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_KEY] = storage.key;
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_ADDRESS] = storage.address;
 
-    string? user = storage.user;
+    string? user = storage.username;
     if user is string {
         configMap[SCHEMA_HISTORY_INTERNAL_REDIS_USER] = user;
     }
@@ -1101,7 +1098,7 @@ public isolated function populateRedisSchemaHistoryConfiguration(RedisInternalSc
         configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_KEYSTORE_TYPE] = sslKeystoreType;
     }
 
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_CONNECTION_TIMEOUT_MS] = getMillisecondValueOf(storage.connectionTimeout);
+    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_CONNECTION_TIMEOUT_MS] = getMillisecondValueOf(storage.connectTimeout);
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SOCKET_TIMEOUT_MS] = getMillisecondValueOf(storage.socketTimeout);
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_INITIAL_DELAY_MS] = getMillisecondValueOf(storage.retryInitialDelay);
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_MAX_DELAY_MS] = getMillisecondValueOf(storage.retryMaxDelay);
@@ -1176,7 +1173,7 @@ public isolated function populateRedisOffsetStorageConfiguration(RedisOffsetStor
     configMap[OFFSET_STORAGE_REDIS_KEY] = storage.key;
     configMap[OFFSET_STORAGE_REDIS_ADDRESS] = storage.address;
 
-    string? user = storage.user;
+    string? user = storage.username;
     if user is string {
         configMap[OFFSET_STORAGE_REDIS_USER] = user;
     }
@@ -1214,7 +1211,7 @@ public isolated function populateRedisOffsetStorageConfiguration(RedisOffsetStor
 
     configMap[OFFSET_STORAGE_REDIS_SSL_KEYSTORE_TYPE] = storage.sslKeystoreType;
 
-    configMap[OFFSET_STORAGE_REDIS_CONNECTION_TIMEOUT_MS] = getMillisecondValueOf(storage.connectionTimeout);
+    configMap[OFFSET_STORAGE_REDIS_CONNECTION_TIMEOUT_MS] = getMillisecondValueOf(storage.connectTimeout);
     configMap[OFFSET_STORAGE_REDIS_SOCKET_TIMEOUT_MS] = getMillisecondValueOf(storage.socketTimeout);
     configMap[OFFSET_STORAGE_REDIS_RETRY_INITIAL_DELAY_MS] = getMillisecondValueOf(storage.retryInitialDelay);
     configMap[OFFSET_STORAGE_REDIS_RETRY_MAX_DELAY_MS] = getMillisecondValueOf(storage.retryMaxDelay);
@@ -1233,7 +1230,7 @@ public isolated function populateRedisOffsetStorageConfiguration(RedisOffsetStor
 public isolated function populateJdbcOffsetStorageConfiguration(JdbcOffsetStorage storage, map<string> configMap) {
     configMap[OFFSET_STORAGE_JDBC_URL] = storage.url;
 
-    string? user = storage.user;
+    string? user = storage.username;
     if user is string {
         configMap[OFFSET_STORAGE_JDBC_USER] = user;
     }
@@ -1272,7 +1269,9 @@ isolated function populateAdditionalConfigurations(Options options, map<string> 
     string[] additionalConfigKeys = getAdditionalConfigKeys(options, optionsSubType);
     foreach string key in additionalConfigKeys {
         anydata value = options[key];
-        if value !is string {
+        if value !is string { 
+        // TODO: We should allow primitive types and convert them to string instead of restricting to string type only. 
+        //We need to update/remove testNonStringAdditionalPropertiesIgnored after that change.
             log:printError(string `Invalid additional configuration type for option ${key}: ${value.toBalString()}, Only string values are allowed.`);
             continue;
         }

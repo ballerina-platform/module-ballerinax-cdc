@@ -64,3 +64,4 @@ examples/**/Config.toml
 *.env
 
 examples/*/tmp
+ballerina/tmp

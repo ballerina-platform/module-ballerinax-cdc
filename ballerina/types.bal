@@ -200,7 +200,7 @@ public type MemoryInternalSchemaStorage record {|
 #
 # + className - Fully-qualified class name of the JDBC schema history implementation
 # + url - JDBC connection URL
-# + user - Database username
+# + username - Database username
 # + password - Database password
 # + retryDelay - Delay in seconds between connection retry attempts
 # + retryMaxAttempts - Maximum connection retry attempts
@@ -213,7 +213,7 @@ public type JdbcInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.jdbc.history.JdbcSchemaHistory";
     string url;
-    string user?;
+    string username?;
     string password?;
     decimal retryDelay = 3.0;
     int retryMaxAttempts = 5;
@@ -229,7 +229,7 @@ public type JdbcInternalSchemaStorage record {|
 # + className - Fully-qualified class name of the Redis schema history implementation
 # + key - Redis key for storing the schema history
 # + address - Redis server address (host:port)
-# + user - Redis username for authentication
+# + username - Redis username for authentication
 # + password - Redis password for authentication
 # + dbIndex - Redis database index
 # + sslEnabled - Whether SSL/TLS is enabled
@@ -240,7 +240,7 @@ public type JdbcInternalSchemaStorage record {|
 # + sslKeystorePath - Path to the SSL keystore file
 # + sslKeystorePassword - SSL keystore password
 # + sslKeystoreType - SSL keystore type (e.g., JKS, PKCS12)
-# + connectionTimeout - Connection timeout in seconds
+# + connectTimeout - Connection timeout in seconds
 # + socketTimeout - Socket read/write timeout in seconds
 # + retryInitialDelay - Initial delay in seconds before the first retry
 # + retryMaxDelay - Maximum delay in seconds between retries
@@ -255,7 +255,7 @@ public type RedisInternalSchemaStorage record {|
     string className = "io.debezium.storage.redis.history.RedisSchemaHistory";
     string key = "metadata:debezium:schema_history";
     string address;
-    string user?;
+    string username?;
     string password?;
     int dbIndex = 0;
     boolean sslEnabled = false;
@@ -266,7 +266,7 @@ public type RedisInternalSchemaStorage record {|
     string sslKeystorePath?;
     string sslKeystorePassword?;
     string sslKeystoreType?;
-    decimal connectionTimeout = 2.0; // TODO: check if we use the same name everywhere
+    decimal connectTimeout = 2.0;
     decimal socketTimeout = 2.0;
     decimal retryInitialDelay = 0.3; // TODO: do we need to nest the retry configs together?
     decimal retryMaxDelay = 10.0;
@@ -342,7 +342,7 @@ public type RocketMQInternalSchemaStorage record {|
 #
 # + flushInterval - Interval in seconds between offset flushes
 # + flushTimeout - Timeout in seconds for an offset flush operation
-type OffsetStorage record {|
+type OffsetStorageInternal record {|
     decimal flushInterval = 60;
     decimal flushTimeout = 5;
 |};
@@ -352,7 +352,7 @@ type OffsetStorage record {|
 # + className - Fully-qualified class name of the file offset storage implementation
 # + fileName - Path to the offset storage file
 public type FileOffsetStorage record {|
-    *OffsetStorage;
+    *OffsetStorageInternal;
     string className = "org.apache.kafka.connect.storage.FileOffsetBackingStore";
     string fileName = "tmp/debezium-offsets.dat";
 |};
@@ -368,7 +368,7 @@ public type FileOffsetStorage record {|
 # + auth - SASL authentication credentials; required for SASL_PLAINTEXT and SASL_SSL
 # + secureSocket - SSL/TLS configuration with truststore and optional keystore for mTLS
 public type KafkaOffsetStorage record {|
-    *OffsetStorage;
+    *OffsetStorageInternal;
     string className = "org.apache.kafka.connect.storage.KafkaOffsetBackingStore";
     string|string[] bootstrapServers;
     string topicName = "bal_cdc_offsets";
@@ -383,7 +383,7 @@ public type KafkaOffsetStorage record {|
 #
 # + className - Fully-qualified class name of the memory offset storage implementation
 public type MemoryOffsetStorage record {|
-    *OffsetStorage;
+    *OffsetStorageInternal;
     string className = "org.apache.kafka.connect.storage.MemoryOffsetBackingStore";
 |};
 
@@ -392,7 +392,7 @@ public type MemoryOffsetStorage record {|
 # + className - Fully-qualified class name of the Redis offset storage implementation
 # + key - Redis key for storing offsets
 # + address - Redis server address (host:port)
-# + user - Redis username for authentication
+# + username - Redis username for authentication
 # + password - Redis password for authentication
 # + dbIndex - Redis database index
 # + sslEnabled - Whether SSL/TLS is enabled
@@ -403,7 +403,7 @@ public type MemoryOffsetStorage record {|
 # + sslKeystorePath - Path to the SSL keystore file
 # + sslKeystorePassword - SSL keystore password
 # + sslKeystoreType - SSL keystore type (e.g., JKS, PKCS12)
-# + connectionTimeout - Connection timeout in seconds
+# + connectTimeout - Connection timeout in seconds
 # + socketTimeout - Socket read/write timeout in seconds
 # + retryInitialDelay - Initial delay in seconds before the first retry
 # + retryMaxDelay - Maximum delay in seconds between retries
@@ -414,11 +414,11 @@ public type MemoryOffsetStorage record {|
 # + waitRetryDelay - Delay in seconds between replication wait retries
 # + clusterEnabled - Whether Redis cluster mode is enabled
 public type RedisOffsetStorage record {|
-    *OffsetStorage;
+    *OffsetStorageInternal;
     string className = "io.debezium.storage.redis.offset.RedisOffsetBackingStore";
     string key = "metadata:debezium:offsets";
     string address;
-    string user?;
+    string username?;
     string password?;
     int dbIndex = 0;
     boolean sslEnabled = false;
@@ -429,7 +429,7 @@ public type RedisOffsetStorage record {|
     string sslKeystorePath?;
     string sslKeystorePassword?;
     string sslKeystoreType = "JKS";
-    decimal connectionTimeout = 2.0; // TODO: check if we use the same name everywhere
+    decimal connectTimeout = 2.0;
     decimal socketTimeout = 2.0;
     decimal retryInitialDelay = 0.3; // TODO: do we need to nest the retry configs together?
     decimal retryMaxDelay = 10.0;
@@ -445,7 +445,7 @@ public type RedisOffsetStorage record {|
 #
 # + className - Fully-qualified class name of the JDBC offset storage implementation
 # + url - JDBC connection URL
-# + user - Database username
+# + username - Database username
 # + password - Database password
 # + retryDelay - Delay in seconds between connection retry attempts
 # + retryMaxAttempts - Maximum connection retry attempts
@@ -455,10 +455,10 @@ public type RedisOffsetStorage record {|
 # + tableInsert - INSERT query for creating new offsets
 # + tableDelete - DELETE query for removing offsets
 public type JdbcOffsetStorage record {|
-    *OffsetStorage;
+    *OffsetStorageInternal;
     string className = "io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore";
     string url;
-    string user?;
+    string username?;
     string password?;
     decimal retryDelay = 3.0;
     int retryMaxAttempts = 5;
@@ -489,7 +489,7 @@ public type CommonSignalConfiguration record {|
 
 # Kafka-based signal configuration.
 #
-# + topic - Kafka topic for signal messages
+# + topicName - Kafka topic for signal messages
 # + bootstrapServers - Kafka bootstrap servers for the signal consumer
 # + groupId - Consumer group ID for reading signal messages
 # + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL)
@@ -497,7 +497,7 @@ public type CommonSignalConfiguration record {|
 # + secureSocket - SSL/TLS configuration for the signal consumer
 public type KafkaSignalConfiguration record {|
     *CommonSignalConfiguration;
-    string topic?;
+    string topicName?;
     string|string[] bootstrapServers?;
     string groupId?;
     kafka:SecurityProtocol securityProtocol = kafka:PROTOCOL_PLAINTEXT;
@@ -507,10 +507,10 @@ public type KafkaSignalConfiguration record {|
 
 # File-based signal configuration.
 #
-# + filePath - Path to the signal file monitored for changes
+# + fileName - Path to the signal file monitored for changes
 public type FileSignalConfiguration record {|
     *CommonSignalConfiguration;
-    string filePath = "file-signals.txt";
+    string fileName = "file-signals.txt";
 |};
 
 # Signal configuration supporting either file-based or Kafka-based signaling.
@@ -559,10 +559,10 @@ public type RelationalExtendedSnapshotConfiguration record {|
 # Transaction boundary event configuration.
 #
 # + enabled - Whether to emit BEGIN/END transaction events with transaction IDs on change events
-# + topic - Topic name suffix for transaction metadata events (full topic: `<prefix>.<topic>`)
+# + topicName - Topic name suffix for transaction metadata events (full topic: `<prefix>.<topicName>`)
 public type TransactionMetadataConfiguration record {|
     boolean enabled = false;
-    string topic = "transaction";
+    string topicName = "transaction";
 |};
 
 # Hash-based column masking configuration for irreversibly hashing sensitive column values.
@@ -625,22 +625,22 @@ public type DataTypeConfiguration record {
 
 # Error handling configuration for connector failure and recovery behavior.
 #
-# + maxRetries - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled)
+# + maxRetryAttempts - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled)
 # + retriableRestartWait - Wait time in seconds before restarting after a retriable error
 # + tombstonesOnDelete - Whether to emit tombstone events after delete events
 public type ErrorHandlingConfiguration record {|
-    int maxRetries = -1;
+    int maxRetryAttempts = -1;
     decimal retriableRestartWait = 10.0;
     boolean tombstonesOnDelete = true;
 |};
 
 # Performance tuning configuration.
 #
-# + maxQueueSize - Maximum queue size in bytes for memory-based backpressure (0 = unlimited)
+# + maxQueueSizeInBytes - Maximum queue size in bytes for memory-based backpressure (0 = unlimited)
 # + pollInterval - Interval in seconds between database polls for new events
 # + queryFetchSize - Number of rows fetched per database round trip
 public type PerformanceConfiguration record {|
-    int maxQueueSize = 0; // TODO: this is redundant with the same option in Options. Check for other places as well.
+    int maxQueueSizeInBytes = 0;
     decimal pollInterval = 0.5;
     int queryFetchSize?;
 |};
@@ -729,6 +729,12 @@ public type Options record {
     GuardrailConfiguration guardrail?;
 };
 
+# Union type representing all supported internal schema history storage configurations.
+public type InternalSchemaStorage FileInternalSchemaStorage|KafkaInternalSchemaStorage|MemoryInternalSchemaStorage|JdbcInternalSchemaStorage|RedisInternalSchemaStorage|AmazonS3InternalSchemaStorage|AzureBlobInternalSchemaStorage|RocketMQInternalSchemaStorage;
+
+# Union type representing all supported offset storage configurations.
+public type OffsetStorage FileOffsetStorage|KafkaOffsetStorage|MemoryOffsetStorage|JdbcOffsetStorage|RedisOffsetStorage;
+
 # Base CDC listener configuration.
 #
 # + engineName - Debezium engine instance name
@@ -737,7 +743,7 @@ public type Options record {
 # + livenessInterval - Interval in seconds for checking CDC listener liveness
 public type ListenerConfiguration record {
     string engineName = "ballerina-cdc-connector";
-    FileInternalSchemaStorage|KafkaInternalSchemaStorage|MemoryInternalSchemaStorage|JdbcInternalSchemaStorage|RedisInternalSchemaStorage|AmazonS3InternalSchemaStorage|AzureBlobInternalSchemaStorage|RocketMQInternalSchemaStorage internalSchemaStorage = <FileInternalSchemaStorage>{};
-    FileOffsetStorage|KafkaOffsetStorage|MemoryOffsetStorage|JdbcOffsetStorage|RedisOffsetStorage offsetStorage = <FileOffsetStorage>{};
+    InternalSchemaStorage internalSchemaStorage = <FileInternalSchemaStorage>{};
+    OffsetStorage offsetStorage = <FileOffsetStorage>{};
     decimal livenessInterval = 60.0;
 };
