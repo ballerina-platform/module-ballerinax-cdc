@@ -143,7 +143,8 @@ public class Listener {
         }
     }
 
-    public static Object start(Environment environment, BObject listener, BMap<BString, Object> config) {
+    public static Object start(Environment environment, BObject listener, BMap<BString, Object> debeziumConfigs,
+                               BMap<BString, Object> listenerConfigs) {
         String id = getListenerId(listener);
         ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
 
@@ -162,11 +163,11 @@ public class Listener {
                         "Cannot start the listener without at least one attached service.");
             }
 
-            Properties engineProperties = populateEngineProperties(config);
+            Properties engineProperties = populateEngineProperties(debeziumConfigs);
 
             Long livenessInterval;
-            if (config.containsKey(LIVENESS_INTERVAL_CONFIG_KEY)) {
-                livenessInterval = ((BDecimal) config.get(LIVENESS_INTERVAL_CONFIG_KEY))
+            if (listenerConfigs.containsKey(LIVENESS_INTERVAL_CONFIG_KEY)) {
+                livenessInterval = ((BDecimal) listenerConfigs.get(LIVENESS_INTERVAL_CONFIG_KEY))
                         .decimalValue()
                         .multiply(BigDecimal.valueOf(1000))
                         .longValue();
@@ -396,9 +397,6 @@ public class Listener {
     private static Properties populateEngineProperties(BMap<BString, Object> config) {
         Properties engineProperties = new Properties();
         for (Map.Entry<BString, Object> configEntry : config.entrySet()) {
-            if (configEntry.getKey().equals(LIVENESS_INTERVAL_CONFIG_KEY)) {
-                continue;
-            }
             engineProperties.setProperty(configEntry.getKey().getValue(), configEntry.getValue().toString());
         }
         return engineProperties;

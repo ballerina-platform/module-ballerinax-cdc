@@ -310,6 +310,16 @@ public isolated function populateDebeziumProperties(ListenerConfiguration config
     configMap[INCLUDE_SCHEMA_CHANGES] = "false";
 }
 
+# Processes the given configuration and populates the map with the necessary listener-specific properties.
+# These properties are not passed to the Debezium engine, but are used by the listener implementation for
+# its internal functioning.
+# 
+# + config - listener configuration
+# + listenerConfigMap - map to populate with listener-specific properties
+public isolated function populateListenerProperties(ListenerConfiguration config, map<anydata> listenerConfigMap) {
+    listenerConfigMap["livenessInterval"] = config.livenessInterval;
+}
+
 isolated function populateSchemaHistoryConfigurations(
     FileInternalSchemaStorage|KafkaInternalSchemaStorage|MemoryInternalSchemaStorage|
     JdbcInternalSchemaStorage|RedisInternalSchemaStorage|AmazonS3InternalSchemaStorage|
@@ -968,7 +978,7 @@ public isolated function populateErrorHandlingConfiguration(ErrorHandlingConfigu
 # + config - performance configuration
 # + configMap - map to populate with performance properties
 public isolated function populatePerformanceConfiguration(PerformanceConfiguration config, map<string> configMap) {
-    configMap[MAX_QUEUE_SIZE_IN_BYTES] = config.maxQueueSizeInBytes.toString();
+    configMap[MAX_QUEUE_SIZE_IN_BYTES] = config.maxQueueSize.toString();
     configMap[POLL_INTERVAL_MS] = getMillisecondValueOf(config.pollInterval);
 
     int? queryFetchSize = config.queryFetchSize;

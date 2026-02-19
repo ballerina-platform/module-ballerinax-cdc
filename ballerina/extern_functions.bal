@@ -39,9 +39,10 @@ public isolated function externDetach(Listener cdcListener, Service cdcService) 
 # Attach point to call the native CDC listener start method.
 #
 # + cdcListener - the cdc listener object
-# + config - the configuration map containing debezium properties
+# + debeziumConfigs - the configuration map containing debezium properties
+# + listenerConfigs - the configuration map containing listener-specific properties
 # + return - an error if the listener cannot be started, or `()` if successful
-public isolated function externStart(Listener cdcListener, map<anydata> config) returns Error? = @java:Method {
+public isolated function externStart(Listener cdcListener, map<anydata> debeziumConfigs, map<anydata> listenerConfigs) returns Error? = @java:Method {
     name: "start",
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
