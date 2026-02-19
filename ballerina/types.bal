@@ -34,14 +34,14 @@ public enum EventProcessingFailureHandlingMode {
 
 # Represents the snapshot modes for capturing database states.
 #
-# + ALWAYS - Always take a snapshot of the structure and data of captured tables at every start.
-# + INITIAL - Take a snapshot only at the initial startup, then stream subsequent changes.
-# + INITIAL_ONLY - Take a snapshot only at the initial startup, then stop without streaming changes.
-# + NO_DATA - Take a snapshot without creating READ events for the initial data set.
-# + RECOVERY - Take a snapshot during recovery to restore schema history.
-# + WHEN_NEEDED - Take a snapshot only when required, e.g., missing or invalid offsets.
-# + CONFIGURATION_BASED - Take a snapshot based on configuration properties.
-# + CUSTOM - Take a custom snapshot using a custom implementation.
+# + ALWAYS - Take a snapshot on every connector startup.
+# + INITIAL - Take a snapshot only on initial startup, then stream changes.
+# + INITIAL_ONLY - Take a snapshot on initial startup, then stop.
+# + NO_DATA - Snapshot the schema only, without emitting READ events for existing rows.
+# + RECOVERY - Take a snapshot to restore lost schema history.
+# + WHEN_NEEDED - Take a snapshot only when offsets are missing or invalid.
+# + CONFIGURATION_BASED - Take a snapshot controlled by configuration properties.
+# + CUSTOM - Take a snapshot using a custom implementation.
 public enum SnapshotMode {
     ALWAYS = "always",
     INITIAL = "initial",
@@ -132,11 +132,11 @@ public enum GuardrailLimitAction {
     WARN = "warn"
 }
 
-# Represents a secure database connection configuration.
+# SSL/TLS configuration for database connections.
 #
-# + sslMode - The SSL mode to use for the connection
-# + keyStore - The keystore for SSL connections
-# + trustStore - The truststore for SSL connections
+# + sslMode - SSL mode controlling the connection security level
+# + keyStore - Client keystore for mutual TLS authentication
+# + trustStore - Truststore for verifying the server certificate
 public type SecureDatabaseConnection record {|
     SslMode sslMode = PREFERRED;
     crypto:KeyStore keyStore?;
@@ -145,31 +145,35 @@ public type SecureDatabaseConnection record {|
 
 # Represents the internal schema history configuration.
 #
-# + className - The class name of the schema history implementation to use
-# + topicPrefix - The prefix for the topic names used in Kafka-based schema history
+# + className - Fully-qualified class name of the schema history implementation
+# + topicPrefix - Prefix for topic names used in Kafka-based schema history
 type SchemaHistoryInternal record {|
     string className;
     string topicPrefix = "bal_cdc_schema_history";
 |};
 
-# Represents the file-based schema history configuration.
+# File-based schema history storage configuration.
 #
-# + className - The class name of the file schema history implementation to use
-# + fileName - The name of the file to store schema history
+# + className - Fully-qualified class name of the file schema history implementation
+# + fileName - Path to the schema history file
 public type FileInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.file.history.FileSchemaHistory";
     string fileName = "tmp/dbhistory.dat";
 |};
 
-# Represents the Kafka-based schema history configuration.
+# Kafka-based schema history storage configuration.
 #
-# + className - The class name of the Kafka schema history implementation to use
-# + topicName - The name of the Kafka topic to store schema history
-# + bootstrapServers - The list of Kafka bootstrap servers
-# + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, or SASL_SSL). Defaults to PLAINTEXT
-# + auth - SASL authentication credentials (mechanism, username, password). Required for SASL_PLAINTEXT and SASL_SSL
-# + secureSocket - SSL/TLS configuration with truststore and optional keystore for mutual TLS. Supports both JKS/PKCS12 truststores and PEM certificates
+# + className - Fully-qualified class name of the Kafka schema history implementation
+# + topicName - Kafka topic for storing schema history
+# + bootstrapServers - Kafka bootstrap servers
+# + recoveryPollInterval - Interval in seconds between recovery polls
+# + recoveryAttempts - Maximum poll attempts during schema history recovery
+# + queryTimeout - Timeout in seconds for Kafka queries
+# + createTimeout - Timeout in seconds for topic creation
+# + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL)
+# + auth - SASL authentication credentials; required for SASL_PLAINTEXT and SASL_SSL
+# + secureSocket - SSL/TLS configuration with truststore and optional keystore for mTLS
 public type KafkaInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.kafka.history.KafkaSchemaHistory";
@@ -184,24 +188,27 @@ public type KafkaInternalSchemaStorage record {|
     kafka:SecureSocket secureSocket?;
 |};
 
-# Represents the memory-based schema history configuration.
+# In-memory schema history storage configuration (data is lost on restart).
 #
-# + className - The class name of the memory schema history implementation to use
+# + className - Fully-qualified class name of the memory schema history implementation
 public type MemoryInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.relational.history.MemorySchemaHistory";
 |};
 
-# Represents the JDBC-based schema history configuration.
+# JDBC-based schema history storage configuration.
 #
-# + className - The class name of the JDBC schema history implementation to use
-# + jdbcUrl - The JDBC connection URL
-# + jdbcUser - The database username
-# + jdbcPassword - The database password
-# + tableName - The name of the schema history table
-# + tableDdl - DDL statement for creating the schema history table (optional, uses default if not provided)
-# + tableSelect - SELECT query for reading schema history (optional, uses default if not provided)
-# + tableInsert - INSERT query for creating new schema history entries (optional, uses default if not provided)
+# + className - Fully-qualified class name of the JDBC schema history implementation
+# + url - JDBC connection URL
+# + user - Database username
+# + password - Database password
+# + retryDelay - Delay in seconds between connection retry attempts
+# + retryMaxAttempts - Maximum connection retry attempts
+# + tableName - Schema history table name
+# + tableDdl - DDL for creating the schema history table
+# + tableSelect - SELECT query for reading schema history
+# + tableInsert - INSERT query for writing schema history entries
+# + tableDelete - DELETE query for removing schema history entries
 public type JdbcInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.jdbc.history.JdbcSchemaHistory";
@@ -217,22 +224,32 @@ public type JdbcInternalSchemaStorage record {|
     string tableDelete?;
 |};
 
-# Represents the Redis-based schema history configuration.
+# Redis-based schema history storage configuration.
 #
-# + className - The class name of the Redis schema history implementation to use
-# + address - The Redis server address (host:port)
-# + user - The Redis username for authentication
-# + password - The Redis password for authentication
+# + className - Fully-qualified class name of the Redis schema history implementation
+# + key - Redis key for storing the schema history
+# + address - Redis server address (host:port)
+# + user - Redis username for authentication
+# + password - Redis password for authentication
+# + dbIndex - Redis database index
 # + sslEnabled - Whether SSL/TLS is enabled
+# + sslHostNameVerificationEnabled - Whether hostname verification is enforced for SSL
+# + sslTruststorePath - Path to the SSL truststore file
+# + sslTruststorePassword - SSL truststore password
+# + sslTruststoreType - SSL truststore type (e.g., JKS, PKCS12)
+# + sslKeystorePath - Path to the SSL keystore file
+# + sslKeystorePassword - SSL keystore password
+# + sslKeystoreType - SSL keystore type (e.g., JKS, PKCS12)
+# + connectionTimeout - Connection timeout in seconds
+# + socketTimeout - Socket read/write timeout in seconds
+# + retryInitialDelay - Initial delay in seconds before the first retry
+# + retryMaxDelay - Maximum delay in seconds between retries
+# + retryMaxAttempts - Maximum number of retry attempts
+# + waitEnabled - Whether to wait for replication acknowledgement
+# + waitTimeout - Timeout in seconds for replication wait
+# + waitRetryEnabled - Whether to retry after a failed replication wait
+# + waitRetryDelay - Delay in seconds between replication wait retries
 # + clusterEnabled - Whether Redis cluster mode is enabled
-# + waitEnabled - Whether to wait for replication
-# + waitTimeoutMs - Timeout in milliseconds for waiting for replication (only when waitEnabled is true)
-# + waitRetryEnabled - Whether to retry wait operations on failure
-# + waitRetryDelayMs - Delay in milliseconds between wait retries
-# + retryInitialDelayMs - Initial delay in milliseconds for retry attempts
-# + retryMaxDelayMs - Maximum delay in milliseconds for retry attempts
-# + connectionTimeoutMs - Connection timeout in milliseconds
-# + socketTimeoutMs - Socket timeout in milliseconds
 public type RedisInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.redis.history.RedisSchemaHistory";
@@ -266,10 +283,10 @@ public type RedisInternalSchemaStorage record {|
 # + className - Fully-qualified class name of the S3 schema history implementation
 # + accessKeyId - AWS access key ID for authentication
 # + secretAccessKey - AWS secret access key for authentication
-# + region - AWS region name where the S3 bucket is located
-# + bucketName - Name of the S3 bucket to store schema history
-# + objectName - Name of the object (file) within the S3 bucket
-# + endpoint - Custom S3 endpoint URL (optional, for S3-compatible storage)
+# + region - AWS region of the S3 bucket
+# + bucketName - S3 bucket name for schema history
+# + objectName - S3 object (file) name within the bucket
+# + endpoint - Custom S3-compatible endpoint URL; uses the AWS endpoint if not set
 public type AmazonS3InternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.s3.history.S3SchemaHistory";
@@ -284,10 +301,10 @@ public type AmazonS3InternalSchemaStorage record {|
 # Azure Blob Storage-based schema history storage configuration.
 #
 # + className - Fully-qualified class name of the Azure Blob schema history implementation
-# + connectionString - Azure Storage connection string for authentication
+# + connectionString - Azure Storage connection string
 # + accountName - Azure Storage account name
-# + containerName - Name of the Azure Blob container to store schema history
-# + blobName - Name of the blob (file) within the container
+# + containerName - Azure Blob container name for schema history
+# + blobName - Blob (file) name within the container
 public type AzureBlobInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.azure.blob.history.AzureBlobSchemaHistory";
@@ -300,12 +317,12 @@ public type AzureBlobInternalSchemaStorage record {|
 # RocketMQ-based schema history storage configuration.
 #
 # + className - Fully-qualified class name of the RocketMQ schema history implementation
-# + topicName - Name of the RocketMQ topic to store schema history
-# + nameServerAddress - Address of the RocketMQ name server
-# + aclEnabled - Whether Access Control List (ACL) authentication is enabled
+# + topicName - RocketMQ topic for schema history
+# + nameServerAddress - RocketMQ name server address
+# + aclEnabled - Whether ACL authentication is enabled
 # + accessKey - Access key for ACL authentication
 # + secretKey - Secret key for ACL authentication
-# + recoveryAttempts - Maximum number of recovery attempts when reading schema history
+# + recoveryAttempts - Maximum recovery attempts when reading schema history
 # + recoveryPollInterval - Interval in seconds between recovery poll attempts
 # + storeRecordTimeout - Timeout in seconds for storing schema history records
 public type RocketMQInternalSchemaStorage record {|
@@ -323,33 +340,33 @@ public type RocketMQInternalSchemaStorage record {|
 
 # Represents the base configuration for offset storage.
 #
-# + flushInterval - The interval in seconds to flush offsets
-# + flushTimeout - The timeout in seconds for flushing offsets
+# + flushInterval - Interval in seconds between offset flushes
+# + flushTimeout - Timeout in seconds for an offset flush operation
 type OffsetStorage record {|
     decimal flushInterval = 60;
     decimal flushTimeout = 5;
 |};
 
-# Represents the file-based offset storage configuration.
+# File-based offset storage configuration.
 #
-# + className - The class name of the file offset storage implementation to use
-# + fileName - The name of the file to store offsets
+# + className - Fully-qualified class name of the file offset storage implementation
+# + fileName - Path to the offset storage file
 public type FileOffsetStorage record {|
     *OffsetStorage;
     string className = "org.apache.kafka.connect.storage.FileOffsetBackingStore";
     string fileName = "tmp/debezium-offsets.dat";
 |};
 
-# Represents the Kafka-based offset storage configuration.
+# Kafka-based offset storage configuration.
 #
-# + className - The class name of the Kafka offset storage implementation to use
-# + bootstrapServers - The list of Kafka bootstrap servers
-# + topicName - The name of the Kafka topic to store offsets
-# + partitions - The number of partitions for the Kafka topic
-# + replicationFactor - The replication factor for the Kafka topic
-# + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, or SASL_SSL). Defaults to PLAINTEXT
-# + auth - SASL authentication credentials (mechanism, username, password). Required for SASL_PLAINTEXT and SASL_SSL
-# + secureSocket - SSL/TLS configuration with truststore and optional keystore for mutual TLS
+# + className - Fully-qualified class name of the Kafka offset storage implementation
+# + bootstrapServers - Kafka bootstrap servers
+# + topicName - Kafka topic for storing offsets
+# + partitions - Number of partitions for the offset topic
+# + replicationFactor - Replication factor for the offset topic
+# + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL)
+# + auth - SASL authentication credentials; required for SASL_PLAINTEXT and SASL_SSL
+# + secureSocket - SSL/TLS configuration with truststore and optional keystore for mTLS
 public type KafkaOffsetStorage record {|
     *OffsetStorage;
     string className = "org.apache.kafka.connect.storage.KafkaOffsetBackingStore";
@@ -362,30 +379,40 @@ public type KafkaOffsetStorage record {|
     kafka:SecureSocket secureSocket?;
 |};
 
-# Represents the memory-based offset storage configuration.
+# In-memory offset storage configuration (data is lost on restart).
 #
-# + className - The class name of the memory offset storage implementation to use
+# + className - Fully-qualified class name of the memory offset storage implementation
 public type MemoryOffsetStorage record {|
     *OffsetStorage;
     string className = "org.apache.kafka.connect.storage.MemoryOffsetBackingStore";
 |};
 
-# Represents the Redis-based offset storage configuration.
+# Redis-based offset storage configuration.
 #
-# + className - The class name of the Redis offset storage implementation to use
-# + address - The Redis server address (host:port)
-# + user - The Redis username for authentication
-# + password - The Redis password for authentication
+# + className - Fully-qualified class name of the Redis offset storage implementation
+# + key - Redis key for storing offsets
+# + address - Redis server address (host:port)
+# + user - Redis username for authentication
+# + password - Redis password for authentication
+# + dbIndex - Redis database index
 # + sslEnabled - Whether SSL/TLS is enabled
+# + sslHostNameVerificationEnabled - Whether hostname verification is enforced for SSL
+# + sslTruststorePath - Path to the SSL truststore file
+# + sslTruststorePassword - SSL truststore password
+# + sslTruststoreType - SSL truststore type (e.g., JKS, PKCS12)
+# + sslKeystorePath - Path to the SSL keystore file
+# + sslKeystorePassword - SSL keystore password
+# + sslKeystoreType - SSL keystore type (e.g., JKS, PKCS12)
+# + connectionTimeout - Connection timeout in seconds
+# + socketTimeout - Socket read/write timeout in seconds
+# + retryInitialDelay - Initial delay in seconds before the first retry
+# + retryMaxDelay - Maximum delay in seconds between retries
+# + retryMaxAttempts - Maximum number of retry attempts
+# + waitEnabled - Whether to wait for replication acknowledgement
+# + waitTimeout - Timeout in seconds for replication wait
+# + waitRetryEnabled - Whether to retry after a failed replication wait
+# + waitRetryDelay - Delay in seconds between replication wait retries
 # + clusterEnabled - Whether Redis cluster mode is enabled
-# + waitEnabled - Whether to wait for replication
-# + waitTimeoutMs - Timeout in milliseconds for waiting for replication (only when waitEnabled is true)
-# + waitRetryEnabled - Whether to retry wait operations on failure
-# + waitRetryDelayMs - Delay in milliseconds between wait retries
-# + retryInitialDelayMs - Initial delay in milliseconds for retry attempts
-# + retryMaxDelayMs - Maximum delay in milliseconds for retry attempts
-# + connectionTimeoutMs - Connection timeout in milliseconds
-# + socketTimeoutMs - Socket timeout in milliseconds
 public type RedisOffsetStorage record {|
     *OffsetStorage;
     string className = "io.debezium.storage.redis.offset.RedisOffsetBackingStore";
@@ -414,18 +441,19 @@ public type RedisOffsetStorage record {|
     boolean clusterEnabled = false;
 |};
 
-# Represents the JDBC-based offset storage configuration.
+# JDBC-based offset storage configuration.
 #
-# + className - The class name of the JDBC offset storage implementation to use
-# + jdbcUrl - The JDBC connection URL
-# + jdbcUser - The database username
-# + jdbcPassword - The database password
-# + tableName - The name of the offset storage table
-# + tableDdl - DDL statement for creating the offset storage table (optional, uses default if not provided)
-# + tableSelect - SELECT query for reading offsets (optional, uses default if not provided)
-# + tableInsert - INSERT query for creating new offsets (optional, uses default if not provided)
-# + tableUpdate - UPDATE query for updating existing offsets (optional, uses default if not provided)
-# + tableDelete - DELETE query for removing offsets (optional, uses default if not provided)
+# + className - Fully-qualified class name of the JDBC offset storage implementation
+# + url - JDBC connection URL
+# + user - Database username
+# + password - Database password
+# + retryDelay - Delay in seconds between connection retry attempts
+# + retryMaxAttempts - Maximum connection retry attempts
+# + tableName - Offset storage table name
+# + tableDdl - DDL for creating the offset storage table
+# + tableSelect - SELECT query for reading offsets
+# + tableInsert - INSERT query for creating new offsets
+# + tableDelete - DELETE query for removing offsets
 public type JdbcOffsetStorage record {|
     *OffsetStorage;
     string className = "io.debezium.storage.jdbc.offset.JdbcOffsetBackingStore";
@@ -441,32 +469,32 @@ public type JdbcOffsetStorage record {|
     string tableDelete?;
 |};
 
-# Heartbeat configuration for maintaining connection liveness and preventing idle connection termination.
+# Heartbeat configuration for detecting idle or stale connections.
 #
-# + interval - Interval in seconds between heartbeat messages (0 = disabled)
-# + actionQuery - Optional SQL query to execute with each heartbeat for keeping connections active
+# + interval - Interval in seconds between heartbeats (0 = disabled)
+# + actionQuery - SQL query executed with each heartbeat to keep the connection active
 public type HeartbeatConfiguration record {|
     decimal interval = 0.0;
     string actionQuery?;
 |};
 
-# Base signal configuration for ad-hoc snapshots and runtime control operations.
+# Base signal configuration for ad-hoc snapshots and runtime control.
 #
-# + enabledChannels - List of enabled signal channels (source, kafka, file, jmx)
-# + dataCollection - Fully-qualified name of the database table for source-based signals
+# + enabledChannels - Signal channels to enable (source, kafka, file, jmx)
+# + dataCollection - Fully-qualified table name for source-based signals
 public type CommonSignalConfiguration record {|
     SignalChannel[] enabledChannels = [SOURCE];
     string dataCollection?;
 |};
 
-# Kafka-based signal configuration for ad-hoc snapshot and runtime commands.
+# Kafka-based signal configuration.
 #
-# + topic - Kafka topic name for signal messages
-# + bootstrapServers - Kafka bootstrap servers for signal consumer
+# + topic - Kafka topic for signal messages
+# + bootstrapServers - Kafka bootstrap servers for the signal consumer
 # + groupId - Consumer group ID for reading signal messages
 # + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL)
-# + auth - SASL authentication configuration for Kafka signal consumer
-# + secureSocket - SSL/TLS configuration for Kafka signal consumer
+# + auth - SASL authentication configuration for the signal consumer
+# + secureSocket - SSL/TLS configuration for the signal consumer
 public type KafkaSignalConfiguration record {|
     *CommonSignalConfiguration;
     string topic?;
@@ -477,9 +505,9 @@ public type KafkaSignalConfiguration record {|
     kafka:SecureSocket secureSocket?;
 |};
 
-# File-based signal configuration for ad-hoc snapshot and runtime commands.
+# File-based signal configuration.
 #
-# + filePath - Path to the signal file that is monitored for changes
+# + filePath - Path to the signal file monitored for changes
 public type FileSignalConfiguration record {|
     *CommonSignalConfiguration;
     string filePath = "file-signals.txt";
@@ -488,11 +516,11 @@ public type FileSignalConfiguration record {|
 # Signal configuration supporting either file-based or Kafka-based signaling.
 public type SignalConfiguration FileSignalConfiguration|KafkaSignalConfiguration;
 
-# Incremental snapshot configuration for non-blocking snapshots with chunked processing.
+# Incremental (non-blocking) snapshot configuration.
 #
-# + chunkSize - Number of rows per incremental snapshot chunk (smaller = less memory, more overhead)
-# + watermarkingStrategy - Watermarking strategy for chunk boundaries (insert_insert or insert_delete)
-# + allowSchemaChanges - Whether to allow DDL schema changes during incremental snapshot
+# + chunkSize - Number of rows per snapshot chunk
+# + watermarkingStrategy - Strategy for marking chunk boundaries
+# + allowSchemaChanges - Whether DDL changes are allowed during incremental snapshot
 public type IncrementalSnapshotConfiguration record {|
     int chunkSize = 1024;
     IncrementalSnapshotWatermarkingStrategy watermarkingStrategy = INSERT_INSERT;
@@ -501,11 +529,11 @@ public type IncrementalSnapshotConfiguration record {|
 
 # Extended snapshot configuration for fine-tuning snapshot behavior.
 #
-# + delay - Delay in seconds before starting snapshot (useful for coordinating with other systems)
-# + fetchSize - Number of rows to fetch per database round trip during snapshot
-# + maxThreads - Maximum number of threads for parallel snapshot operations
-# + includeCollectionList - Regex patterns for tables/collections to include in snapshot
-# + incrementalConfig - Incremental snapshot configuration for chunked snapshots
+# + delay - Delay in seconds before starting the snapshot
+# + fetchSize - Number of rows fetched per database round trip during snapshot
+# + maxThreads - Maximum threads for parallel snapshot operations
+# + includeCollectionList - Regex patterns for tables/collections to include in the snapshot
+# + incrementalConfig - Incremental snapshot configuration
 public type ExtendedSnapshotConfiguration record {
     decimal delay?;
     int fetchSize?;
@@ -514,12 +542,12 @@ public type ExtendedSnapshotConfiguration record {
     IncrementalSnapshotConfiguration incrementalConfig?;
 };
 
-# Extended snapshot configuration for relational databases with transaction control.
+# Extended snapshot configuration for relational databases.
 #
-# + isolationMode - Transaction isolation level during snapshots (serializable, repeatable_read, etc.)
-# + lockingMode - Table locking strategy during snapshots (exclusive, shared, minimal, none)
+# + isolationMode - Transaction isolation level during snapshot
+# + lockingMode - Table locking strategy during snapshot
 # + selectStatementOverrides - Custom SELECT statements per table for filtering snapshot data
-# + queryMode - Query strategy for snapshots (select_all or custom)
+# + queryMode - Query strategy for snapshot execution
 public type RelationalExtendedSnapshotConfiguration record {|
     *ExtendedSnapshotConfiguration;
     SnapshotIsolationMode isolationMode?;
@@ -528,69 +556,68 @@ public type RelationalExtendedSnapshotConfiguration record {|
     SnapshotQueryMode queryMode?;
 |};
 
-# Transaction metadata configuration for tracking transaction boundaries in change events.
+# Transaction boundary event configuration.
 #
-# + enabled - Whether to emit BEGIN/END transaction events and add transaction IDs to change events
-# + topic - Topic name suffix for transaction metadata events (full topic: <prefix>.<topic>)
+# + enabled - Whether to emit BEGIN/END transaction events with transaction IDs on change events
+# + topic - Topic name suffix for transaction metadata events (full topic: `<prefix>.<topic>`)
 public type TransactionMetadataConfiguration record {|
     boolean enabled = false;
     string topic = "transaction";
 |};
 
-# Column hash mask configuration for irreversibly hashing sensitive column values.
+# Hash-based column masking configuration for irreversibly hashing sensitive column values.
 #
-# + algorithm - Hash algorithm to use (e.g., SHA-256, MD5)
-# + salt - Salt value to add to the hash for additional security
-# + regexPatterns - Regex patterns matching fully-qualified column names to hash
+# + algorithm - Hash algorithm (e.g., SHA-256, MD5)
+# + salt - Salt added to the hash for extra security
+# + regexPatterns - Fully-qualified column name patterns to hash
 public type ColumnHashMask record {|
     string algorithm;
     string salt;
     string|string[] regexPatterns;
 |};
 
-# Column character mask configuration for replacing column values with asterisks.
+# Character-based column masking configuration.
 #
-# + length - Number of asterisk characters to use as replacement
-# + regexPatterns - Regex patterns matching fully-qualified column names to mask
+# + length - Number of mask characters replacing the original value
+# + regexPatterns - Fully-qualified column name patterns to mask
 public type ColumnCharMask record {|
     int length;
     string|string[] regexPatterns;
 |};
 
-# Column truncation configuration for limiting string column length.
+# Column truncation configuration.
 #
-# + length - Maximum character length to truncate strings to
-# + regexPatterns - Regex patterns matching fully-qualified column names to truncate
+# + length - Maximum character length after truncation
+# + regexPatterns - Fully-qualified column name patterns to truncate
 public type ColumnTruncate record {|
     int length;
     string|string[] regexPatterns;
 |};
 
-# Column transformation configuration for masking and redacting sensitive data.
+# Column masking and transformation configuration.
 #
-# + maskWithHash - Hash-based masking for irreversible obfuscation of column values
-# + maskWithChars - Character-based masking for replacing values with asterisks
-# + truncateToChars - Truncation for limiting string column lengths
+# + maskWithHash - Hash-based masking for irreversible column value hashing
+# + maskWithChars - Character-based masking with a fixed-length replacement string
+# + truncateToChars - Truncation to a fixed string length
 public type ColumnTransformConfiguration record {|
     ColumnHashMask[] maskWithHash?;
     ColumnCharMask[] maskWithChars?;
     ColumnTruncate[] truncateToChars?;
 |};
 
-# Topic naming configuration for controlling logical identifiers in change events.
+# Topic naming configuration for change event topics.
 #
-# + delimiter - Delimiter between topic name components (default: ".")
-# + namingStrategy - Fully-qualified class name of custom topic naming strategy implementation
+# + delimiter - Delimiter between topic name components
+# + namingStrategy - Fully-qualified class name of a custom topic naming strategy
 public type TopicConfiguration record {|
     string delimiter = ".";
     string namingStrategy = "io.debezium.schema.SchemaTopicNamingStrategy";
 |};
 
-# Data type handling configuration for binary and temporal value representation.
+# Data type handling configuration.
 #
-# + binaryHandlingMode - How to encode binary column data (bytes, base64, hex)
-# + timePrecisionMode - How to represent temporal values (adaptive, connect, microseconds, etc.)
-# + includeSchemaChanges - Whether to include schema change events
+# + binaryHandlingMode - Encoding mode for binary column data (bytes, base64, hex)
+# + timePrecisionMode - Representation mode for temporal values
 public type DataTypeConfiguration record {
     BinaryHandlingMode binaryHandlingMode = BYTES;
     TimePrecisionMode timePrecisionMode = ADAPTIVE;
@@ -598,37 +625,37 @@ public type DataTypeConfiguration record {
 
 # Error handling configuration for connector failure and recovery behavior.
 #
-# + maxRetries - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = no retries)
-# + retriableRestartWait - Wait time in seconds before restarting connector after retriable error
-# + tombstonesOnDelete - Whether to emit tombstone (null value) events after delete events
+# + maxRetries - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled)
+# + retriableRestartWait - Wait time in seconds before restarting after a retriable error
+# + tombstonesOnDelete - Whether to emit tombstone events after delete events
 public type ErrorHandlingConfiguration record {|
     int maxRetries = -1;
     decimal retriableRestartWait = 10.0;
     boolean tombstonesOnDelete = true;
 |};
 
-# Performance tuning configuration for throughput and resource optimization.
+# Performance tuning configuration.
 #
-# + maxQueueSizeInBytes - Maximum queue size in bytes for memory-based backpressure (0 = unlimited)
-# + pollInterval - Interval in seconds between polling database for new change events
-# + queryFetchSize - Number of rows to fetch per database round trip (balances memory vs network)
+# + maxQueueSize - Maximum queue size in bytes for memory-based backpressure (0 = unlimited)
+# + pollInterval - Interval in seconds between database polls for new events
+# + queryFetchSize - Number of rows fetched per database round trip
 public type PerformanceConfiguration record {|
-    int maxQueueSizeInBytes = 0;
+    int maxQueueSize = 0; // TODO: this is redundant with the same option in Options. Check for other places as well.
     decimal pollInterval = 0.5;
     int queryFetchSize?;
 |};
 
-# Monitoring configuration for custom MBean object name tags.
+# Monitoring configuration for custom metric tags.
 #
-# + customMetricTags - Key-value pairs for custom metric tags (format: key1=value1,key2=value2)
+# + customMetricTags - Custom metric tag pairs in `key=value` format (comma-separated)
 public type MonitoringConfiguration record {|
     string customMetricTags?;
 |};
 
-# Guardrail configuration for preventing accidental capture of too many tables.
+# Guardrail configuration to prevent accidentally capturing too many tables.
 #
 # + maxCollections - Maximum number of tables/collections to capture (0 = unlimited)
-# + limitAction - Action when limit exceeded (fail or warn)
+# + limitAction - Action taken when the limit is exceeded (fail or warn)
 public type GuardrailConfiguration record {|
     int maxCollections = 0;
     GuardrailLimitAction limitAction = WARN;
@@ -636,18 +663,18 @@ public type GuardrailConfiguration record {|
 
 # Base database connection configuration for all CDC connectors.
 #
-# + connectorClass - Fully-qualified class name of the Debezium connector implementation
+# + connectorClass - Fully-qualified class name of the Debezium connector
 # + hostname - Database server hostname or IP address
 # + port - Database server port number
 # + username - Database username for authentication
 # + password - Database password for authentication
 # + connectTimeout - Connection timeout in seconds
-# + tasksMax - Maximum number of connector tasks (most connectors use single task)
-# + secure - SSL/TLS secure connection configuration
-# + includedTables - Regex patterns for tables to capture (mutually exclusive with excludedTables)
-# + excludedTables - Regex patterns for tables to exclude (mutually exclusive with includedTables)
-# + includedColumns - Regex patterns for columns to capture (mutually exclusive with excludedColumns)
-# + excludedColumns - Regex patterns for columns to exclude (mutually exclusive with includedColumns)
+# + tasksMax - Maximum number of connector tasks
+# + secure - SSL/TLS connection configuration
+# + includedTables - Regex patterns for tables to capture (mutually exclusive with `excludedTables`)
+# + excludedTables - Regex patterns for tables to exclude (mutually exclusive with `includedTables`)
+# + includedColumns - Regex patterns for columns to capture (mutually exclusive with `excludedColumns`)
+# + excludedColumns - Regex patterns for columns to exclude (mutually exclusive with `includedColumns`)
 public type DatabaseConnection record {|
     string connectorClass;
     string hostname;
@@ -663,25 +690,25 @@ public type DatabaseConnection record {|
     string|string[] excludedColumns?;
 |};
 
-# Common CDC options for all database connectors (generic configuration).
+# Common CDC options applicable to all database connectors.
 #
-# + snapshotMode - Snapshot capture mode (initial, always, when_needed, etc.)
-# + eventProcessingFailureHandlingMode - How to handle event processing failures (fail, warn, skip)
-# + skippedOperations - List of database operations to skip (e.g., truncate)
-# + skipMessagesWithoutChange - Whether to skip events without actual data changes
-# + decimalHandlingMode - How to represent decimal values (precise, double, string)
-# + maxQueueSize - Maximum number of events in internal queue (backpressure control)
-# + maxBatchSize - Maximum number of events per batch
-# + queryTimeout - Database query timeout in seconds (0 = no timeout)
-# + heartbeat - Heartbeat configuration for connection keep-alive
-# + signal - Signal configuration for ad-hoc snapshots and control operations
+# + snapshotMode - Initial snapshot behavior (initial, always, no_data, etc.)
+# + eventProcessingFailureHandlingMode - How to handle event processing failures
+# + skippedOperations - Database operations to skip publishing
+# + skipMessagesWithoutChange - Whether to discard events with no data changes
+# + decimalHandlingMode - Representation mode for decimal values
+# + maxQueueSize - Maximum number of events in the internal queue
+# + maxBatchSize - Maximum number of events per processing batch
+# + queryTimeout - Database query timeout in seconds
+# + heartbeat - Heartbeat configuration for connection liveness
+# + signal - Signal channel configuration for ad-hoc control
 # + transactionMetadata - Transaction boundary event configuration
 # + columnTransform - Column masking and transformation configuration
 # + topicConfig - Topic naming and routing configuration
 # + errorHandling - Error handling and retry configuration
 # + performance - Performance tuning configuration
-# + monitoring - Monitoring configuration
-# + guardrail - Guardrail configuration
+# + monitoring - Monitoring and metric configuration
+# + guardrail - Guardrail configuration to prevent over-capture
 public type Options record {
     SnapshotMode snapshotMode = INITIAL;
     EventProcessingFailureHandlingMode eventProcessingFailureHandlingMode = WARN;
@@ -702,15 +729,15 @@ public type Options record {
     GuardrailConfiguration guardrail?;
 };
 
-# Represents the base configuration for the CDC engine.
+# Base CDC listener configuration.
 #
-# + engineName - The name of the CDC engine
-# + internalSchemaStorage - The internal schema history configuration
-# + offsetStorage - The offset storage configuration
-# + livenessInterval - Time interval (in seconds) used to evaluate the liveness of the CDC listener
-public type ListenerConfiguration record {|
+# + engineName - Debezium engine instance name
+# + internalSchemaStorage - Schema history storage configuration
+# + offsetStorage - Offset storage configuration
+# + livenessInterval - Interval in seconds for checking CDC listener liveness
+public type ListenerConfiguration record {
     string engineName = "ballerina-cdc-connector";
     FileInternalSchemaStorage|KafkaInternalSchemaStorage|MemoryInternalSchemaStorage|JdbcInternalSchemaStorage|RedisInternalSchemaStorage|AmazonS3InternalSchemaStorage|AzureBlobInternalSchemaStorage|RocketMQInternalSchemaStorage internalSchemaStorage = <FileInternalSchemaStorage>{};
     FileOffsetStorage|KafkaOffsetStorage|MemoryOffsetStorage|JdbcOffsetStorage|RedisOffsetStorage offsetStorage = <FileOffsetStorage>{};
     decimal livenessInterval = 60.0;
-|};
+};
