@@ -143,6 +143,42 @@ public type SecureDatabaseConnection record {|
     crypto:TrustStore trustStore?;
 |};
 
+# SSL/TLS configuration for secure Redis connections.
+# The presence of this configuration indicates that SSL is enabled for the Redis connection.
+#
+# + cert - Truststore configuration or certificate file path for server verification
+# + key - Keystore configuration for client certificate authentication (mTLS)
+# + verifyHostName - Whether to verify the Redis server's hostname against the certificate
+public type RedisSecureSocket record {|
+    crypto:TrustStore|string cert?;
+    crypto:KeyStore key?;
+    boolean verifyHostName = false;
+|};
+
+# Retry configuration for Redis connections.
+#
+# + initialDelay - Initial delay in seconds before the first retry
+# + maxDelay - Maximum delay in seconds between retries
+# + maxAttempts - Maximum number of retry attempts
+public type RedisRetryConfig record {|
+    decimal initialDelay = 0.3;
+    decimal maxDelay = 10.0;
+    int maxAttempts = 10;
+|};
+
+# Wait configuration for Redis replication acknowledgement.
+#
+# + enabled - Whether to wait for replication acknowledgement
+# + timeout - Timeout in seconds for replication wait
+# + retryEnabled - Whether to retry after a failed replication wait
+# + retryDelay - Delay in seconds between replication wait retries
+public type RedisWaitConfig record {|
+    boolean enabled = false;
+    decimal timeout = 1.0;
+    boolean retryEnabled = false;
+    decimal retryDelay = 1.0;
+|};
+
 # Represents the internal schema history configuration.
 #
 # + className - Fully-qualified class name of the schema history implementation
@@ -232,23 +268,11 @@ public type JdbcInternalSchemaStorage record {|
 # + username - Redis username for authentication
 # + password - Redis password for authentication
 # + dbIndex - Redis database index
-# + sslEnabled - Whether SSL/TLS is enabled
-# + sslHostNameVerificationEnabled - Whether hostname verification is enforced for SSL
-# + sslTruststorePath - Path to the SSL truststore file
-# + sslTruststorePassword - SSL truststore password
-# + sslTruststoreType - SSL truststore type (e.g., JKS, PKCS12)
-# + sslKeystorePath - Path to the SSL keystore file
-# + sslKeystorePassword - SSL keystore password
-# + sslKeystoreType - SSL keystore type (e.g., JKS, PKCS12)
+# + secureSocket - SSL/TLS configuration; if present, SSL is enabled for the connection
 # + connectTimeout - Connection timeout in seconds
 # + socketTimeout - Socket read/write timeout in seconds
-# + retryInitialDelay - Initial delay in seconds before the first retry
-# + retryMaxDelay - Maximum delay in seconds between retries
-# + retryMaxAttempts - Maximum number of retry attempts
-# + waitEnabled - Whether to wait for replication acknowledgement
-# + waitTimeout - Timeout in seconds for replication wait
-# + waitRetryEnabled - Whether to retry after a failed replication wait
-# + waitRetryDelay - Delay in seconds between replication wait retries
+# + retryConfig - Retry configuration for Redis connection attempts
+# + waitConfig - Wait configuration for Redis replication acknowledgement
 # + clusterEnabled - Whether Redis cluster mode is enabled
 public type RedisInternalSchemaStorage record {|
     *SchemaHistoryInternal;
@@ -258,23 +282,11 @@ public type RedisInternalSchemaStorage record {|
     string username?;
     string password?;
     int dbIndex = 0;
-    boolean sslEnabled = false;
-    boolean sslHostNameVerificationEnabled = false;
-    string sslTruststorePath?; // TODO: bundle these parameters like in KafkaOffsetStorage
-    string sslTruststorePassword?;
-    string sslTruststoreType?;
-    string sslKeystorePath?;
-    string sslKeystorePassword?;
-    string sslKeystoreType?;
+    RedisSecureSocket secureSocket?;
     decimal connectTimeout = 2.0;
     decimal socketTimeout = 2.0;
-    decimal retryInitialDelay = 0.3; // TODO: do we need to nest the retry configs together?
-    decimal retryMaxDelay = 10.0;
-    int retryMaxAttempts = 10;
-    boolean waitEnabled = false; // TODO: do we need to nest the wait configs together?
-    decimal waitTimeout = 1.0;
-    boolean waitRetryEnabled = false;
-    decimal waitRetryDelay = 1.0;
+    RedisRetryConfig retryConfig = {};
+    RedisWaitConfig waitConfig = {};
     boolean clusterEnabled = false;
 |};
 
@@ -395,23 +407,11 @@ public type MemoryOffsetStorage record {|
 # + username - Redis username for authentication
 # + password - Redis password for authentication
 # + dbIndex - Redis database index
-# + sslEnabled - Whether SSL/TLS is enabled
-# + sslHostNameVerificationEnabled - Whether hostname verification is enforced for SSL
-# + sslTruststorePath - Path to the SSL truststore file
-# + sslTruststorePassword - SSL truststore password
-# + sslTruststoreType - SSL truststore type (e.g., JKS, PKCS12)
-# + sslKeystorePath - Path to the SSL keystore file
-# + sslKeystorePassword - SSL keystore password
-# + sslKeystoreType - SSL keystore type (e.g., JKS, PKCS12)
+# + secureSocket - SSL/TLS configuration; if present, SSL is enabled for the connection
 # + connectTimeout - Connection timeout in seconds
 # + socketTimeout - Socket read/write timeout in seconds
-# + retryInitialDelay - Initial delay in seconds before the first retry
-# + retryMaxDelay - Maximum delay in seconds between retries
-# + retryMaxAttempts - Maximum number of retry attempts
-# + waitEnabled - Whether to wait for replication acknowledgement
-# + waitTimeout - Timeout in seconds for replication wait
-# + waitRetryEnabled - Whether to retry after a failed replication wait
-# + waitRetryDelay - Delay in seconds between replication wait retries
+# + retryConfig - Retry configuration for Redis connection attempts
+# + waitConfig - Wait configuration for Redis replication acknowledgement
 # + clusterEnabled - Whether Redis cluster mode is enabled
 public type RedisOffsetStorage record {|
     *OffsetStorageInternal;
@@ -421,23 +421,11 @@ public type RedisOffsetStorage record {|
     string username?;
     string password?;
     int dbIndex = 0;
-    boolean sslEnabled = false;
-    boolean sslHostNameVerificationEnabled = false;
-    string sslTruststorePath?; // TODO: bundle these parameters like in KafkaOffsetStorage
-    string sslTruststorePassword?;
-    string sslTruststoreType = "JKS";
-    string sslKeystorePath?;
-    string sslKeystorePassword?;
-    string sslKeystoreType = "JKS";
+    RedisSecureSocket secureSocket?;
     decimal connectTimeout = 2.0;
     decimal socketTimeout = 2.0;
-    decimal retryInitialDelay = 0.3; // TODO: do we need to nest the retry configs together?
-    decimal retryMaxDelay = 10.0;
-    int retryMaxAttempts = 10;
-    boolean waitEnabled = false; // TODO: do we need to nest the wait configs together?
-    decimal waitTimeout = 1.0;
-    boolean waitRetryEnabled = false;
-    decimal waitRetryDelay = 1.0;
+    RedisRetryConfig retryConfig = {};
+    RedisWaitConfig waitConfig = {};
     boolean clusterEnabled = false;
 |};
 

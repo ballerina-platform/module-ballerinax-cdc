@@ -848,22 +848,53 @@ function testJdbcSchemaHistory() {
 @test:Config {groups: ["schema-history"]}
 function testRedisSchemaHistory() {
     map<string> expectedProperties = {
+        "name": "ballerina-cdc-connector",
+        "topic.prefix": "bal_cdc_schema_history",
         "schema.history.internal": "io.debezium.storage.redis.history.RedisSchemaHistory",
-        "schema.history.internal.redis.address": "localhost:6379"
+        "schema.history.internal.redis.address": "localhost:6379",
+        "schema.history.internal.redis.key": "metadata:debezium:schema_history",
+        "schema.history.internal.redis.db.index": "0",
+        "schema.history.internal.redis.ssl.enabled": "true",
+        "schema.history.internal.redis.ssl.hostname.verification.enabled": "true",
+        "schema.history.internal.redis.ssl.truststore": "/path/to/truststore.jks",
+        "schema.history.internal.redis.ssl.truststore.password": "trustpass",
+        "schema.history.internal.redis.ssl.truststore.type": "JKS",
+        "schema.history.internal.redis.ssl.keystore": "/path/to/keystore.jks",
+        "schema.history.internal.redis.ssl.keystore.password": "keypass",
+        "schema.history.internal.redis.ssl.keystore.type": "JKS",
+        "schema.history.internal.redis.connection.timeout.ms": "2000",
+        "schema.history.internal.redis.socket.timeout.ms": "2000",
+        "schema.history.internal.redis.retry.initial.delay.ms": "300",
+        "schema.history.internal.redis.retry.max.delay.ms": "10000",
+        "schema.history.internal.redis.retry.max.attempts": "10",
+        "schema.history.internal.redis.wait.enabled": "false",
+        "schema.history.internal.redis.wait.timeout.ms": "1000",
+        "schema.history.internal.redis.wait.retry.enabled": "false",
+        "schema.history.internal.redis.wait.retry.delay.ms": "1000",
+        "schema.history.internal.redis.cluster.enabled": "false",
+        "offset.storage": "org.apache.kafka.connect.storage.FileOffsetBackingStore",
+        "offset.flush.interval.ms": "60000",
+        "offset.flush.timeout.ms": "5000",
+        "offset.storage.file.filename": "tmp/debezium-offsets.dat",
+        "tombstones.on.delete": "false",
+        "include.schema.changes": "false"
     };
 
     ListenerConfiguration config = {
         internalSchemaStorage: <RedisInternalSchemaStorage>{
-            address: "localhost:6379"
+            address: "localhost:6379",
+            secureSocket: {
+                cert: {path: "/path/to/truststore.jks", password: "trustpass"},
+                key: {path: "/path/to/keystore.jks", password: "keypass"},
+                verifyHostName: true
+            }
         }
     };
 
     map<string> actualProperties = {};
     populateDebeziumProperties(config, actualProperties);
 
-    test:assertEquals(actualProperties["schema.history.internal"],
-        expectedProperties["schema.history.internal"],
-        msg = "Redis schema history does not match.");
+    test:assertEquals(actualProperties, expectedProperties, msg = "Redis schema history properties do not match.");
 }
 
 @test:Config {groups: ["schema-history"]}
@@ -964,22 +995,48 @@ function testMemoryOffsetStorage() {
 @test:Config {groups: ["offset-storage"]}
 function testRedisOffsetStorage() {
     map<string> expectedProperties = {
+        "name": "ballerina-cdc-connector",
+        "schema.history.internal": "io.debezium.storage.file.history.FileSchemaHistory",
+        "topic.prefix": "bal_cdc_schema_history",
+        "schema.history.internal.file.filename": "tmp/dbhistory.dat",
         "offset.storage": "io.debezium.storage.redis.offset.RedisOffsetBackingStore",
-        "offset.storage.redis.address": "localhost:6379"
+        "offset.storage.redis.address": "localhost:6379",
+        "offset.storage.redis.key": "metadata:debezium:offsets",
+        "offset.storage.redis.db.index": "0",
+        "offset.storage.redis.ssl.enabled": "true",
+        "offset.storage.redis.ssl.hostname.verification.enabled": "false",
+        "offset.storage.redis.ssl.truststore": "/path/to/truststore.jks",
+        "offset.storage.redis.ssl.truststore.password": "password",
+        "offset.storage.redis.ssl.truststore.type": "JKS",
+        "offset.storage.redis.connection.timeout.ms": "2000",
+        "offset.storage.redis.socket.timeout.ms": "2000",
+        "offset.storage.redis.retry.initial.delay.ms": "300",
+        "offset.storage.redis.retry.max.delay.ms": "10000",
+        "offset.storage.redis.retry.max.attempts": "10",
+        "offset.storage.redis.wait.enabled": "false",
+        "offset.storage.redis.wait.timeout.ms": "1000",
+        "offset.storage.redis.wait.retry.enabled": "false",
+        "offset.storage.redis.wait.retry.delay.ms": "1000",
+        "offset.storage.redis.cluster.enabled": "false",
+        "offset.flush.interval.ms": "60000",
+        "offset.flush.timeout.ms": "5000",
+        "tombstones.on.delete": "false",
+        "include.schema.changes": "false"
     };
 
     ListenerConfiguration config = {
         offsetStorage: <RedisOffsetStorage>{
-            address: "localhost:6379"
+            address: "localhost:6379",
+            secureSocket: {
+                cert: {path: "/path/to/truststore.jks", password: "password"}
+            }
         }
     };
 
     map<string> actualProperties = {};
     populateDebeziumProperties(config, actualProperties);
 
-    test:assertEquals(actualProperties["offset.storage"],
-        expectedProperties["offset.storage"],
-        msg = "Redis offset storage does not match.");
+    test:assertEquals(actualProperties, expectedProperties, msg = "Redis offset storage properties do not match.");
 }
 
 @test:Config {groups: ["offset-storage"]}

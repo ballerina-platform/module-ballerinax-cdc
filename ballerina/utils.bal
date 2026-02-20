@@ -1065,48 +1065,47 @@ public isolated function populateRedisSchemaHistoryConfiguration(RedisInternalSc
     }
 
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_DB_INDEX] = storage.dbIndex.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_ENABLED] = storage.sslEnabled.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = storage.sslHostNameVerificationEnabled.toString();
 
-    string? sslTruststorePath = storage.sslTruststorePath;
-    if sslTruststorePath is string {
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_TRUSTSTORE] = sslTruststorePath;
-    }
+    // Handle secure socket configuration
+    RedisSecureSocket? secureSocket = storage.secureSocket;
+    if secureSocket is RedisSecureSocket {
+        // SSL is enabled when secureSocket is present
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_ENABLED] = "true";
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = secureSocket.verifyHostName.toString();
 
-    string? sslTruststorePassword = storage.sslTruststorePassword;
-    if sslTruststorePassword is string {
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_TRUSTSTORE_PASSWORD] = sslTruststorePassword;
-    }
+        // Handle cert - can be crypto:TrustStore or string path
+        crypto:TrustStore|string? cert = secureSocket.cert;
+        if cert is crypto:TrustStore {
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_TRUSTSTORE] = cert.path;
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_TRUSTSTORE_PASSWORD] = cert.password;
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_TRUSTSTORE_TYPE] = "JKS";
+        } else if cert is string {
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_TRUSTSTORE] = cert;
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_TRUSTSTORE_TYPE] = "PEM";
+        }
 
-    string? sslTruststoreType = storage.sslTruststoreType;
-    if sslTruststoreType is string {
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_TRUSTSTORE_TYPE] = sslTruststoreType;
-    }
-
-    string? sslKeystorePath = storage.sslKeystorePath;
-    if sslKeystorePath is string {
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_KEYSTORE] = sslKeystorePath;
-    }
-
-    string? sslKeystorePassword = storage.sslKeystorePassword;
-    if sslKeystorePassword is string {
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_KEYSTORE_PASSWORD] = sslKeystorePassword;
-    }
-
-    string? sslKeystoreType = storage.sslKeystoreType;
-    if sslKeystoreType is string {
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_KEYSTORE_TYPE] = sslKeystoreType;
+        // Handle key - crypto:KeyStore only
+        crypto:KeyStore? key = secureSocket.key;
+        if key is crypto:KeyStore {
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_KEYSTORE] = key.path;
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_KEYSTORE_PASSWORD] = key.password;
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_KEYSTORE_TYPE] = "JKS";
+        }
+    } else {
+        // SSL is disabled when secureSocket is not present
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_ENABLED] = "false";
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = "false";
     }
 
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_CONNECTION_TIMEOUT_MS] = getMillisecondValueOf(storage.connectTimeout);
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SOCKET_TIMEOUT_MS] = getMillisecondValueOf(storage.socketTimeout);
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_INITIAL_DELAY_MS] = getMillisecondValueOf(storage.retryInitialDelay);
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_MAX_DELAY_MS] = getMillisecondValueOf(storage.retryMaxDelay);
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_MAX_ATTEMPTS] = storage.retryMaxAttempts.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = storage.waitEnabled.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(storage.waitTimeout);
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = storage.waitRetryEnabled.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(storage.waitRetryDelay);
+    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_INITIAL_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.initialDelay);
+    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_MAX_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.maxDelay);
+    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_MAX_ATTEMPTS] = storage.retryConfig.maxAttempts.toString();
+    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = storage.waitConfig.enabled.toString();
+    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(storage.waitConfig.timeout);
+    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = storage.waitConfig.retryEnabled.toString();
+    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(storage.waitConfig.retryDelay);
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_CLUSTER_ENABLED] = storage.clusterEnabled.toString();
 }
 
@@ -1184,42 +1183,47 @@ public isolated function populateRedisOffsetStorageConfiguration(RedisOffsetStor
     }
 
     configMap[OFFSET_STORAGE_REDIS_DB_INDEX] = storage.dbIndex.toString();
-    configMap[OFFSET_STORAGE_REDIS_SSL_ENABLED] = storage.sslEnabled.toString();
-    configMap[OFFSET_STORAGE_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = storage.sslHostNameVerificationEnabled.toString();
 
-    string? sslTruststorePath = storage.sslTruststorePath;
-    if sslTruststorePath is string {
-        configMap[OFFSET_STORAGE_REDIS_SSL_TRUSTSTORE] = sslTruststorePath;
+    // Handle secure socket configuration
+    RedisSecureSocket? secureSocket = storage.secureSocket;
+    if secureSocket is RedisSecureSocket {
+        // SSL is enabled when secureSocket is present
+        configMap[OFFSET_STORAGE_REDIS_SSL_ENABLED] = "true";
+        configMap[OFFSET_STORAGE_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = secureSocket.verifyHostName.toString();
+
+        // Handle cert - can be crypto:TrustStore or string path
+        crypto:TrustStore|string? cert = secureSocket.cert;
+        if cert is crypto:TrustStore {
+            configMap[OFFSET_STORAGE_REDIS_SSL_TRUSTSTORE] = cert.path;
+            configMap[OFFSET_STORAGE_REDIS_SSL_TRUSTSTORE_PASSWORD] = cert.password;
+            configMap[OFFSET_STORAGE_REDIS_SSL_TRUSTSTORE_TYPE] = "JKS";
+        } else if cert is string {
+            configMap[OFFSET_STORAGE_REDIS_SSL_TRUSTSTORE] = cert;
+            configMap[OFFSET_STORAGE_REDIS_SSL_TRUSTSTORE_TYPE] = "PEM";
+        }
+
+        // Handle key - crypto:KeyStore only
+        crypto:KeyStore? key = secureSocket.key;
+        if key is crypto:KeyStore {
+            configMap[OFFSET_STORAGE_REDIS_SSL_KEYSTORE] = key.path;
+            configMap[OFFSET_STORAGE_REDIS_SSL_KEYSTORE_PASSWORD] = key.password;
+            configMap[OFFSET_STORAGE_REDIS_SSL_KEYSTORE_TYPE] = "JKS";
+        }
+    } else {
+        // SSL is disabled when secureSocket is not present
+        configMap[OFFSET_STORAGE_REDIS_SSL_ENABLED] = "false";
+        configMap[OFFSET_STORAGE_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = "false";
     }
-
-    string? sslTruststorePassword = storage.sslTruststorePassword;
-    if sslTruststorePassword is string {
-        configMap[OFFSET_STORAGE_REDIS_SSL_TRUSTSTORE_PASSWORD] = sslTruststorePassword;
-    }
-
-    configMap[OFFSET_STORAGE_REDIS_SSL_TRUSTSTORE_TYPE] = storage.sslTruststoreType;
-
-    string? sslKeystorePath = storage.sslKeystorePath;
-    if sslKeystorePath is string {
-        configMap[OFFSET_STORAGE_REDIS_SSL_KEYSTORE] = sslKeystorePath;
-    }
-
-    string? sslKeystorePassword = storage.sslKeystorePassword;
-    if sslKeystorePassword is string {
-        configMap[OFFSET_STORAGE_REDIS_SSL_KEYSTORE_PASSWORD] = sslKeystorePassword;
-    }
-
-    configMap[OFFSET_STORAGE_REDIS_SSL_KEYSTORE_TYPE] = storage.sslKeystoreType;
 
     configMap[OFFSET_STORAGE_REDIS_CONNECTION_TIMEOUT_MS] = getMillisecondValueOf(storage.connectTimeout);
     configMap[OFFSET_STORAGE_REDIS_SOCKET_TIMEOUT_MS] = getMillisecondValueOf(storage.socketTimeout);
-    configMap[OFFSET_STORAGE_REDIS_RETRY_INITIAL_DELAY_MS] = getMillisecondValueOf(storage.retryInitialDelay);
-    configMap[OFFSET_STORAGE_REDIS_RETRY_MAX_DELAY_MS] = getMillisecondValueOf(storage.retryMaxDelay);
-    configMap[OFFSET_STORAGE_REDIS_RETRY_MAX_ATTEMPTS] = storage.retryMaxAttempts.toString();
-    configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = storage.waitEnabled.toString();
-    configMap[OFFSET_STORAGE_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(storage.waitTimeout);
-    configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = storage.waitRetryEnabled.toString();
-    configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(storage.waitRetryDelay);
+    configMap[OFFSET_STORAGE_REDIS_RETRY_INITIAL_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.initialDelay);
+    configMap[OFFSET_STORAGE_REDIS_RETRY_MAX_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.maxDelay);
+    configMap[OFFSET_STORAGE_REDIS_RETRY_MAX_ATTEMPTS] = storage.retryConfig.maxAttempts.toString();
+    configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = storage.waitConfig.enabled.toString();
+    configMap[OFFSET_STORAGE_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(storage.waitConfig.timeout);
+    configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = storage.waitConfig.retryEnabled.toString();
+    configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(storage.waitConfig.retryDelay);
     configMap[OFFSET_STORAGE_REDIS_CLUSTER_ENABLED] = storage.clusterEnabled.toString();
 }
 
