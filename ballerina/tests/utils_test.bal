@@ -726,53 +726,63 @@ function testPopulateOptionsWithGuardrail() {
 
 @test:Config {groups: ["options-additional"]}
 function testPopulateOptionsWithAdditionalProperties() {
-    map<string> expectedProperties = {
-        "custom.property.1": "value1",
-        "custom.property.2": "value2"
-    };
-
+    // Test that additional properties of various primitive types are converted to strings
     SampleDBOptions options = {
-        "custom.property.1": "value1",
-        "custom.property.2": "value2"
+        "custom.string.property": "stringValue",
+        "custom.int.property": 123,
+        "custom.boolean.true": true,
+        "custom.boolean.false": false,
+        "custom.decimal.property": 45.67,
+        "custom.float.property": 3.14
     };
 
     map<string> actualProperties = {};
     populateSampleDBOptions(options, actualProperties);
 
-    test:assertEquals(actualProperties["custom.property.1"],
-        expectedProperties["custom.property.1"],
-        msg = "Additional property 1 does not match.");
-    test:assertEquals(actualProperties["custom.property.2"],
-        expectedProperties["custom.property.2"],
-        msg = "Additional property 2 does not match.");
+    // Verify all primitive properties are present and converted to strings
+    test:assertEquals(actualProperties["custom.string.property"], "stringValue",
+        msg = "String property should be preserved.");
+    test:assertEquals(actualProperties["custom.int.property"], "123",
+        msg = "Int property should be converted to string.");
+    test:assertEquals(actualProperties["custom.boolean.true"], "true",
+        msg = "Boolean true should be converted to string 'true'.");
+    test:assertEquals(actualProperties["custom.boolean.false"], "false",
+        msg = "Boolean false should be converted to string 'false'.");
+    test:assertEquals(actualProperties["custom.decimal.property"], "45.67",
+        msg = "Decimal property should be converted to string.");
+    // Float may have precision variations, so check if value exists and is a string representation
+    test:assertTrue(actualProperties.hasKey("custom.float.property"),
+        msg = "Float property should be present.");
+    string? floatValue = actualProperties["custom.float.property"];
+    test:assertTrue(floatValue is string && floatValue.startsWith("3.14"),
+        msg = "Float property should be converted to string starting with '3.14'.");
 }
 
 @test:Config {groups: ["options-additional"]}
-function testNonStringAdditionalPropertiesIgnored() {
-    // Non-string additional properties should be ignored (and logged as errors)
+function testUnsupportedAdditionalPropertiesIgnored() {
+    // Complex types (arrays, records) should be ignored and logged as errors
     SampleDBOptions options = {
         "valid.string.property": "validValue",
-        "invalid.int.property": 123,
-        "invalid.boolean.property": true,
-        "invalid.decimal.property": 45.67
+        "valid.int.property": 42,
+        "invalid.array.property": [1, 2, 3]
     };
 
     map<string> actualProperties = {};
     populateSampleDBOptions(options, actualProperties);
 
-    // Only the valid string property should be present
+    // Valid primitive properties should be present
     test:assertTrue(actualProperties.hasKey("valid.string.property"),
         msg = "Valid string property should be present.");
     test:assertEquals(actualProperties["valid.string.property"], "validValue",
         msg = "Valid string property value mismatch.");
+    test:assertTrue(actualProperties.hasKey("valid.int.property"),
+        msg = "Valid int property should be present.");
+    test:assertEquals(actualProperties["valid.int.property"], "42",
+        msg = "Valid int property should be converted to string.");
 
-    // Non-string properties should be ignored
-    test:assertFalse(actualProperties.hasKey("invalid.int.property"),
-        msg = "Invalid int property should be ignored.");
-    test:assertFalse(actualProperties.hasKey("invalid.boolean.property"),
-        msg = "Invalid boolean property should be ignored.");
-    test:assertFalse(actualProperties.hasKey("invalid.decimal.property"),
-        msg = "Invalid decimal property should be ignored.");
+    // Complex types should be ignored
+    test:assertFalse(actualProperties.hasKey("invalid.array.property"),
+        msg = "Invalid array property should be ignored.");
 }
 
 // ========== SCHEMA HISTORY STORAGE TESTS ==========

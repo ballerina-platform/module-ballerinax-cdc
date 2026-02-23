@@ -1269,17 +1269,28 @@ public isolated function populateJdbcOffsetStorageConfiguration(JdbcOffsetStorag
     }
 }
 
+# Populates additional configuration properties from options record.
+# Supports primitive types (string, int, boolean, decimal, float) which are converted to strings.
+# Complex types (arrays, records, maps) are rejected and logged as errors.
+#
+# + options - Options record containing additional properties
+# + configMap - Map to populate with additional configuration properties
+# + optionsSubType - Type descriptor for the options subtype
 isolated function populateAdditionalConfigurations(Options options, map<string> configMap, typedesc<Options> optionsSubType) {
     string[] additionalConfigKeys = getAdditionalConfigKeys(options, optionsSubType);
     foreach string key in additionalConfigKeys {
         anydata value = options[key];
-        if value !is string { 
-        // TODO: We should allow primitive types and convert them to string instead of restricting to string type only. 
-        //We need to update/remove testNonStringAdditionalPropertiesIgnored after that change.
-            log:printError(string `Invalid additional configuration type for option ${key}: ${value.toBalString()}, Only string values are allowed.`);
+
+        // Convert supported primitive types to string
+        if value is string {
+            configMap[key] = value;
+        } else if value is int|boolean|decimal|float {
+            configMap[key] = value.toString();
+        } else {
+            // Log error for unsupported types (arrays, records, etc.)
+            log:printError(string `Unsupported additional configuration type for option ${key}: ${value.toBalString()}. Only string, int, boolean, decimal, and float values are supported.`);
             continue;
         }
-        configMap[key] = value;
     }
 }
 
