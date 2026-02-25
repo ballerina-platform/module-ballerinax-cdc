@@ -17,8 +17,6 @@
 import ballerina/crypto;
 import ballerina/test;
 
-import ballerinax/kafka;
-
 @test:Config {}
 function testGetDebeziumProperties() {
     // Expected properties map
@@ -143,7 +141,7 @@ function testKafkaOffsetStorageWithSslAuth() {
     ListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: "localhost:9093",
-            securityProtocol: kafka:PROTOCOL_SSL,
+            securityProtocol: PROTOCOL_SSL,
             secureSocket: {
                 cert: {path: "/path/to/truststore.jks", password: "truststore-password"},
                 key: {
@@ -186,9 +184,9 @@ function testKafkaOffsetStorageWithSaslAuth() {
     ListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: "localhost:9093",
-            securityProtocol: kafka:PROTOCOL_SASL_SSL,
+            securityProtocol: PROTOCOL_SASL_SSL,
             auth: {
-                mechanism: kafka:AUTH_SASL_SCRAM_SHA_256,
+                mechanism: AUTH_SASL_SCRAM_SHA_256,
                 username: "user",
                 password: "pass"
             },
@@ -237,9 +235,9 @@ function testKafkaSchemaHistoryWithAuth() {
     ListenerConfiguration config = {
         internalSchemaStorage: {
             bootstrapServers: "localhost:9093",
-            securityProtocol: kafka:PROTOCOL_SASL_SSL,
+            securityProtocol: PROTOCOL_SASL_SSL,
             auth: {
-                mechanism: kafka:AUTH_SASL_PLAIN,
+                mechanism: AUTH_SASL_PLAIN,
                 username: "user",
                 password: "pass"
             },
@@ -294,16 +292,16 @@ function testBothKafkaStoragesWithAuth() {
     ListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: "kafka2:9093",
-                securityProtocol: kafka:PROTOCOL_SASL_PLAINTEXT,
+                securityProtocol: PROTOCOL_SASL_PLAINTEXT,
                 auth: {
-                    mechanism: kafka:AUTH_SASL_SCRAM_SHA_512,
+                    mechanism: AUTH_SASL_SCRAM_SHA_512,
                     username: "offsetuser",
                     password: "offsetpass"
                 }
         },
         internalSchemaStorage: {
             bootstrapServers: "kafka1:9093",
-            securityProtocol: kafka:PROTOCOL_SSL,
+            securityProtocol: PROTOCOL_SSL,
             secureSocket: {
                 cert: <crypto:TrustStore>{path: "/path/to/truststore1.jks", password: "pass1"},
                 key: {
@@ -364,7 +362,7 @@ function testBothKafkaStoragesWithCertKey() {
     ListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: "kafka2:9093",
-            securityProtocol: kafka:PROTOCOL_SSL,
+            securityProtocol: PROTOCOL_SSL,
             secureSocket: {
                 cert: "truststore2.pem",
                 key: {
@@ -376,7 +374,7 @@ function testBothKafkaStoragesWithCertKey() {
         },
         internalSchemaStorage: {
             bootstrapServers: "kafka1:9093",
-            securityProtocol: kafka:PROTOCOL_SSL,
+            securityProtocol: PROTOCOL_SSL,
             secureSocket: {
                 cert: "truststore1.pem",
                 key: {

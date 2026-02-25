@@ -9,14 +9,6 @@ distribution-version = "2201.12.0"
 
 [[package]]
 org = "ballerina"
-name = "avro"
-version = "1.2.0"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"}
-]
-
-[[package]]
-org = "ballerina"
 name = "crypto"
 version = "2.9.3"
 dependencies = [
@@ -78,6 +70,7 @@ modules = [
 org = "ballerina"
 name = "lang.__internal"
 version = "0.0.0"
+scope = "testOnly"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.object"}
@@ -100,16 +93,6 @@ version = "0.0.0"
 scope = "testOnly"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
-]
-
-[[package]]
-org = "ballerina"
-name = "lang.int"
-version = "0.0.0"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "lang.__internal"},
-	{org = "ballerina", name = "lang.object"}
 ]
 
 [[package]]
@@ -236,17 +219,6 @@ dependencies = [
 ]
 
 [[package]]
-org = "ballerina"
-name = "uuid"
-version = "1.10.0"
-dependencies = [
-	{org = "ballerina", name = "crypto"},
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "lang.int"},
-	{org = "ballerina", name = "time"}
-]
-
-[[package]]
 org = "ballerinai"
 name = "observe"
 version = "0.0.0"
@@ -274,30 +246,10 @@ dependencies = [
 	{org = "ballerina", name = "test"},
 	{org = "ballerinai", name = "observe"},
 	{org = "ballerinax", name = "java.jdbc"},
-	{org = "ballerinax", name = "kafka"},
 	{org = "ballerinax", name = "mysql.cdc.driver"}
 ]
 modules = [
 	{org = "ballerinax", packageName = "cdc", moduleName = "cdc"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "confluent.cavroserdes"
-version = "1.0.2"
-dependencies = [
-	{org = "ballerina", name = "avro"},
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "confluent.cregistry"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "confluent.cregistry"
-version = "0.4.3"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"}
 ]
 
 [[package]]
@@ -314,23 +266,6 @@ dependencies = [
 ]
 modules = [
 	{org = "ballerinax", packageName = "java.jdbc", moduleName = "java.jdbc"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "kafka"
-version = "4.6.3"
-dependencies = [
-	{org = "ballerina", name = "crypto"},
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "time"},
-	{org = "ballerina", name = "uuid"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "confluent.cavroserdes"},
-	{org = "ballerinax", name = "confluent.cregistry"}
-]
-modules = [
-	{org = "ballerinax", packageName = "kafka", moduleName = "kafka"}
 ]
 
 [[package]]

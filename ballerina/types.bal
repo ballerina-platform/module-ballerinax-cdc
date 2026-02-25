@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/crypto;
-import ballerinax/kafka;
 
 # Represents the SSL modes for secure database connections.
 public enum SslMode {
@@ -132,6 +131,73 @@ public enum GuardrailLimitAction {
     WARN = "warn"
 }
 
+# Represents the authentication mechanisms for Kafka connections.
+public enum KafkaAuthenticationMechanism {
+    AUTH_SASL_PLAIN = "PLAIN",
+    AUTH_SASL_SCRAM_SHA_256 = "SCRAM-SHA-256",
+    AUTH_SASL_SCRAM_SHA_512 = "SCRAM-SHA-512"
+}
+
+# Configurations related to Kafka authentication mechanisms.
+#
+# + mechanism - Type of the authentication mechanism. Currently `SASL_PLAIN`, `SASL_SCRAM_256` & `SASL_SCRAM_512`
+#               is supported
+# + username - The username to authenticate the Kafka producer/consumer
+# + password - The password to authenticate the Kafka producer/consumer
+public type KafkaAuthenticationConfiguration record {|
+    KafkaAuthenticationMechanism mechanism = AUTH_SASL_PLAIN;
+    string username;
+    string password;
+|};
+
+# The security protocols for Kafka connections.
+public enum KafkaSecurityProtocol {
+    PROTOCOL_PLAINTEXT = "PLAINTEXT",
+    PROTOCOL_SSL = "SSL",
+    PROTOCOL_SASL_PLAINTEXT = "SASL_PLAINTEXT",
+    PROTOCOL_SASL_SSL = "SASL_SSL"
+}
+
+# A combination of certificate, private key, and private key password if encrypted.
+#
+# + certFile - A file containing the certificate
+# + keyFile - A file containing the private key in PKCS8 format
+# + keyPassword - Password of the private key if it is encrypted
+public type KafkaSecureSocketCertKey record {|
+    string certFile;
+    string keyFile;
+    string keyPassword?;
+|};
+
+# Protocol options for secure Kafka connections, allowing specification of SSL/TLS protocol versions.
+public enum KafkaSecureSocketProtocol {
+   SSL,
+   TLS,
+   DTLS
+}
+
+# Configurations for secure communication with the Kafka server.
+#
+# + cert - Configurations associated with crypto:TrustStore or single certificate file that the client trusts
+# + key - Configurations associated with crypto:KeyStore or combination of certificate and private key of the client
+# + protocol - SSL/TLS protocol related options
+# + ciphers - List of ciphers to be used. By default, all the available cipher suites are supported
+# + provider - Name of the security provider used for SSL connections. The default value is the default security provider
+#              of the JVM
+public type KafkaSecureSocket record {|
+   crypto:TrustStore|string cert;
+   record {|
+        crypto:KeyStore keyStore;
+        string keyPassword?;
+  |}|KafkaSecureSocketCertKey key?;
+   record {|
+        KafkaSecureSocketProtocol name;
+        string[] versions?;
+   |} protocol?;
+   string[] ciphers?;
+   string provider?;
+|};
+
 # SSL/TLS configuration for database connections.
 #
 # + sslMode - SSL mode controlling the connection security level
@@ -219,9 +285,9 @@ public type KafkaInternalSchemaStorage record {|
     int recoveryAttempts = 100;
     decimal queryTimeout = 0.003;
     decimal createTimeout = 0.03;
-    kafka:SecurityProtocol securityProtocol = kafka:PROTOCOL_PLAINTEXT;
-    kafka:AuthenticationConfiguration auth?;
-    kafka:SecureSocket secureSocket?;
+    KafkaSecurityProtocol securityProtocol = PROTOCOL_PLAINTEXT;
+    KafkaAuthenticationConfiguration auth?;
+    KafkaSecureSocket secureSocket?;
 |};
 
 # In-memory schema history storage configuration (data is lost on restart).
@@ -386,9 +452,9 @@ public type KafkaOffsetStorage record {|
     string topicName = "bal_cdc_offsets";
     int partitions = 1;
     int replicationFactor = 2;
-    kafka:SecurityProtocol securityProtocol = kafka:PROTOCOL_PLAINTEXT;
-    kafka:AuthenticationConfiguration auth?;
-    kafka:SecureSocket secureSocket?;
+    KafkaSecurityProtocol securityProtocol = PROTOCOL_PLAINTEXT;
+    KafkaAuthenticationConfiguration auth?;
+    KafkaSecureSocket secureSocket?;
 |};
 
 # In-memory offset storage configuration (data is lost on restart).
@@ -488,9 +554,9 @@ public type KafkaSignalConfiguration record {|
     string topicName?;
     string|string[] bootstrapServers?;
     string groupId?;
-    kafka:SecurityProtocol securityProtocol = kafka:PROTOCOL_PLAINTEXT;
-    kafka:AuthenticationConfiguration auth?;
-    kafka:SecureSocket secureSocket?;
+    KafkaSecurityProtocol securityProtocol = PROTOCOL_PLAINTEXT;
+    KafkaAuthenticationConfiguration auth?;
+    KafkaSecureSocket secureSocket?;
 |};
 
 # File-based signal configuration.

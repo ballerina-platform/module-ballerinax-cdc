@@ -16,7 +16,6 @@
 import ballerina/crypto;
 import ballerina/io;
 import ballerina/log;
-import ballerinax/kafka;
 
 const string NAME = "name";
 const string CONNECTOR_CLASS = "connector.class";
@@ -360,18 +359,18 @@ isolated function populateOffsetStorageConfigurations(
         configMap[OFFSET_STORAGE_PARTITIONS] = offsetStorage.partitions.toString();
         configMap[OFFSET_STORAGE_REPLICATION_FACTOR] = offsetStorage.replicationFactor.toString();
 
-        kafka:SecurityProtocol? securityProtocol = offsetStorage.securityProtocol;
-        if securityProtocol is kafka:SecurityProtocol {
+        KafkaSecurityProtocol? securityProtocol = offsetStorage.securityProtocol;
+        if securityProtocol is KafkaSecurityProtocol {
             configMap[OFFSET_SECURITY_PROTOCOL] = securityProtocol;
         }
 
-        kafka:AuthenticationConfiguration? auth = offsetStorage.auth;
-        if auth is kafka:AuthenticationConfiguration {
+        KafkaAuthenticationConfiguration? auth = offsetStorage.auth;
+        if auth is KafkaAuthenticationConfiguration {
             populateOffsetAuthConfigurations(auth, configMap);
         }
 
-        kafka:SecureSocket? secureSocket = offsetStorage.secureSocket;
-        if secureSocket is kafka:SecureSocket {
+        KafkaSecureSocket? secureSocket = offsetStorage.secureSocket;
+        if secureSocket is KafkaSecureSocket {
             populateOffsetSecureSocketConfigurations(secureSocket, configMap);
         }
     } else if offsetStorage is FileOffsetStorage {
@@ -394,24 +393,24 @@ isolated function populateKafkaSchemaHistoryConfiguration(KafkaInternalSchemaSto
     configMap[SCHEMA_HISTORY_INTERNAL_KAFKA_QUERY_TIMEOUT_MS] = getMillisecondValueOf(storage.queryTimeout);
     configMap[SCHEMA_HISTORY_INTERNAL_KAFKA_CREATE_TIMEOUT_MS] = getMillisecondValueOf(storage.createTimeout);
 
-    kafka:SecurityProtocol? securityProtocol = storage.securityProtocol;
-    if securityProtocol is kafka:SecurityProtocol {
+    KafkaSecurityProtocol? securityProtocol = storage.securityProtocol;
+    if securityProtocol is KafkaSecurityProtocol {
         configMap[SCHEMA_HISTORY_PRODUCER_SECURITY_PROTOCOL] = securityProtocol;
         configMap[SCHEMA_HISTORY_CONSUMER_SECURITY_PROTOCOL] = securityProtocol;
     }
 
-    kafka:AuthenticationConfiguration? auth = storage.auth;
-    if auth is kafka:AuthenticationConfiguration {
+    KafkaAuthenticationConfiguration? auth = storage.auth;
+    if auth is KafkaAuthenticationConfiguration {
         populateSchemaHistoryAuthConfigurations(auth, configMap);
     }
 
-    kafka:SecureSocket? secureSocket = storage.secureSocket;
-    if secureSocket is kafka:SecureSocket {
+    KafkaSecureSocket? secureSocket = storage.secureSocket;
+    if secureSocket is KafkaSecureSocket {
         populateSchemaHistorySecureSocketConfigurations(secureSocket, configMap);
     }
 }
 
-isolated function populateSchemaHistoryAuthConfigurations(kafka:AuthenticationConfiguration auth, map<string> configMap) {
+isolated function populateSchemaHistoryAuthConfigurations(KafkaAuthenticationConfiguration auth, map<string> configMap) {
     configMap[SCHEMA_HISTORY_PRODUCER_SASL_MECHANISM] = auth.mechanism;
     configMap[SCHEMA_HISTORY_CONSUMER_SASL_MECHANISM] = auth.mechanism;
 
@@ -420,7 +419,7 @@ isolated function populateSchemaHistoryAuthConfigurations(kafka:AuthenticationCo
     configMap[SCHEMA_HISTORY_CONSUMER_SASL_JAAS_CONFIG] = jaasConfig;
 }
 
-isolated function populateSchemaHistorySecureSocketConfigurations(kafka:SecureSocket secure, map<string> configMap) {
+isolated function populateSchemaHistorySecureSocketConfigurations(KafkaSecureSocket secure, map<string> configMap) {
     crypto:TrustStore|string cert = secure.cert;
     if cert is crypto:TrustStore {
         configMap[SCHEMA_HISTORY_PRODUCER_SSL_TRUSTSTORE_LOCATION] = cert.path;
@@ -434,13 +433,13 @@ isolated function populateSchemaHistorySecureSocketConfigurations(kafka:SecureSo
         configMap[SCHEMA_HISTORY_CONSUMER_SSL_TRUSTSTORE_TYPE] = "PEM";
     }
 
-    record {|crypto:KeyStore keyStore; string keyPassword?;|}|kafka:CertKey? keyConfig = secure.key;
+    record {|crypto:KeyStore keyStore; string keyPassword?;|}|KafkaSecureSocketCertKey? keyConfig = secure.key;
     if keyConfig is record {| crypto:KeyStore keyStore; string keyPassword?; |} {
         configMap[SCHEMA_HISTORY_PRODUCER_SSL_KEYSTORE_LOCATION] = keyConfig.keyStore.path;
         configMap[SCHEMA_HISTORY_PRODUCER_SSL_KEYSTORE_PASSWORD] = keyConfig.keyStore.password;
         configMap[SCHEMA_HISTORY_CONSUMER_SSL_KEYSTORE_LOCATION] = keyConfig.keyStore.path;
         configMap[SCHEMA_HISTORY_CONSUMER_SSL_KEYSTORE_PASSWORD] = keyConfig.keyStore.password;
-    } else if keyConfig is kafka:CertKey {
+    } else if keyConfig is KafkaSecureSocketCertKey {
         string|error certContent = readFileContent(keyConfig.certFile);
         string|error keyContent = readFileContent(keyConfig.keyFile);
 
@@ -475,7 +474,7 @@ isolated function populateSchemaHistorySecureSocketConfigurations(kafka:SecureSo
     }
 
     var protocolConfig = secure.protocol;
-    if protocolConfig is record {| kafka:Protocol name; string[] versions?; |} {
+    if protocolConfig is record {| KafkaSecureSocketProtocol name; string[] versions?; |} {
         configMap[SCHEMA_HISTORY_PRODUCER_SSL_PROTOCOL] = protocolConfig.name.toString();
         configMap[SCHEMA_HISTORY_CONSUMER_SSL_PROTOCOL] = protocolConfig.name.toString();
 
@@ -494,13 +493,13 @@ isolated function populateSchemaHistorySecureSocketConfigurations(kafka:SecureSo
     }
 }
 
-isolated function populateOffsetAuthConfigurations(kafka:AuthenticationConfiguration auth, map<string> configMap) {
+isolated function populateOffsetAuthConfigurations(KafkaAuthenticationConfiguration auth, map<string> configMap) {
     configMap[OFFSET_SASL_MECHANISM] = auth.mechanism;
     string jaasConfig = generateJaasConfig(auth.mechanism, auth.username, auth.password);
     configMap[OFFSET_SASL_JAAS_CONFIG] = jaasConfig;
 }
 
-isolated function populateOffsetSecureSocketConfigurations(kafka:SecureSocket secure, map<string> configMap) {
+isolated function populateOffsetSecureSocketConfigurations(KafkaSecureSocket secure, map<string> configMap) {
     crypto:TrustStore|string cert = secure.cert;
     if cert is crypto:TrustStore {
         configMap[OFFSET_SSL_TRUSTSTORE_LOCATION] = cert.path;
@@ -510,11 +509,11 @@ isolated function populateOffsetSecureSocketConfigurations(kafka:SecureSocket se
         configMap[OFFSET_SSL_TRUSTSTORE_TYPE] = "PEM";
     }
 
-    record {| crypto:KeyStore keyStore; string keyPassword?;|}|kafka:CertKey? keyConfig = secure.key;
+    record {| crypto:KeyStore keyStore; string keyPassword?;|}|KafkaSecureSocketCertKey? keyConfig = secure.key;
     if keyConfig is record {| crypto:KeyStore keyStore; string keyPassword?; |} {
         configMap[OFFSET_SSL_KEYSTORE_LOCATION] = keyConfig.keyStore.path;
         configMap[OFFSET_SSL_KEYSTORE_PASSWORD] = keyConfig.keyStore.password;
-    } else if keyConfig is kafka:CertKey {
+    } else if keyConfig is KafkaSecureSocketCertKey {
         string|error certContent = readFileContent(keyConfig.certFile);
         string|error keyContent = readFileContent(keyConfig.keyFile);
 
@@ -543,8 +542,8 @@ isolated function populateOffsetSecureSocketConfigurations(kafka:SecureSocket se
         configMap[OFFSET_SSL_CIPHER_SUITES] = cipherSuites;
     }
 
-    record {| kafka:Protocol name; string[] versions?;|}? protocolConfig = secure.protocol;
-    if protocolConfig is record {| kafka:Protocol name; string[] versions?; |} {
+    record {| KafkaSecureSocketProtocol name; string[] versions?; |}? protocolConfig = secure.protocol;
+    if protocolConfig is record {| KafkaSecureSocketProtocol name; string[] versions?; |} {
         configMap[OFFSET_SSL_PROTOCOL] = protocolConfig.name.toString();
         string[]? versions = protocolConfig.versions;
         if versions is string[] && versions.length() > 0 {
@@ -692,9 +691,9 @@ isolated function getMillisecondValueOf(decimal value) returns string {
     return milliSecondVal.substring(0, milliSecondVal.indexOf(".") ?: milliSecondVal.length());
 }
 
-isolated function generateJaasConfig(kafka:AuthenticationMechanism mechanism, string username, string password) returns string {
+isolated function generateJaasConfig(KafkaAuthenticationMechanism mechanism, string username, string password) returns string {
     string loginModule;
-    if mechanism == kafka:AUTH_SASL_PLAIN {
+    if mechanism == AUTH_SASL_PLAIN {
         loginModule = "org.apache.kafka.common.security.plain.PlainLoginModule";
     } else {
         loginModule = "org.apache.kafka.common.security.scram.ScramLoginModule";
@@ -749,18 +748,18 @@ public isolated function populateSignalConfiguration(SignalConfiguration config,
             configMap[SIGNAL_KAFKA_GROUP_ID] = groupId;
         }
 
-        kafka:SecurityProtocol? securityProtocol = config.securityProtocol;
-        if securityProtocol is kafka:SecurityProtocol {
+        KafkaSecurityProtocol? securityProtocol = config.securityProtocol;
+        if securityProtocol is KafkaSecurityProtocol {
             configMap[SIGNAL_KAFKA_SECURITY_PROTOCOL] = securityProtocol;
         }
 
-        kafka:AuthenticationConfiguration? auth = config.auth;
-        if auth is kafka:AuthenticationConfiguration {
+        KafkaAuthenticationConfiguration? auth = config.auth;
+        if auth is KafkaAuthenticationConfiguration {
             populateSignalKafkaAuthConfigurations(auth, configMap);
         }
 
-        kafka:SecureSocket? secureSocket = config.secureSocket;
-        if secureSocket is kafka:SecureSocket {
+        KafkaSecureSocket? secureSocket = config.secureSocket;
+        if secureSocket is KafkaSecureSocket {
             populateSignalKafkaSecureSocketConfigurations(secureSocket, configMap);
         }
     } else {
@@ -768,13 +767,13 @@ public isolated function populateSignalConfiguration(SignalConfiguration config,
     }
 }
 
-isolated function populateSignalKafkaAuthConfigurations(kafka:AuthenticationConfiguration auth, map<string> configMap) {
+isolated function populateSignalKafkaAuthConfigurations(KafkaAuthenticationConfiguration auth, map<string> configMap) {
     configMap[SIGNAL_KAFKA_SASL_MECHANISM] = auth.mechanism;
     string jaasConfig = generateJaasConfig(auth.mechanism, auth.username, auth.password);
     configMap[SIGNAL_KAFKA_SASL_JAAS_CONFIG] = jaasConfig;
 }
 
-isolated function populateSignalKafkaSecureSocketConfigurations(kafka:SecureSocket secure, map<string> configMap) {
+isolated function populateSignalKafkaSecureSocketConfigurations(KafkaSecureSocket secure, map<string> configMap) {
     crypto:TrustStore|string cert = secure.cert;
     if cert is crypto:TrustStore {
         configMap[SIGNAL_KAFKA_SSL_TRUSTSTORE_LOCATION] = cert.path;
@@ -784,11 +783,11 @@ isolated function populateSignalKafkaSecureSocketConfigurations(kafka:SecureSock
         configMap[SIGNAL_KAFKA_SSL_TRUSTSTORE_TYPE] = "PEM";
     }
 
-    record {|crypto:KeyStore keyStore; string keyPassword?;|}|kafka:CertKey? keyConfig = secure.key;
+    record {|crypto:KeyStore keyStore; string keyPassword?;|}|KafkaSecureSocketCertKey? keyConfig = secure.key;
     if keyConfig is record {| crypto:KeyStore keyStore; string keyPassword?; |} {
         configMap[SIGNAL_KAFKA_SSL_KEYSTORE_LOCATION] = keyConfig.keyStore.path;
         configMap[SIGNAL_KAFKA_SSL_KEYSTORE_PASSWORD] = keyConfig.keyStore.password;
-    } else if keyConfig is kafka:CertKey {
+    } else if keyConfig is KafkaSecureSocketCertKey {
         string|error certContent = readFileContent(keyConfig.certFile);
         string|error keyContent = readFileContent(keyConfig.keyFile);
 
@@ -809,8 +808,8 @@ isolated function populateSignalKafkaSecureSocketConfigurations(kafka:SecureSock
         configMap[SIGNAL_KAFKA_SSL_CIPHER_SUITES] = string:'join(",", ...ciphers);
     }
 
-    record {| kafka:Protocol name; string[] versions?;|}? protocolConfig = secure.protocol;
-    if protocolConfig is record {| kafka:Protocol name; string[] versions?; |} {
+    record {| KafkaSecureSocketProtocol name; string[] versions?; |}? protocolConfig = secure.protocol;
+    if protocolConfig is record {| KafkaSecureSocketProtocol name; string[] versions?; |} {
         configMap[SIGNAL_KAFKA_SSL_PROTOCOL] = protocolConfig.name.toString();
         string[]? versions = protocolConfig.versions;
         if versions is string[] && versions.length() > 0 {
