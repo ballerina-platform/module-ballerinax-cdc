@@ -84,9 +84,7 @@ function testGetDatabaseDebeziumProperties() {
         "database.ssl.keystore": "",
         "database.ssl.keystore.password": "",
         "database.ssl.truststore": "",
-        "database.ssl.truststore.password": "",
-        "table.include.list": "",
-        "column.include.list": "ya,tan"
+        "database.ssl.truststore.password": ""
     };
 
     DatabaseConnection config = {
@@ -101,9 +99,7 @@ function testGetDatabaseDebeziumProperties() {
             sslMode: DISABLED,
             keyStore: {path: "", password: ""},
             trustStore: {path: "", password: ""}
-        },
-        includedTables: "",
-        includedColumns: ["ya", "tan"]
+        }
     };
 
     map<string> actualProperties = {};

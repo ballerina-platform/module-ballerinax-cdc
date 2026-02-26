@@ -99,6 +99,10 @@ public type MySqlDatabaseConnection record {|
     string databaseServerId = (checkpanic random:createIntInRange(0, 100000)).toString();
     string|string[] includedDatabases?;
     string|string[] excludedDatabases?;
+    string|string[] includedTables?;
+    string|string[] excludedTables?;
+    string|string[] includedColumns?;
+    string|string[] excludedColumns?;
     int tasksMax = 1;
     SecureDatabaseConnection secure = {};
 |};
@@ -114,6 +118,7 @@ isolated function populateMySqlDebeziumProperties(MySqlListenerConfiguration con
 }
 
 isolated function populateMySqlDatabaseConfigurations(MySqlDatabaseConnection database, map<string> debeziumConfigs) {
+    // Populate generic CDC connection fields
     populateDatabaseConfigurations({
         connectorClass: database.connectorClass,
         hostname: database.hostname,
@@ -122,13 +127,18 @@ isolated function populateMySqlDatabaseConfigurations(MySqlDatabaseConnection da
         password: database.password,
         connectTimeout: database.connectTimeout,
         tasksMax: database.tasksMax,
-        secure: database.secure,
-        includedTables: database.includedTables,
-        excludedTables: database.excludedTables,
-        includedColumns: database.includedColumns,
-        excludedColumns: database.excludedColumns
+        secure: database.secure
         }, debeziumConfigs);
-    
+
+    // Populate MySQL-specific relational filtering
+    populateTableAndColumnConfigurations(
+        database.includedTables,
+        database.excludedTables,
+        database.includedColumns,
+        database.excludedColumns,
+        debeziumConfigs
+    );
+
     debeziumConfigs[MYSQL_DATABASE_SERVER_ID] = database.databaseServerId.toString();
     string|string[]? includedDatabases = database.includedDatabases;
     if includedDatabases !is () {

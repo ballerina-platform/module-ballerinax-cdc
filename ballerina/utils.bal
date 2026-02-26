@@ -37,6 +37,7 @@ const string TABLE_INCLUDE_LIST = "table.include.list";
 const string TABLE_EXCLUDE_LIST = "table.exclude.list";
 const string COLUMN_INCLUDE_LIST = "column.include.list";
 const string COLUMN_EXCLUDE_LIST = "column.exclude.list";
+const string MESSAGE_KEY_COLUMNS = "message.key.columns";
 const string DATABASE_SSL_MODE = "database.ssl.mode";
 const string DATABASE_SSL_KEYSTORE = "database.ssl.keystore";
 const string DATABASE_SSL_KEYSTORE_PASSWORD = "database.ssl.keystore.password";
@@ -634,7 +635,6 @@ public isolated function populateDatabaseConfigurations(DatabaseConnection conne
     }
 
     populateSslConfigurations(connection, configMap);
-    populateTableAndColumnConfigurations(connection, configMap);
 }
 
 isolated function populateSslConfigurations(DatabaseConnection connection, map<string> configMap) {
@@ -656,33 +656,56 @@ isolated function populateSslConfigurations(DatabaseConnection connection, map<s
     }
 }
 
-isolated function populateTableAndColumnConfigurations(DatabaseConnection connection, map<string> configMap) {
-    string|string[]? includedTables = connection.includedTables;
+# Populates table and column filtering configurations (relational databases only).
+#
+# + includedTables - Regex patterns for tables to include
+# + excludedTables - Regex patterns for tables to exclude
+# + includedColumns - Regex patterns for columns to include
+# + excludedColumns - Regex patterns for columns to exclude
+# + configMap - map to populate with filtering configurations
+public isolated function populateTableAndColumnConfigurations(
+        string|string[]? includedTables,
+        string|string[]? excludedTables,
+        string|string[]? includedColumns,
+        string|string[]? excludedColumns,
+        map<string> configMap) {
+
     if includedTables is string {
         configMap[TABLE_INCLUDE_LIST] = includedTables;
     } else if includedTables is string[] {
         configMap[TABLE_INCLUDE_LIST] = string:'join(",", ...includedTables);
     }
 
-    string|string[]? excludedTables = connection.excludedTables;
     if excludedTables is string {
         configMap[TABLE_EXCLUDE_LIST] = excludedTables;
     } else if excludedTables is string[] {
         configMap[TABLE_EXCLUDE_LIST] = string:'join(",", ...excludedTables);
     }
 
-    string|string[]? includedColumns = connection.includedColumns;
     if includedColumns is string {
         configMap[COLUMN_INCLUDE_LIST] = includedColumns;
     } else if includedColumns is string[] {
         configMap[COLUMN_INCLUDE_LIST] = string:'join(",", ...includedColumns);
     }
 
-    string|string[]? excludedColumns = connection.excludedColumns;
     if excludedColumns is string {
         configMap[COLUMN_EXCLUDE_LIST] = excludedColumns;
     } else if excludedColumns is string[] {
         configMap[COLUMN_EXCLUDE_LIST] = string:'join(",", ...excludedColumns);
+    }
+}
+
+# Populates message.key.columns configuration (relational databases only).
+# This property specifies the columns to use for the message key in change events.
+#
+# + messageKeyColumns - Composite message key columns specification
+# + configMap - map to populate with message key columns configuration
+public isolated function populateMessageKeyColumnsConfiguration(
+        string? messageKeyColumns,
+        map<string> configMap) {
+
+    if messageKeyColumns !is () {
+        configMap[MESSAGE_KEY_COLUMNS] = messageKeyColumns;
     }
 }
 

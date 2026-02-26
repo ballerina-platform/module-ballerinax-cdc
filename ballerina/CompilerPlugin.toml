@@ -3,4 +3,4 @@ id = "cdc-compiler-plugin"
 class = "io.ballerina.lib.cdc.compiler.CdcCompilerPlugin"
 
 [[dependency]]
-path = "../compiler-plugin/build/libs/cdc-compiler-plugin-1.2.2-SNAPSHOT.jar"
+path = "../compiler-plugin/build/libs/cdc-compiler-plugin-1.3.0-SNAPSHOT.jar"

@@ -725,10 +725,6 @@ public type GuardrailConfiguration record {|
 # + connectTimeout - Connection timeout in seconds
 # + tasksMax - Maximum number of connector tasks
 # + secure - SSL/TLS connection configuration
-# + includedTables - Regex patterns for tables to capture (mutually exclusive with `excludedTables`)
-# + excludedTables - Regex patterns for tables to exclude (mutually exclusive with `includedTables`)
-# + includedColumns - Regex patterns for columns to capture (mutually exclusive with `excludedColumns`)
-# + excludedColumns - Regex patterns for columns to exclude (mutually exclusive with `includedColumns`)
 public type DatabaseConnection record {|
     string connectorClass;
     string hostname;
@@ -738,10 +734,6 @@ public type DatabaseConnection record {|
     decimal connectTimeout?;
     int tasksMax = 1;
     SecureDatabaseConnection secure?;
-    string|string[] includedTables?;
-    string|string[] excludedTables?;
-    string|string[] includedColumns?;
-    string|string[] excludedColumns?;
 |};
 
 # Common CDC options applicable to all database connectors.
