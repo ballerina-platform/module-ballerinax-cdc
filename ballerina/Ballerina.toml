@@ -50,6 +50,48 @@ version = "3.0.8.Final"
 path = "./lib/debezium-storage-kafka-3.0.8.Final.jar"
 
 [[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-storage-redis"
+version = "3.0.8.Final"
+path = "./lib/debezium-storage-redis-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-storage-jdbc"
+version = "3.0.8.Final"
+path = "./lib/debezium-storage-jdbc-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "redis.clients"
+artifactId = "jedis"
+version = "4.1.1"
+path = "./lib/jedis-4.1.1.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.smallrye.reactive"
+artifactId = "mutiny"
+version = "2.6.2"
+path = "./lib/mutiny-2.6.2.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.smallrye.common"
+artifactId = "smallrye-common-annotation"
+version = "2.5.0"
+path = "./lib/smallrye-common-annotation-2.5.0.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.commons"
+artifactId = "commons-pool2"
+version = "2.11.1"
+path = "./lib/commons-pool2-2.11.1.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.jctools"
+artifactId = "jctools-core"
+version = "4.0.5"
+path = "./lib/jctools-core-4.0.5.jar"
+
+[[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "kafka-clients"
 version = "3.9.1"

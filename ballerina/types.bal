@@ -226,23 +226,29 @@ public type RedisSecureSocket record {|
 # + initialDelay - Initial delay in seconds before the first retry
 # + maxDelay - Maximum delay in seconds between retries
 # + maxAttempts - Maximum number of retry attempts
-public type RedisRetryConfig record {|
+public type RedisRetryConfiguration record {|
     decimal initialDelay = 0.3;
     decimal maxDelay = 10.0;
     int maxAttempts = 10;
 |};
 
 # Wait configuration for Redis replication acknowledgement.
+# The presence of this configuration enables the wait; its absence disables it.
 #
-# + enabled - Whether to wait for replication acknowledgement
 # + timeout - Timeout in seconds for replication wait
-# + retryEnabled - Whether to retry after a failed replication wait
-# + retryDelay - Delay in seconds between replication wait retries
-public type RedisWaitConfig record {|
-    boolean enabled = false;
+# + retryDelay - Delay in seconds between replication wait retries. If not set, the wait will not be retried and will fail immediately on timeout.
+public type RedisWaitConfiguration record {|
     decimal timeout = 1.0;
-    boolean retryEnabled = false;
-    decimal retryDelay = 1.0;
+    decimal retryDelay?;
+|};
+
+# Retry configuration for JDBC connections.
+#
+# + retryDelay - Delay in seconds between connection retry attempts
+# + maxAttempts - Maximum number of retry attempts
+public type JdbcRetryConfiguration record {|
+    decimal retryDelay = 3.0;
+    int maxAttempts = 5;
 |};
 
 # Represents the internal schema history configuration.
@@ -301,11 +307,10 @@ public type MemoryInternalSchemaStorage record {|
 # JDBC-based schema history storage configuration.
 #
 # + className - Fully-qualified class name of the JDBC schema history implementation
-# + url - JDBC connection URL
+# + url - Full JDBC connection URL (e.g., `jdbc:mysql://localhost:3306/dbname`)
 # + username - Database username
 # + password - Database password
-# + retryDelay - Delay in seconds between connection retry attempts
-# + retryMaxAttempts - Maximum connection retry attempts
+# + retryConfig - Retry configuration for JDBC connection attempts
 # + tableName - Schema history table name
 # + tableDdl - DDL for creating the schema history table
 # + tableSelect - SELECT query for reading schema history
@@ -317,8 +322,7 @@ public type JdbcInternalSchemaStorage record {|
     string url;
     string username?;
     string password?;
-    decimal retryDelay = 3.0;
-    int retryMaxAttempts = 5;
+    JdbcRetryConfiguration retryConfig = {};
     string tableName = "debezium_database_history";
     string tableDdl?;
     string tableSelect?;
@@ -338,7 +342,7 @@ public type JdbcInternalSchemaStorage record {|
 # + connectTimeout - Connection timeout in seconds
 # + socketTimeout - Socket read/write timeout in seconds
 # + retryConfig - Retry configuration for Redis connection attempts
-# + waitConfig - Wait configuration for Redis replication acknowledgement
+# + waitConfig - Wait configuration for Redis replication acknowledgement; if present, replication wait is enabled
 # + clusterEnabled - Whether Redis cluster mode is enabled
 public type RedisInternalSchemaStorage record {|
     *SchemaHistoryInternal;
@@ -351,12 +355,14 @@ public type RedisInternalSchemaStorage record {|
     RedisSecureSocket secureSocket?;
     decimal connectTimeout = 2.0;
     decimal socketTimeout = 2.0;
-    RedisRetryConfig retryConfig = {};
-    RedisWaitConfig waitConfig = {};
+    RedisRetryConfiguration retryConfig = {};
+    RedisWaitConfiguration waitConfig?;
     boolean clusterEnabled = false;
 |};
 
 # Amazon S3-based schema history storage configuration.
+# Using this storage backend requires additional dependencies to be declared in your
+# `Ballerina.toml`. Refer to the official documentation for the required `[[platform.java21.dependency]]` entries.
 #
 # + className - Fully-qualified class name of the S3 schema history implementation
 # + accessKeyId - AWS access key ID for authentication
@@ -377,6 +383,8 @@ public type AmazonS3InternalSchemaStorage record {|
 |};
 
 # Azure Blob Storage-based schema history storage configuration.
+# Using this storage backend requires additional dependencies to be declared in your
+# `Ballerina.toml`. Refer to the official documentation for the required `[[platform.java21.dependency]]` entries.
 #
 # + className - Fully-qualified class name of the Azure Blob schema history implementation
 # + connectionString - Azure Storage connection string
@@ -393,6 +401,8 @@ public type AzureBlobInternalSchemaStorage record {|
 |};
 
 # RocketMQ-based schema history storage configuration.
+# Using this storage backend requires additional dependencies to be declared in your
+# `Ballerina.toml`. Refer to the official documentation for the required `[[platform.java21.dependency]]` entries.
 #
 # + className - Fully-qualified class name of the RocketMQ schema history implementation
 # + topicName - RocketMQ topic for schema history
@@ -477,7 +487,7 @@ public type MemoryOffsetStorage record {|
 # + connectTimeout - Connection timeout in seconds
 # + socketTimeout - Socket read/write timeout in seconds
 # + retryConfig - Retry configuration for Redis connection attempts
-# + waitConfig - Wait configuration for Redis replication acknowledgement
+# + waitConfig - Wait configuration for Redis replication acknowledgement; if present, replication wait is enabled
 # + clusterEnabled - Whether Redis cluster mode is enabled
 public type RedisOffsetStorage record {|
     *OffsetStorageInternal;
@@ -490,19 +500,18 @@ public type RedisOffsetStorage record {|
     RedisSecureSocket secureSocket?;
     decimal connectTimeout = 2.0;
     decimal socketTimeout = 2.0;
-    RedisRetryConfig retryConfig = {};
-    RedisWaitConfig waitConfig = {};
+    RedisRetryConfiguration retryConfig = {};
+    RedisWaitConfiguration waitConfig?;
     boolean clusterEnabled = false;
 |};
 
 # JDBC-based offset storage configuration.
 #
 # + className - Fully-qualified class name of the JDBC offset storage implementation
-# + url - JDBC connection URL
+# + url - Full JDBC connection URL (e.g., `jdbc:mysql://localhost:3306/dbname`)
 # + username - Database username
 # + password - Database password
-# + retryDelay - Delay in seconds between connection retry attempts
-# + retryMaxAttempts - Maximum connection retry attempts
+# + retryConfig - Retry configuration for JDBC connection attempts
 # + tableName - Offset storage table name
 # + tableDdl - DDL for creating the offset storage table
 # + tableSelect - SELECT query for reading offsets
@@ -514,8 +523,7 @@ public type JdbcOffsetStorage record {|
     string url;
     string username?;
     string password?;
-    decimal retryDelay = 3.0;
-    int retryMaxAttempts = 5;
+    JdbcRetryConfiguration retryConfig = {};
     string tableName = "debezium_offset_storage";
     string tableDdl?;
     string tableSelect?;
@@ -535,10 +543,10 @@ public type HeartbeatConfiguration record {|
 # Base signal configuration for ad-hoc snapshots and runtime control.
 #
 # + enabledChannels - Signal channels to enable (source, kafka, file, jmx)
-# + dataCollection - Fully-qualified table name for source-based signals
+# + dataCollectionTable - Fully-qualified table name for source-based signals
 public type SignalConfigurationInternal record {|
     SignalChannel[] enabledChannels = [SOURCE];
-    string dataCollection?;
+    string dataCollectionTable?;
 |};
 
 # Kafka-based signal configuration.
@@ -681,11 +689,11 @@ public type DataTypeConfiguration record {
 
 # Error handling configuration for connector failure and recovery behavior.
 #
-# + retryMaxAttempts - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled)
+# + maxAttempts - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled)
 # + retryInitialDelay - Wait time in seconds before restarting after a retriable error
 # + retryMaxDelay - Maximum wait time in seconds before restarting after a retriable error
-public type ConnectionErrorHandlingConfiguration record {|
-    int retryMaxAttempts = -1;
+public type ConnectionRetryConfiguration record {|
+    int maxAttempts = -1;
     decimal retryInitialDelay = 0.3;
     decimal retryMaxDelay = 10.0;
 |};
@@ -748,15 +756,15 @@ public type DatabaseConnection record {|
 # + maxQueueSize - Maximum number of events in the internal queue
 # + maxBatchSize - Maximum number of events per processing batch
 # + queryTimeout - Database query timeout in seconds
-# + heartbeat - Heartbeat configuration for connection liveness
-# + signal - Signal channel configuration for ad-hoc control
-# + transactionMetadata - Transaction boundary event configuration
-# + columnTransform - Column masking and transformation configuration
+# + heartbeatConfig - Heartbeat configuration for connection liveness
+# + signalConfig - Signal channel configuration for ad-hoc control
+# + transactionMetadataConfig - Transaction boundary event configuration
+# + columnTransformConfig - Column masking and transformation configuration
 # + topicConfig - Topic naming and routing configuration
-# + connectionErrorHandling - Error handling and retry configuration
-# + performance - Performance tuning configuration
-# + monitoring - Monitoring and metric configuration
-# + guardrail - Guardrail configuration to prevent over-capture
+# + connectionRetryConfig - Error handling and retry configuration
+# + performanceConfig - Performance tuning configuration
+# + monitoringConfig - Monitoring and metric configuration
+# + guardrailConfig - Guardrail configuration to prevent over-capture
 public type Options record {
     SnapshotMode snapshotMode = INITIAL;
     EventProcessingFailureHandlingMode eventProcessingFailureHandlingMode = WARN;
@@ -766,15 +774,15 @@ public type Options record {
     int maxQueueSize = 8192;
     int maxBatchSize = 2048;
     decimal queryTimeout = 60;
-    HeartbeatConfiguration heartbeat?;
-    SignalConfiguration signal?;
-    TransactionMetadataConfiguration transactionMetadata?;
-    ColumnTransformConfiguration columnTransform?;
+    HeartbeatConfiguration heartbeatConfig?;
+    SignalConfiguration signalConfig?;
+    TransactionMetadataConfiguration transactionMetadataConfig?;
+    ColumnTransformConfiguration columnTransformConfig?;
     TopicConfiguration topicConfig?;
-    ConnectionErrorHandlingConfiguration connectionErrorHandling?;
-    PerformanceConfiguration performance?;
-    MonitoringConfiguration monitoring?;
-    GuardrailConfiguration guardrail?;
+    ConnectionRetryConfiguration connectionRetryConfig?;
+    PerformanceConfiguration performanceConfig?;
+    MonitoringConfiguration monitoringConfig?;
+    GuardrailConfiguration guardrailConfig?;
 };
 
 # Union type representing all supported internal schema history storage configurations.

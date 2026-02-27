@@ -35,7 +35,7 @@ function testPopulateOptionsWithHeartbeat() {
     };
 
     SampleDBOptions options = {
-        heartbeat: {
+        heartbeatConfig: {
             interval: 5,
             actionQuery: "SELECT 1"
         }
@@ -60,7 +60,7 @@ function testPopulateOptionsWithFileSignal() {
     };
 
     SampleDBOptions options = {
-        signal: {
+        signalConfig: {
             enabledChannels: [FILE],
             fileName: "/tmp/signals.txt"
         }
@@ -86,7 +86,7 @@ function testPopulateOptionsWithKafkaSignal() {
     };
 
     SampleDBOptions options = {
-        signal: {
+        signalConfig: {
             enabledChannels: [KAFKA],
             topicName: "cdc-signals",
             bootstrapServers: "localhost:9092"
@@ -114,7 +114,7 @@ function testPopulateOptionsWithTransactionMetadata() {
     };
 
     SampleDBOptions options = {
-        transactionMetadata: {
+        transactionMetadataConfig: {
             enabled: true
         }
     };
@@ -134,7 +134,7 @@ function testPopulateOptionsWithColumnHashMask() {
     };
 
     SampleDBOptions options = {
-        columnTransform: {
+        columnTransformConfig: {
             maskWithHash: [
                 {
                     regexPatterns: ["inventory.orders.customerName", "inventory.shipment.customerName"],
@@ -161,7 +161,7 @@ function testPopulateOptionsWithColumnCharMask() {
     };
 
     SampleDBOptions options = {
-        columnTransform: {
+        columnTransformConfig: {
             maskWithChars: [
                 {
                     length: 10,
@@ -193,7 +193,7 @@ function testPopulateOptionsWithColumnTruncate() {
     };
 
     SampleDBOptions options = {
-        columnTransform: {
+        columnTransformConfig: {
             truncateToChars: [
                 {
                     length: 20,
@@ -238,8 +238,8 @@ function testPopulateOptionsWithErrorHandling() {
     };
 
     SampleDBOptions options = {
-        connectionErrorHandling: {
-            retryMaxAttempts: 5
+        connectionRetryConfig: {
+            maxAttempts: 5
         }
     };
 
@@ -281,7 +281,7 @@ function testPopulateOptionsWithMonitoring() {
     };
 
     SampleDBOptions options = {
-        performance: {
+        performanceConfig: {
             maxQueueSizeInBytes: 1048576
         }
     };
@@ -301,7 +301,7 @@ function testPopulateOptionsWithGuardrail() {
     };
 
     SampleDBOptions options = {
-        performance: {
+        performanceConfig: {
             queryFetchSize: 1000
         }
     };

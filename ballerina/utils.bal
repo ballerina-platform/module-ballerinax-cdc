@@ -571,24 +571,24 @@ public isolated function populateOptions(Options options, map<string> configMap,
     configMap[DECIMAL_HANDLING_MODE] = options.decimalHandlingMode;
     configMap[DATABASE_QUERY_TIMEOUTS_MS] = getMillisecondValueOf(options.queryTimeout);
 
-    HeartbeatConfiguration? heartbeat = options.heartbeat;
-    if heartbeat is HeartbeatConfiguration {
-        populateHeartbeatConfiguration(heartbeat, configMap);
+    HeartbeatConfiguration? heartbeatConfig = options.heartbeatConfig;
+    if heartbeatConfig is HeartbeatConfiguration {
+        populateHeartbeatConfiguration(heartbeatConfig, configMap);
     }
 
-    SignalConfiguration? signal = options.signal;
-    if signal is SignalConfiguration {
-        populateSignalConfiguration(signal, configMap);
+    SignalConfiguration? signalConfig = options.signalConfig;
+    if signalConfig is SignalConfiguration {
+        populateSignalConfiguration(signalConfig, configMap);
     }
 
-    TransactionMetadataConfiguration? transactionMetadata = options.transactionMetadata;
-    if transactionMetadata is TransactionMetadataConfiguration {
-        populateTransactionMetadataConfiguration(transactionMetadata, configMap);
+    TransactionMetadataConfiguration? transactionMetadataConfig = options.transactionMetadataConfig;
+    if transactionMetadataConfig is TransactionMetadataConfiguration {
+        populateTransactionMetadataConfiguration(transactionMetadataConfig, configMap);
     }
 
-    ColumnTransformConfiguration? columnTransform = options.columnTransform;
-    if columnTransform is ColumnTransformConfiguration {
-        populateColumnTransformConfiguration(columnTransform, configMap);
+    ColumnTransformConfiguration? columnTransformConfig = options.columnTransformConfig;
+    if columnTransformConfig is ColumnTransformConfiguration {
+        populateColumnTransformConfiguration(columnTransformConfig, configMap);
     }
 
     TopicConfiguration? topicConfig = options.topicConfig;
@@ -596,24 +596,24 @@ public isolated function populateOptions(Options options, map<string> configMap,
         populateTopicConfiguration(topicConfig, configMap);
     }
 
-    ConnectionErrorHandlingConfiguration? connectionErrorHandling = options.connectionErrorHandling;
-    if connectionErrorHandling is ConnectionErrorHandlingConfiguration {
-        populateErrorHandlingConfiguration(connectionErrorHandling, configMap);
+    ConnectionRetryConfiguration? connectionRetryConfig = options.connectionRetryConfig;
+    if connectionRetryConfig is ConnectionRetryConfiguration {
+        populateErrorHandlingConfiguration(connectionRetryConfig, configMap);
     }
 
-    PerformanceConfiguration? performance = options.performance;
-    if performance is PerformanceConfiguration {
-        populatePerformanceConfiguration(performance, configMap);
+    PerformanceConfiguration? performanceConfig = options.performanceConfig;
+    if performanceConfig is PerformanceConfiguration {
+        populatePerformanceConfiguration(performanceConfig, configMap);
     }
 
-    MonitoringConfiguration? monitoring = options.monitoring;
-    if monitoring is MonitoringConfiguration {
-        populateMonitoringConfiguration(monitoring, configMap);
+    MonitoringConfiguration? monitoringConfig = options.monitoringConfig;
+    if monitoringConfig is MonitoringConfiguration {
+        populateMonitoringConfiguration(monitoringConfig, configMap);
     }
 
-    GuardrailConfiguration? guardrail = options.guardrail;
-    if guardrail is GuardrailConfiguration {
-        populateGuardrailConfiguration(guardrail, configMap);
+    GuardrailConfiguration? guardrailConfig = options.guardrailConfig;
+    if guardrailConfig is GuardrailConfiguration {
+        populateGuardrailConfiguration(guardrailConfig, configMap);
     }
 
     populateAdditionalConfigurations(options, configMap, optionsSubType);
@@ -750,9 +750,9 @@ public isolated function populateHeartbeatConfiguration(HeartbeatConfiguration c
 public isolated function populateSignalConfiguration(SignalConfiguration config, map<string> configMap) {
     configMap[SIGNAL_ENABLED_CHANNELS] = string:'join(",", ...config.enabledChannels);
 
-    string? dataCollection = config.dataCollection;
-    if dataCollection is string {
-        configMap[SIGNAL_DATA_COLLECTION] = dataCollection;
+    string? dataCollectionTable = config.dataCollectionTable;
+    if dataCollectionTable is string {
+        configMap[SIGNAL_DATA_COLLECTION] = dataCollectionTable;
     }
 
     if config is KafkaSignalConfiguration {
@@ -988,8 +988,8 @@ public isolated function populateDataTypeConfiguration(DataTypeConfiguration con
 #
 # + config - error handling configuration
 # + configMap - map to populate with error handling properties
-public isolated function populateErrorHandlingConfiguration(ConnectionErrorHandlingConfiguration config, map<string> configMap) {
-    configMap[ERRORS_MAX_RETRIES] = config.retryMaxAttempts.toString();
+public isolated function populateErrorHandlingConfiguration(ConnectionRetryConfiguration config, map<string> configMap) {
+    configMap[ERRORS_MAX_RETRIES] = config.maxAttempts.toString();
     configMap[ERRORS_RETRY_DELAY_INITIAL_MS] = getMillisecondValueOf(config.retryInitialDelay);
     configMap[ERRORS_RETRY_DELAY_MAX_MS] = getMillisecondValueOf(config.retryMaxDelay);
 }
@@ -1019,12 +1019,12 @@ public isolated function populateMonitoringConfiguration(MonitoringConfiguration
     }
 }
 
-# Populates guardrail configuration properties.
+# Populates guardrailConfig configuration properties.
 #
-# + config - guardrail configuration
-# + configMap - map to populate with guardrail properties
+# + config - guardrailConfig configuration
+# + configMap - map to populate with guardrailConfig properties
 public isolated function populateGuardrailConfiguration(GuardrailConfiguration config, map<string> configMap) {
-    // Note: Debezium doesn't have direct guardrail properties
+    // Note: Debezium doesn't have direct guardrailConfig properties
     // This is a placeholder for future implementation
 }
 
@@ -1045,8 +1045,8 @@ public isolated function populateJdbcSchemaHistoryConfiguration(JdbcInternalSche
         configMap[SCHEMA_HISTORY_INTERNAL_JDBC_PASSWORD] = password;
     }
 
-    configMap[SCHEMA_HISTORY_INTERNAL_JDBC_RETRY_DELAY_MS] = getMillisecondValueOf(storage.retryDelay);
-    configMap[SCHEMA_HISTORY_INTERNAL_JDBC_RETRY_MAX_ATTEMPTS] = storage.retryMaxAttempts.toString();
+    configMap[SCHEMA_HISTORY_INTERNAL_JDBC_RETRY_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.retryDelay);
+    configMap[SCHEMA_HISTORY_INTERNAL_JDBC_RETRY_MAX_ATTEMPTS] = storage.retryConfig.maxAttempts.toString();
     configMap[SCHEMA_HISTORY_INTERNAL_JDBC_TABLE_NAME] = storage.tableName;
 
     string? tableDdl = storage.tableDdl;
@@ -1126,10 +1126,20 @@ public isolated function populateRedisSchemaHistoryConfiguration(RedisInternalSc
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_INITIAL_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.initialDelay);
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_MAX_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.maxDelay);
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_MAX_ATTEMPTS] = storage.retryConfig.maxAttempts.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = storage.waitConfig.enabled.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(storage.waitConfig.timeout);
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = storage.waitConfig.retryEnabled.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(storage.waitConfig.retryDelay);
+    RedisWaitConfiguration? waitConfig = storage.waitConfig;
+    if waitConfig is RedisWaitConfiguration {
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = "true";
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(waitConfig.timeout);
+        decimal? retryDelay = waitConfig.retryDelay;
+        if retryDelay is decimal {
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = "true";
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(retryDelay);
+        } else {
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = "false";
+        }
+    } else {
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = "false";
+    }
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_CLUSTER_ENABLED] = storage.clusterEnabled.toString();
 }
 
@@ -1262,10 +1272,20 @@ public isolated function populateRedisOffsetStorageConfiguration(RedisOffsetStor
     configMap[OFFSET_STORAGE_REDIS_RETRY_INITIAL_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.initialDelay);
     configMap[OFFSET_STORAGE_REDIS_RETRY_MAX_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.maxDelay);
     configMap[OFFSET_STORAGE_REDIS_RETRY_MAX_ATTEMPTS] = storage.retryConfig.maxAttempts.toString();
-    configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = storage.waitConfig.enabled.toString();
-    configMap[OFFSET_STORAGE_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(storage.waitConfig.timeout);
-    configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = storage.waitConfig.retryEnabled.toString();
-    configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(storage.waitConfig.retryDelay);
+    RedisWaitConfiguration? waitConfig = storage.waitConfig;
+    if waitConfig is RedisWaitConfiguration {
+        configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = "true";
+        configMap[OFFSET_STORAGE_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(waitConfig.timeout);
+        decimal? retryDelay = waitConfig.retryDelay;
+        if retryDelay is decimal {
+            configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = "true";
+            configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(retryDelay);
+        } else {
+            configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = "false";
+        }
+    } else {
+        configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = "false";
+    }
     configMap[OFFSET_STORAGE_REDIS_CLUSTER_ENABLED] = storage.clusterEnabled.toString();
 }
 
@@ -1286,8 +1306,8 @@ public isolated function populateJdbcOffsetStorageConfiguration(JdbcOffsetStorag
         configMap[OFFSET_STORAGE_JDBC_PASSWORD] = password;
     }
 
-    configMap[OFFSET_STORAGE_JDBC_RETRY_DELAY_MS] = getMillisecondValueOf(storage.retryDelay);
-    configMap[OFFSET_STORAGE_JDBC_RETRY_MAX_ATTEMPTS] = storage.retryMaxAttempts.toString();
+    configMap[OFFSET_STORAGE_JDBC_RETRY_DELAY_MS] = getMillisecondValueOf(storage.retryConfig.retryDelay);
+    configMap[OFFSET_STORAGE_JDBC_RETRY_MAX_ATTEMPTS] = storage.retryConfig.maxAttempts.toString();
     configMap[OFFSET_STORAGE_JDBC_TABLE_NAME] = storage.tableName;
 
     string? tableDdl = storage.tableDdl;
