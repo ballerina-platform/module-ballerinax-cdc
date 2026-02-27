@@ -387,9 +387,9 @@ public type AzureBlobInternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.azure.blob.history.AzureBlobSchemaHistory";
     string connectionString;
-    string accountName;
+    string accountName?;
     string containerName;
-    string blobName;
+    string blobName?;
 |};
 
 # RocketMQ-based schema history storage configuration.
@@ -409,11 +409,11 @@ public type RocketMQInternalSchemaStorage record {|
     string topicName;
     string nameServerAddress;
     boolean aclEnabled = false;
-    string accessKey;
-    string secretKey;
-    int recoveryAttempts;
+    string accessKey?;
+    string secretKey?;
+    int recoveryAttempts?;
     decimal recoveryPollInterval = 0.1;
-    decimal storeRecordTimeout;
+    decimal storeRecordTimeout?;
 |};
 
 # Represents the base configuration for offset storage.
@@ -536,7 +536,7 @@ public type HeartbeatConfiguration record {|
 #
 # + enabledChannels - Signal channels to enable (source, kafka, file, jmx)
 # + dataCollection - Fully-qualified table name for source-based signals
-public type CommonSignalConfiguration record {|
+public type SignalConfigurationInternal record {|
     SignalChannel[] enabledChannels = [SOURCE];
     string dataCollection?;
 |};
@@ -549,21 +549,23 @@ public type CommonSignalConfiguration record {|
 # + securityProtocol - Kafka security protocol (PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL)
 # + auth - SASL authentication configuration for the signal consumer
 # + secureSocket - SSL/TLS configuration for the signal consumer
+# + pollTimeout - Timeout in seconds for polling signal messages from Kafka
 public type KafkaSignalConfiguration record {|
-    *CommonSignalConfiguration;
-    string topicName?;
+    *SignalConfigurationInternal;
+    string topicName = "bal_cdc_signals";
     string|string[] bootstrapServers?;
-    string groupId?;
+    string groupId = "kafka-signal";
     KafkaSecurityProtocol securityProtocol = PROTOCOL_PLAINTEXT;
     KafkaAuthenticationConfiguration auth?;
     KafkaSecureSocket secureSocket?;
+    decimal pollTimeout = 0.1;
 |};
 
 # File-based signal configuration.
 #
 # + fileName - Path to the signal file monitored for changes
 public type FileSignalConfiguration record {|
-    *CommonSignalConfiguration;
+    *SignalConfigurationInternal;
     string fileName = "file-signals.txt";
 |};
 
@@ -679,13 +681,13 @@ public type DataTypeConfiguration record {
 
 # Error handling configuration for connector failure and recovery behavior.
 #
-# + maxRetryAttempts - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled)
-# + retriableRestartWait - Wait time in seconds before restarting after a retriable error
-# + tombstonesOnDelete - Whether to emit tombstone events after delete events
-public type ErrorHandlingConfiguration record {|
-    int maxRetryAttempts = -1;
-    decimal retriableRestartWait = 10.0;
-    boolean tombstonesOnDelete = true;
+# + retryMaxAttempts - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled)
+# + retryInitialDelay - Wait time in seconds before restarting after a retriable error
+# + retryMaxDelay - Maximum wait time in seconds before restarting after a retriable error
+public type ConnectionErrorHandlingConfiguration record {|
+    int retryMaxAttempts = -1;
+    decimal retryInitialDelay = 0.3;
+    decimal retryMaxDelay = 10.0;
 |};
 
 # Performance tuning configuration.
@@ -751,7 +753,7 @@ public type DatabaseConnection record {|
 # + transactionMetadata - Transaction boundary event configuration
 # + columnTransform - Column masking and transformation configuration
 # + topicConfig - Topic naming and routing configuration
-# + errorHandling - Error handling and retry configuration
+# + connectionErrorHandling - Error handling and retry configuration
 # + performance - Performance tuning configuration
 # + monitoring - Monitoring and metric configuration
 # + guardrail - Guardrail configuration to prevent over-capture
@@ -769,7 +771,7 @@ public type Options record {
     TransactionMetadataConfiguration transactionMetadata?;
     ColumnTransformConfiguration columnTransform?;
     TopicConfiguration topicConfig?;
-    ErrorHandlingConfiguration errorHandling?;
+    ConnectionErrorHandlingConfiguration connectionErrorHandling?;
     PerformanceConfiguration performance?;
     MonitoringConfiguration monitoring?;
     GuardrailConfiguration guardrail?;

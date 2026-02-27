@@ -20,6 +20,8 @@ package io.ballerina.lib.cdc.utils;
 
 import io.ballerina.runtime.api.creators.ValueCreator;
 import io.ballerina.runtime.api.types.RecordType;
+import io.ballerina.runtime.api.types.Type;
+import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BString;
@@ -28,11 +30,29 @@ import io.ballerina.runtime.api.values.BTypedesc;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class contains utility methods for the CDC module.
+ *
+ * @since 1.3.0
+ */
 public class Utils {
+
+    /**
+     * This method returns the additional configuration keys provided in the options map which are not defined in the
+     * typedesc.
+     *
+     * @param options the options map provided by the user.
+     * @param bTypedesc type description of the DB-specific options record.
+     * @return A Ballerina array containing the additional configuration keys.
+     */
     public static BArray getAdditionalConfigKeys(BMap<BString, Object> options, BTypedesc bTypedesc) {
         List<BString> additionalConfigs = new ArrayList<>();
+        Type describedType = TypeUtils.getReferredType(bTypedesc.getDescribingType());
+        if (!(describedType instanceof RecordType recordType)) {
+            return ValueCreator.createArrayValue(new BString[0]);
+        }
         for (BString key : options.getKeys()) {
-            if (!((RecordType) bTypedesc.getDescribingType()).getFields().containsKey(key.getValue())) {
+            if (!recordType.getFields().containsKey(key.getValue())) {
                 additionalConfigs.add(key);
             }
         }

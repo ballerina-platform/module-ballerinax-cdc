@@ -238,8 +238,8 @@ function testPopulateOptionsWithErrorHandling() {
     };
 
     SampleDBOptions options = {
-        errorHandling: {
-            maxRetryAttempts: 5
+        connectionErrorHandling: {
+            retryMaxAttempts: 5
         }
     };
 

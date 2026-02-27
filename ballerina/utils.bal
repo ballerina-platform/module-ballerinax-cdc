@@ -134,6 +134,7 @@ const string SIGNAL_DATA_COLLECTION = "signal.data.collection";
 const string SIGNAL_KAFKA_TOPIC = "signal.kafka.topic";
 const string SIGNAL_KAFKA_BOOTSTRAP_SERVERS = "signal.kafka.bootstrap.servers";
 const string SIGNAL_KAFKA_GROUP_ID = "signal.kafka.groupId";
+const string SIGNAL_KAFKA_POLL_TIMEOUT = "signal.kafka.poll.timeout.ms";
 const string SIGNAL_FILE = "signal.file";
 
 // Extended snapshot properties
@@ -174,6 +175,7 @@ const string TIME_PRECISION_MODE = "time.precision.mode";
 // Error handling properties
 const string ERRORS_MAX_RETRIES = "errors.max.retries";
 const string ERRORS_RETRY_DELAY_INITIAL_MS = "errors.retry.delay.initial.ms";
+const string ERRORS_RETRY_DELAY_MAX_MS = "errors.retry.delay.max.ms";
 
 // Performance properties
 const string MAX_QUEUE_SIZE_IN_BYTES = "max.queue.size.in.bytes";
@@ -594,9 +596,9 @@ public isolated function populateOptions(Options options, map<string> configMap,
         populateTopicConfiguration(topicConfig, configMap);
     }
 
-    ErrorHandlingConfiguration? errorHandling = options.errorHandling;
-    if errorHandling is ErrorHandlingConfiguration {
-        populateErrorHandlingConfiguration(errorHandling, configMap);
+    ConnectionErrorHandlingConfiguration? connectionErrorHandling = options.connectionErrorHandling;
+    if connectionErrorHandling is ConnectionErrorHandlingConfiguration {
+        populateErrorHandlingConfiguration(connectionErrorHandling, configMap);
     }
 
     PerformanceConfiguration? performance = options.performance;
@@ -754,10 +756,7 @@ public isolated function populateSignalConfiguration(SignalConfiguration config,
     }
 
     if config is KafkaSignalConfiguration {
-        string? topicName = config.topicName;
-        if topicName is string {
-            configMap[SIGNAL_KAFKA_TOPIC] = topicName;
-        }
+        configMap[SIGNAL_KAFKA_TOPIC] = config.topicName;
 
         string|string[]? bootstrapServers = config.bootstrapServers;
         if bootstrapServers is string {
@@ -766,10 +765,7 @@ public isolated function populateSignalConfiguration(SignalConfiguration config,
             configMap[SIGNAL_KAFKA_BOOTSTRAP_SERVERS] = string:'join(",", ...bootstrapServers);
         }
 
-        string? groupId = config.groupId;
-        if groupId is string {
-            configMap[SIGNAL_KAFKA_GROUP_ID] = groupId;
-        }
+        configMap[SIGNAL_KAFKA_GROUP_ID] = config.groupId;
 
         KafkaSecurityProtocol? securityProtocol = config.securityProtocol;
         if securityProtocol is KafkaSecurityProtocol {
@@ -785,6 +781,7 @@ public isolated function populateSignalConfiguration(SignalConfiguration config,
         if secureSocket is KafkaSecureSocket {
             populateSignalKafkaSecureSocketConfigurations(secureSocket, configMap);
         }
+        configMap[SIGNAL_KAFKA_POLL_TIMEOUT] = getMillisecondValueOf(config.pollTimeout);
     } else {
         configMap[SIGNAL_FILE] = config.fileName;
     }
@@ -813,7 +810,12 @@ isolated function populateSignalKafkaSecureSocketConfigurations(KafkaSecureSocke
     } else if keyConfig is KafkaSecureSocketCertKey {
         string|error certContent = readFileContent(keyConfig.certFile);
         string|error keyContent = readFileContent(keyConfig.keyFile);
-
+        if certContent is error {
+            log:printError(string `Error reading certificate file: ${keyConfig.certFile}`, certContent);
+        }
+        if keyContent is error {
+            log:printError(string `Error reading key file: ${keyConfig.keyFile}`, keyContent);
+        }
         if certContent is string && keyContent is string {
             configMap[SIGNAL_KAFKA_SSL_KEYSTORE_TYPE] = "PEM";
             configMap[SIGNAL_KAFKA_SSL_KEYSTORE_CERTIFICATE_CHAIN] = certContent;
@@ -986,10 +988,10 @@ public isolated function populateDataTypeConfiguration(DataTypeConfiguration con
 #
 # + config - error handling configuration
 # + configMap - map to populate with error handling properties
-public isolated function populateErrorHandlingConfiguration(ErrorHandlingConfiguration config, map<string> configMap) {
-    configMap[ERRORS_MAX_RETRIES] = config.maxRetryAttempts.toString();
-    configMap[ERRORS_RETRY_DELAY_INITIAL_MS] = getMillisecondValueOf(config.retriableRestartWait);
-    configMap[TOMBSTONES_ON_DELETE] = config.tombstonesOnDelete.toString();
+public isolated function populateErrorHandlingConfiguration(ConnectionErrorHandlingConfiguration config, map<string> configMap) {
+    configMap[ERRORS_MAX_RETRIES] = config.retryMaxAttempts.toString();
+    configMap[ERRORS_RETRY_DELAY_INITIAL_MS] = getMillisecondValueOf(config.retryInitialDelay);
+    configMap[ERRORS_RETRY_DELAY_MAX_MS] = getMillisecondValueOf(config.retryMaxDelay);
 }
 
 # Populates performance configuration properties.
@@ -1166,9 +1168,15 @@ public isolated function populateS3SchemaHistoryConfiguration(AmazonS3InternalSc
 # + configMap - map to populate with Azure Blob schema history properties
 public isolated function populateAzureBlobSchemaHistoryConfiguration(AzureBlobInternalSchemaStorage storage, map<string> configMap) {
     configMap[SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_CONNECTION_STRING] = storage.connectionString;
-    configMap[SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_ACCOUNT_NAME] = storage.accountName;
+    string? accountName = storage.accountName;
+    if accountName is string {
+        configMap[SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_ACCOUNT_NAME] = accountName;
+    }
     configMap[SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_CONTAINER_NAME] = storage.containerName;
-    configMap[SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_BLOB_NAME] = storage.blobName;
+    string? blobName = storage.blobName;
+    if blobName is string {
+        configMap[SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_BLOB_NAME] = blobName;
+    }
 }
 
 # Populates RocketMQ schema history configuration properties.
@@ -1179,11 +1187,23 @@ public isolated function populateRocketMQSchemaHistoryConfiguration(RocketMQInte
     configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_TOPIC] = storage.topicName;
     configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_NAMESRV_ADDR] = storage.nameServerAddress;
     configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_ACL_ENABLED] = storage.aclEnabled.toString();
-    configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_ACCESS_KEY] = storage.accessKey;
-    configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_SECRET_KEY] = storage.secretKey;
-    configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_RECOVERY_ATTEMPTS] = storage.recoveryAttempts.toString();
+    string? accessKey = storage.accessKey;
+    if accessKey is string {
+        configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_ACCESS_KEY] = accessKey;
+    }
+    string? secretKey = storage.secretKey;
+    if secretKey is string {
+        configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_SECRET_KEY] = secretKey;
+    }
+    int? recoveryAttempts = storage.recoveryAttempts;
+    if recoveryAttempts is int {
+        configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_RECOVERY_ATTEMPTS] = recoveryAttempts.toString();
+    }
     configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_RECOVERY_POLL_INTERVAL_MS] = getMillisecondValueOf(storage.recoveryPollInterval);
-    configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_STORE_RECORD_TIMEOUT] = getMillisecondValueOf(storage.storeRecordTimeout);
+    decimal? storeRecordTimeout = storage.storeRecordTimeout;
+    if storeRecordTimeout is decimal {
+        configMap[SCHEMA_HISTORY_INTERNAL_ROCKETMQ_STORE_RECORD_TIMEOUT] = getMillisecondValueOf(storeRecordTimeout);
+    }
 }
 
 # Populates Redis offset storage configuration properties.
