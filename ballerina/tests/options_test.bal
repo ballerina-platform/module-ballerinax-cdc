@@ -61,8 +61,9 @@ function testPopulateOptionsWithFileSignal() {
 
     SampleDBOptions options = {
         signalConfig: {
-            enabledChannels: [FILE],
-            fileName: "/tmp/signals.txt"
+            fileConfig: {
+                fileName: "/tmp/signals.txt"
+            }
         }
     };
 
@@ -87,9 +88,10 @@ function testPopulateOptionsWithKafkaSignal() {
 
     SampleDBOptions options = {
         signalConfig: {
-            enabledChannels: [KAFKA],
-            topicName: "cdc-signals",
-            bootstrapServers: "localhost:9092"
+            kafkaConfig: {
+                topicName: "cdc-signals",
+                bootstrapServers: "localhost:9092"
+            }
         }
     };
 

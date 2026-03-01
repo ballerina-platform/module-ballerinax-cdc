@@ -117,14 +117,6 @@ public enum TimePrecisionMode {
     NANOSECONDS = "nanoseconds"
 }
 
-# Represents signal channel types.
-public enum SignalChannel {
-    SOURCE = "source",
-    KAFKA = "kafka",
-    FILE = "file",
-    JMX = "jmx"
-}
-
 # Represents guardrail limit actions.
 public enum GuardrailLimitAction {
     FAIL = "fail",
@@ -540,13 +532,11 @@ public type HeartbeatConfiguration record {|
     string actionQuery?;
 |};
 
-# Base signal configuration for ad-hoc snapshots and runtime control.
+# Source (database table) signal channel configuration.
 #
-# + enabledChannels - Signal channels to enable (source, kafka, file, jmx)
-# + dataCollectionTable - Fully-qualified table name for source-based signals
-public type SignalConfigurationInternal record {|
-    SignalChannel[] enabledChannels = [SOURCE];
-    string dataCollectionTable?;
+# + dataCollectionTable - Fully-qualified table name (e.g., "mydb.debezium_signal")
+public type SourceSignalConfiguration record {|
+    string dataCollectionTable;
 |};
 
 # Kafka-based signal configuration.
@@ -559,7 +549,6 @@ public type SignalConfigurationInternal record {|
 # + secureSocket - SSL/TLS configuration for the signal consumer
 # + pollTimeout - Timeout in seconds for polling signal messages from Kafka
 public type KafkaSignalConfiguration record {|
-    *SignalConfigurationInternal;
     string topicName = "bal_cdc_signals";
     string|string[] bootstrapServers?;
     string groupId = "kafka-signal";
@@ -569,16 +558,30 @@ public type KafkaSignalConfiguration record {|
     decimal pollTimeout = 0.1;
 |};
 
-# File-based signal configuration.
+# File-based signal channel configuration.
 #
 # + fileName - Path to the signal file monitored for changes
 public type FileSignalConfiguration record {|
-    *SignalConfigurationInternal;
     string fileName = "file-signals.txt";
 |};
 
-# Signal configuration supporting either file-based or Kafka-based signaling.
-public type SignalConfiguration FileSignalConfiguration|KafkaSignalConfiguration;
+# JMX-based signal channel configuration.
+public type JmxSignalConfiguration record {|
+    // JMX specific configs can go here if needed in future
+|};
+
+# All supported signal channel configurations for ad-hoc control of the CDC connector.
+#
+# + sourceConfig - Configuration for a signal channel implemented using a database table
+# + kafkaConfig - Configuration for a signal channel implemented using Kafka topics
+# + fileConfig - Configuration for a signal channel implemented using file monitoring
+# + jmxConfig - Configuration for a signal channel implemented using JMX
+public type SignalConfiguration record {
+    SourceSignalConfiguration sourceConfig?;
+    KafkaSignalConfiguration kafkaConfig?;
+    FileSignalConfiguration fileConfig?;
+    JmxSignalConfiguration jmxConfig?;
+};
 
 # Incremental (non-blocking) snapshot configuration.
 #
@@ -786,7 +789,15 @@ public type Options record {
 };
 
 # Union type representing all supported internal schema history storage configurations.
-public type InternalSchemaStorage FileInternalSchemaStorage|KafkaInternalSchemaStorage|MemoryInternalSchemaStorage|JdbcInternalSchemaStorage|RedisInternalSchemaStorage|AmazonS3InternalSchemaStorage|AzureBlobInternalSchemaStorage|RocketMQInternalSchemaStorage;
+public type InternalSchemaStorage 
+    FileInternalSchemaStorage
+    |KafkaInternalSchemaStorage
+    |MemoryInternalSchemaStorage
+    |JdbcInternalSchemaStorage
+    |RedisInternalSchemaStorage
+    |AmazonS3InternalSchemaStorage
+    |AzureBlobInternalSchemaStorage
+    |RocketMQInternalSchemaStorage;
 
 # Union type representing all supported offset storage configurations.
 public type OffsetStorage FileOffsetStorage|KafkaOffsetStorage|MemoryOffsetStorage|JdbcOffsetStorage|RedisOffsetStorage;
