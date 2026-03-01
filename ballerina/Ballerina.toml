@@ -1,7 +1,7 @@
 [package]
 org = "ballerinax"
 name = "cdc"
-version = "1.2.1"
+version = "1.3.0"
 distribution = "2201.12.0"
 authors = ["Ballerina"]
 repository = "https://github.com/ballerina-platform/module-ballerinax-cdc"
@@ -15,9 +15,9 @@ graalvmCompatible=true
 
 [[platform.java21.dependency]]
 groupId = "io.ballerina.lib.cdc"
-artifactId = "cdc-native-1.2.1"
-version = "1.2.1"
-path = "../native/build/libs/cdc-native-1.2.1.jar"
+artifactId = "cdc-native-1.3.0-SNAPSHOT"
+version = "1.3.0-SNAPSHOT"
+path = "../native/build/libs/cdc-native-1.3.0-SNAPSHOT.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.debezium"
@@ -48,6 +48,48 @@ groupId = "io.debezium"
 artifactId = "debezium-storage-kafka"
 version = "3.0.8.Final"
 path = "./lib/debezium-storage-kafka-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-storage-redis"
+version = "3.0.8.Final"
+path = "./lib/debezium-storage-redis-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-storage-jdbc"
+version = "3.0.8.Final"
+path = "./lib/debezium-storage-jdbc-3.0.8.Final.jar"
+
+[[platform.java21.dependency]]
+groupId = "redis.clients"
+artifactId = "jedis"
+version = "4.1.1"
+path = "./lib/jedis-4.1.1.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.smallrye.reactive"
+artifactId = "mutiny"
+version = "2.6.2"
+path = "./lib/mutiny-2.6.2.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.smallrye.common"
+artifactId = "smallrye-common-annotation"
+version = "2.5.0"
+path = "./lib/smallrye-common-annotation-2.5.0.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.apache.commons"
+artifactId = "commons-pool2"
+version = "2.11.1"
+path = "./lib/commons-pool2-2.11.1.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.jctools"
+artifactId = "jctools-core"
+version = "4.0.5"
+path = "./lib/jctools-core-4.0.5.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"

@@ -19,7 +19,8 @@ import ballerina/random;
 public isolated class MockListener {
     *Listener;
 
-    private final map<anydata> & readonly config;
+    private final map<string> & readonly debeziumConfigs;
+    private final map<anydata> & readonly listenerConfigs;
     private boolean isStarted = false;
     private boolean hasAttachedService = false;
 
@@ -28,32 +29,11 @@ public isolated class MockListener {
     # + config - The configuration for the MySQL connector
     public isolated function init(*MySqlListenerConfiguration config) {
         map<string> debeziumConfigs = {};
-        populateDebeziumProperties({
-                                       engineName: config.engineName,
-                                       offsetStorage: config.offsetStorage,
-                                       internalSchemaStorage: config.internalSchemaStorage,
-                                       options: config.options
-                                   }, debeziumConfigs);
-        populateDatabaseConfigurations({
-                                           connectorClass: config.database.connectorClass,
-                                           hostname: config.database.hostname,
-                                           port: config.database.port,
-                                           username: config.database.username,
-                                           password: config.database.password,
-                                           connectTimeout: config.database.connectTimeout,
-                                           tasksMax: config.database.tasksMax,
-                                           secure: config.database.secure,
-                                           includedTables: config.database.includedTables,
-                                           excludedTables: config.database.excludedTables,
-                                           includedColumns: config.database.includedColumns,
-                                           excludedColumns: config.database.excludedColumns
-                                       }, debeziumConfigs);
-        debeziumConfigs["database.server.id"] = "100000";
-        map<anydata> listenerConfigs = {
-            ...debeziumConfigs
-        };
-        listenerConfigs["livenessInterval"] = config.livenessInterval;
-        self.config = listenerConfigs.cloneReadOnly();
+        map<anydata> listenerConfigs = {};
+        populateMySqlDebeziumProperties(config, debeziumConfigs);
+        populateListenerProperties(config, listenerConfigs);
+        self.debeziumConfigs = debeziumConfigs.cloneReadOnly();
+        self.listenerConfigs = listenerConfigs.cloneReadOnly();
     }
 
     # Attaches a CDC service to the MySQL listener.
@@ -69,7 +49,7 @@ public isolated class MockListener {
     #
     # + return - An error if the listener cannot be started, or `()` if successful
     public isolated function 'start() returns Error? {
-        check externStart(self, self.config);
+        check externStart(self, self.debeziumConfigs, self.listenerConfigs);
     }
 
     # Detaches a CDC service from the MySQL listener.
@@ -99,8 +79,15 @@ const string MYSQL_DATABASE_SERVER_ID = "database.server.id";
 const string MYSQL_DATABASE_INCLUDE_LIST = "database.include.list";
 const string MYSQL_DATABASE_EXCLUDE_LIST = "database.exclude.list";
 
+// MySQL-specific options (mimics actual MySQL module)
+public type MySqlOptions record {|
+    *Options;
+    // MySQL-specific options can be added here
+|};
+
 public type MySqlListenerConfiguration record {|
     MySqlDatabaseConnection database;
+    MySqlOptions options = {};
     *ListenerConfiguration;
 |};
 
@@ -112,21 +99,61 @@ public type MySqlDatabaseConnection record {|
     string databaseServerId = (checkpanic random:createIntInRange(0, 100000)).toString();
     string|string[] includedDatabases?;
     string|string[] excludedDatabases?;
+    string|string[] includedTables?;
+    string|string[] excludedTables?;
+    string|string[] includedColumns?;
+    string|string[] excludedColumns?;
     int tasksMax = 1;
     SecureDatabaseConnection secure = {};
 |};
 
-// Populates MySQL-specific configurations
-isolated function populateMySqlConfigurations(MySqlDatabaseConnection connection, map<string> configMap) {
-    configMap[MYSQL_DATABASE_SERVER_ID] = connection.databaseServerId.toString();
+isolated function populateMySqlDebeziumProperties(MySqlListenerConfiguration config, map<string> debeziumConfigs) {
+    populateDebeziumProperties({
+        engineName: config.engineName,
+        offsetStorage: config.offsetStorage,
+        internalSchemaStorage: config.internalSchemaStorage
+        }, debeziumConfigs);
+    populateMySqlDatabaseConfigurations(config.database, debeziumConfigs);
+    populateMySqlOptions(config.options, debeziumConfigs);
+}
 
-    string|string[]? includedDatabases = connection.includedDatabases;
+isolated function populateMySqlDatabaseConfigurations(MySqlDatabaseConnection database, map<string> debeziumConfigs) {
+    // Populate generic CDC connection fields
+    populateDatabaseConfigurations({
+        connectorClass: database.connectorClass,
+        hostname: database.hostname,
+        port: database.port,
+        username: database.username,
+        password: database.password,
+        connectTimeout: database.connectTimeout,
+        tasksMax: database.tasksMax,
+        secure: database.secure
+        }, debeziumConfigs);
+
+    // Populate MySQL-specific relational filtering
+    populateTableAndColumnConfigurations(
+        database.includedTables,
+        database.excludedTables,
+        database.includedColumns,
+        database.excludedColumns,
+        debeziumConfigs
+    );
+
+    debeziumConfigs[MYSQL_DATABASE_SERVER_ID] = database.databaseServerId.toString();
+    string|string[]? includedDatabases = database.includedDatabases;
     if includedDatabases !is () {
-        configMap[MYSQL_DATABASE_INCLUDE_LIST] = includedDatabases is string ? includedDatabases : string:'join(",", ...includedDatabases);
+        debeziumConfigs[MYSQL_DATABASE_INCLUDE_LIST] = includedDatabases is string ? includedDatabases : string:'join(",", ...includedDatabases);
     }
-
-    string|string[]? excludedDatabases = connection.excludedDatabases;
+    string|string[]? excludedDatabases = database.excludedDatabases;
     if excludedDatabases !is () {
-        configMap[MYSQL_DATABASE_EXCLUDE_LIST] = excludedDatabases is string ? excludedDatabases : string:'join(",", ...excludedDatabases);
+        debeziumConfigs[MYSQL_DATABASE_EXCLUDE_LIST] = excludedDatabases is string ? excludedDatabases : string:'join(",", ...excludedDatabases);
     }
+}
+
+// Populates MySQL-specific options
+isolated function populateMySqlOptions(MySqlOptions options, map<string> debeziumConfigs) {
+    // MySQL-specific options would be populated here if any
+
+    // Populate common options from cdc module
+    populateOptions(options, debeziumConfigs, typeof options);
 }

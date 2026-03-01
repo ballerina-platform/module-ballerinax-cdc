@@ -16,7 +16,6 @@
 
 import ballerina/crypto;
 import ballerina/test;
-import ballerinax/kafka;
 
 @test:Config {}
 function testGetDebeziumProperties() {
@@ -37,6 +36,10 @@ function testGetDebeziumProperties() {
         "schema.history.internal.kafka.topic": "bal_cdc_internal_schema_history",
         "schema.history.internal.producer.security.protocol": "PLAINTEXT",
         "schema.history.internal.consumer.security.protocol": "PLAINTEXT",
+        "schema.history.internal.kafka.recovery.poll.interval.ms": "100",
+        "schema.history.internal.kafka.recovery.attempts": "100",
+        "schema.history.internal.kafka.query.timeout.ms": "3",
+        "schema.history.internal.kafka.create.timeout.ms": "30",
         "offset.storage": "org.apache.kafka.connect.storage.KafkaOffsetBackingStore",
         "offset.flush.interval.ms": "60000",
         "offset.flush.timeout.ms": "5000",
@@ -49,7 +52,7 @@ function testGetDebeziumProperties() {
         "database.query.timeout.ms": "60000"
     };
 
-    ListenerConfiguration config = {
+    SampleDBListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: ""
         },
@@ -60,7 +63,7 @@ function testGetDebeziumProperties() {
 
     map<string> actualProperties = {};
     // Call the function to test
-    populateDebeziumProperties(config, actualProperties);
+    populateSampleDBDebeziumProperties(config, actualProperties);
 
     // Validate the returned properties
     test:assertEquals(actualProperties, expectedProperties, msg = "Debezium properties do not match the expected values.");
@@ -81,9 +84,7 @@ function testGetDatabaseDebeziumProperties() {
         "database.ssl.keystore": "",
         "database.ssl.keystore.password": "",
         "database.ssl.truststore": "",
-        "database.ssl.truststore.password": "",
-        "table.include.list": "",
-        "column.include.list": "ya,tan"
+        "database.ssl.truststore.password": ""
     };
 
     DatabaseConnection config = {
@@ -98,9 +99,7 @@ function testGetDatabaseDebeziumProperties() {
             sslMode: DISABLED,
             keyStore: {path: "", password: ""},
             trustStore: {path: "", password: ""}
-        },
-        includedTables: "",
-        includedColumns: ["ya", "tan"]
+        }
     };
 
     map<string> actualProperties = {};
@@ -116,14 +115,7 @@ function testKafkaOffsetStorageWithSslAuth() {
     // Expected properties map with SSL authentication for offset storage
     map<string> expectedProperties = {
         "name": "ballerina-cdc-connector",
-        "max.queue.size": "8192",
-        "max.batch.size": "2048",
-        "event.processing.failure.handling.mode": "warn",
-        "snapshot.mode": "initial",
-        "skipped.operations": "t",
-        "skip.messages.without.change": "false",
         "tombstones.on.delete": "false",
-        "decimal.handling.mode": "double",
         "schema.history.internal": "io.debezium.storage.file.history.FileSchemaHistory",
         "topic.prefix": "bal_cdc_schema_history",
         "schema.history.internal.file.filename": "tmp/dbhistory.dat",
@@ -139,14 +131,13 @@ function testKafkaOffsetStorageWithSslAuth() {
         "ssl.keystore.password": "keystore-password",
         "ssl.truststore.location": "/path/to/truststore.jks",
         "ssl.truststore.password": "truststore-password",
-        "include.schema.changes": "false",
-        "database.query.timeout.ms": "60000"
+        "include.schema.changes": "false"
     };
 
     ListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: "localhost:9093",
-            securityProtocol: kafka:PROTOCOL_SSL,
+            securityProtocol: PROTOCOL_SSL,
             secureSocket: {
                 cert: {path: "/path/to/truststore.jks", password: "truststore-password"},
                 key: {
@@ -154,7 +145,7 @@ function testKafkaOffsetStorageWithSslAuth() {
                 }
             }
         },
-        internalSchemaStorage: {}
+        internalSchemaStorage: <FileInternalSchemaStorage>{}
     };
 
     map<string> actualProperties = {};
@@ -167,14 +158,7 @@ function testKafkaOffsetStorageWithSaslAuth() {
     // Expected properties map with SASL authentication for offset storage
     map<string> expectedProperties = {
         "name": "ballerina-cdc-connector",
-        "max.queue.size": "8192",
-        "max.batch.size": "2048",
-        "event.processing.failure.handling.mode": "warn",
-        "snapshot.mode": "initial",
-        "skipped.operations": "t",
-        "skip.messages.without.change": "false",
         "tombstones.on.delete": "false",
-        "decimal.handling.mode": "double",
         "schema.history.internal": "io.debezium.storage.file.history.FileSchemaHistory",
         "topic.prefix": "bal_cdc_schema_history",
         "schema.history.internal.file.filename": "tmp/dbhistory.dat",
@@ -190,24 +174,22 @@ function testKafkaOffsetStorageWithSaslAuth() {
         "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"user\" password=\"pass\";",
         "ssl.truststore.location": "/path/to/truststore.jks",
         "ssl.truststore.password": "truststore-password",
-        "include.schema.changes": "false",
-        "database.query.timeout.ms": "60000"
+        "include.schema.changes": "false"
     };
 
     ListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: "localhost:9093",
-            securityProtocol: kafka:PROTOCOL_SASL_SSL,
+            securityProtocol: PROTOCOL_SASL_SSL,
             auth: {
-                mechanism: kafka:AUTH_SASL_SCRAM_SHA_256,
+                mechanism: AUTH_SASL_SCRAM_SHA_256,
                 username: "user",
                 password: "pass"
             },
             secureSocket: {
                 cert: <crypto:TrustStore>{path: "/path/to/truststore.jks", password: "truststore-password"}
             }
-        },
-        internalSchemaStorage: {}
+        }
     };
 
     map<string> actualProperties = {};
@@ -220,18 +202,15 @@ function testKafkaSchemaHistoryWithAuth() {
     // Expected properties map with SASL authentication for schema history
     map<string> expectedProperties = {
         "name": "ballerina-cdc-connector",
-        "max.queue.size": "8192",
-        "max.batch.size": "2048",
-        "event.processing.failure.handling.mode": "warn",
-        "snapshot.mode": "initial",
-        "skipped.operations": "t",
-        "skip.messages.without.change": "false",
         "tombstones.on.delete": "false",
-        "decimal.handling.mode": "double",
         "schema.history.internal": "io.debezium.storage.kafka.history.KafkaSchemaHistory",
         "topic.prefix": "bal_cdc_schema_history",
         "schema.history.internal.kafka.bootstrap.servers": "localhost:9093",
         "schema.history.internal.kafka.topic": "bal_cdc_internal_schema_history",
+        "schema.history.internal.kafka.recovery.poll.interval.ms": "100",
+        "schema.history.internal.kafka.recovery.attempts": "100",
+        "schema.history.internal.kafka.query.timeout.ms": "3",
+        "schema.history.internal.kafka.create.timeout.ms": "30",
         "schema.history.internal.producer.security.protocol": "SASL_SSL",
         "schema.history.internal.producer.sasl.mechanism": "PLAIN",
         "schema.history.internal.producer.sasl.jaas.config": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"user\" password=\"pass\";",
@@ -246,17 +225,15 @@ function testKafkaSchemaHistoryWithAuth() {
         "offset.flush.interval.ms": "60000",
         "offset.flush.timeout.ms": "5000",
         "offset.storage.file.filename": "tmp/debezium-offsets.dat",
-        "include.schema.changes": "false",
-        "database.query.timeout.ms": "60000"
+        "include.schema.changes": "false"
     };
 
     ListenerConfiguration config = {
-        offsetStorage: {},
         internalSchemaStorage: {
             bootstrapServers: "localhost:9093",
-            securityProtocol: kafka:PROTOCOL_SASL_SSL,
+            securityProtocol: PROTOCOL_SASL_SSL,
             auth: {
-                mechanism: kafka:AUTH_SASL_PLAIN,
+                mechanism: AUTH_SASL_PLAIN,
                 username: "user",
                 password: "pass"
             },
@@ -276,18 +253,15 @@ function testBothKafkaStoragesWithAuth() {
     // Test that both offset storage and schema history can have independent auth configurations
     map<string> expectedProperties = {
         "name": "ballerina-cdc-connector",
-        "max.queue.size": "8192",
-        "max.batch.size": "2048",
-        "event.processing.failure.handling.mode": "warn",
-        "snapshot.mode": "initial",
-        "skipped.operations": "t",
-        "skip.messages.without.change": "false",
         "tombstones.on.delete": "false",
-        "decimal.handling.mode": "double",
         "schema.history.internal": "io.debezium.storage.kafka.history.KafkaSchemaHistory",
         "topic.prefix": "bal_cdc_schema_history",
         "schema.history.internal.kafka.bootstrap.servers": "kafka1:9093",
         "schema.history.internal.kafka.topic": "bal_cdc_internal_schema_history",
+        "schema.history.internal.kafka.recovery.poll.interval.ms": "100",
+        "schema.history.internal.kafka.recovery.attempts": "100",
+        "schema.history.internal.kafka.query.timeout.ms": "3",
+        "schema.history.internal.kafka.create.timeout.ms": "30",
         "schema.history.internal.producer.security.protocol": "SSL",
         "schema.history.internal.producer.ssl.keystore.location": "/path/to/keystore1.jks",
         "schema.history.internal.producer.ssl.keystore.password": "pass1",
@@ -308,23 +282,22 @@ function testBothKafkaStoragesWithAuth() {
         "security.protocol": "SASL_PLAINTEXT",
         "sasl.mechanism": "SCRAM-SHA-512",
         "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"offsetuser\" password=\"offsetpass\";",
-        "include.schema.changes": "false",
-        "database.query.timeout.ms": "60000"
+        "include.schema.changes": "false"
     };
 
     ListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: "kafka2:9093",
-                securityProtocol: kafka:PROTOCOL_SASL_PLAINTEXT,
+                securityProtocol: PROTOCOL_SASL_PLAINTEXT,
                 auth: {
-                    mechanism: kafka:AUTH_SASL_SCRAM_SHA_512,
+                    mechanism: AUTH_SASL_SCRAM_SHA_512,
                     username: "offsetuser",
                     password: "offsetpass"
                 }
         },
         internalSchemaStorage: {
             bootstrapServers: "kafka1:9093",
-            securityProtocol: kafka:PROTOCOL_SSL,
+            securityProtocol: PROTOCOL_SSL,
             secureSocket: {
                 cert: <crypto:TrustStore>{path: "/path/to/truststore1.jks", password: "pass1"},
                 key: {
@@ -344,18 +317,15 @@ function testBothKafkaStoragesWithCertKey() {
     // Test that both offset storage and schema history can use CertKey independently
     map<string> expectedProperties = {
         "name": "ballerina-cdc-connector",
-        "max.queue.size": "8192",
-        "max.batch.size": "2048",
-        "event.processing.failure.handling.mode": "warn",
-        "snapshot.mode": "initial",
-        "skipped.operations": "t",
-        "skip.messages.without.change": "false",
         "tombstones.on.delete": "false",
-        "decimal.handling.mode": "double",
         "schema.history.internal": "io.debezium.storage.kafka.history.KafkaSchemaHistory",
         "topic.prefix": "bal_cdc_schema_history",
         "schema.history.internal.kafka.bootstrap.servers": "kafka1:9093",
         "schema.history.internal.kafka.topic": "bal_cdc_internal_schema_history",
+        "schema.history.internal.kafka.recovery.poll.interval.ms": "100",
+        "schema.history.internal.kafka.recovery.attempts": "100",
+        "schema.history.internal.kafka.query.timeout.ms": "3",
+        "schema.history.internal.kafka.create.timeout.ms": "30",
         "schema.history.internal.producer.security.protocol": "SSL",
         "schema.history.internal.producer.ssl.keystore.type": "PEM",
         "schema.history.internal.producer.ssl.keystore.certificate.chain": "-----BEGIN CERTIFICATE-----\ntest-cert-content\n-----END CERTIFICATE-----",
@@ -382,14 +352,13 @@ function testBothKafkaStoragesWithCertKey() {
         "ssl.key.password": "offset-key-password",
         "ssl.truststore.location": "truststore2.pem",
         "ssl.truststore.type": "PEM",
-        "include.schema.changes": "false",
-        "database.query.timeout.ms": "60000"
+        "include.schema.changes": "false"
     };
 
     ListenerConfiguration config = {
         offsetStorage: {
             bootstrapServers: "kafka2:9093",
-            securityProtocol: kafka:PROTOCOL_SSL,
+            securityProtocol: PROTOCOL_SSL,
             secureSocket: {
                 cert: "truststore2.pem",
                 key: {
@@ -401,7 +370,7 @@ function testBothKafkaStoragesWithCertKey() {
         },
         internalSchemaStorage: {
             bootstrapServers: "kafka1:9093",
-            securityProtocol: kafka:PROTOCOL_SSL,
+            securityProtocol: PROTOCOL_SSL,
             secureSocket: {
                 cert: "truststore1.pem",
                 key: {
