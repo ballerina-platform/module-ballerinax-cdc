@@ -49,7 +49,8 @@ function testGetDebeziumProperties() {
         "offset.storage.replication.factor": "2",
         "security.protocol": "PLAINTEXT",
         "include.schema.changes": "false",
-        "database.query.timeout.ms": "60000"
+        "database.query.timeout.ms": "60000",
+        "provide.transaction.metadata": "false"
     };
 
     SampleDBListenerConfiguration config = {
