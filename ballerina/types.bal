@@ -13,6 +13,7 @@
 // KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/crypto;
 
 # Represents the SSL modes for secure database connections.
@@ -117,12 +118,6 @@ public enum TimePrecisionMode {
     NANOSECONDS = "nanoseconds"
 }
 
-# Represents guardrail limit actions.
-public enum GuardrailLimitAction {
-    FAIL = "fail",
-    WARN = "warn"
-}
-
 # Represents the authentication mechanisms for Kafka connections.
 public enum KafkaAuthenticationMechanism {
     AUTH_SASL_PLAIN = "PLAIN",
@@ -149,6 +144,12 @@ public enum KafkaSecurityProtocol {
     PROTOCOL_SASL_PLAINTEXT = "SASL_PLAINTEXT",
     PROTOCOL_SASL_SSL = "SASL_SSL"
 }
+
+# Hash masking version
+public enum HashMaskVersion {
+    HASH_V1,
+    HASH_V2
+};
 
 # A combination of certificate, private key, and private key password if encrypted.
 #
@@ -623,12 +624,11 @@ public type RelationalExtendedSnapshotConfiguration record {|
     SnapshotQueryMode queryMode?;
 |};
 
-# Transaction boundary event configuration.
-#
-# + enabled - Whether to emit BEGIN/END transaction events with transaction IDs on change events
-# + topicName - Topic name suffix for transaction metadata events (full topic: `<prefix>.<topicName>`)
+# Transaction boundary event configuration. 
+# The presence of this configuration enables the emission of transaction metadata events at the start and end of transactions.
+# 
+# + topicName - Topic name suffix for transaction metadata events (full topic: `<prefix>.<topicName>`). In embedded mode, this is essentially a logical identifier.
 public type TransactionMetadataConfiguration record {|
-    boolean enabled = false;
     string topicName = "transaction";
 |};
 
@@ -636,16 +636,18 @@ public type TransactionMetadataConfiguration record {|
 #
 # + algorithm - Hash algorithm (e.g., SHA-256, MD5)
 # + salt - Salt added to the hash for extra security
+# + version - Version of the hashing algorithm to use (affects how the hash is computed and formatted)
 # + regexPatterns - Fully-qualified column name patterns to hash
 public type ColumnHashMask record {|
     string algorithm;
     string salt;
+    HashMaskVersion version = HASH_V2;
     string|string[] regexPatterns;
 |};
 
 # Character-based column masking configuration.
 #
-# + length - Number of mask characters replacing the original value
+# + length - Number of mask characters replacing the original value. Use 0 to replace with an empty string.
 # + regexPatterns - Fully-qualified column name patterns to mask
 public type ColumnCharMask record {|
     int length;
@@ -672,7 +674,7 @@ public type ColumnTransformConfiguration record {|
     ColumnTruncate[] truncateToChars?;
 |};
 
-# Topic naming configuration for change event topics.
+# Topic naming configuration for change event kafka topics.
 #
 # + delimiter - Delimiter between topic name components
 # + namingStrategy - Fully-qualified class name of a custom topic naming strategy
@@ -705,27 +707,9 @@ public type ConnectionRetryConfiguration record {|
 #
 # + maxQueueSizeInBytes - Maximum queue size in bytes for memory-based backpressure (0 = unlimited)
 # + pollInterval - Interval in seconds between database polls for new events
-# + queryFetchSize - Number of rows fetched per database round trip
 public type PerformanceConfiguration record {|
     int maxQueueSizeInBytes = 0;
     decimal pollInterval = 0.5;
-    int queryFetchSize?;
-|};
-
-# Monitoring configuration for custom metric tags.
-#
-# + customMetricTags - Custom metric tag pairs in `key=value` format (comma-separated)
-public type MonitoringConfiguration record {|
-    string customMetricTags?;
-|};
-
-# Guardrail configuration to prevent accidentally capturing too many tables.
-#
-# + maxCollections - Maximum number of tables/collections to capture (0 = unlimited)
-# + limitAction - Action taken when the limit is exceeded (fail or warn)
-public type GuardrailConfiguration record {|
-    int maxCollections = 0;
-    GuardrailLimitAction limitAction = WARN;
 |};
 
 # Base database connection configuration for all CDC connectors.
@@ -766,8 +750,6 @@ public type DatabaseConnection record {|
 # + topicConfig - Topic naming and routing configuration
 # + connectionRetryConfig - Error handling and retry configuration
 # + performanceConfig - Performance tuning configuration
-# + monitoringConfig - Monitoring and metric configuration
-# + guardrailConfig - Guardrail configuration to prevent over-capture
 public type Options record {
     SnapshotMode snapshotMode = INITIAL;
     EventProcessingFailureHandlingMode eventProcessingFailureHandlingMode = WARN;
@@ -784,8 +766,6 @@ public type Options record {
     TopicConfiguration topicConfig?;
     ConnectionRetryConfiguration connectionRetryConfig?;
     PerformanceConfiguration performanceConfig?;
-    MonitoringConfiguration monitoringConfig?;
-    GuardrailConfiguration guardrailConfig?;
 };
 
 # Union type representing all supported internal schema history storage configurations.

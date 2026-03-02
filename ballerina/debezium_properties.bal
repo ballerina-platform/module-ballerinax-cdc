@@ -201,7 +201,6 @@ const string ERRORS_RETRY_DELAY_MAX_MS = "errors.retry.delay.max.ms";
 // Performance properties
 const string MAX_QUEUE_SIZE_IN_BYTES = "max.queue.size.in.bytes";
 const string POLL_INTERVAL_MS = "poll.interval.ms";
-const string QUERY_FETCH_SIZE = "query.fetch.size";
 
 // Monitoring properties
 const string CUSTOM_METRIC_TAGS = "custom.metric.tags";
@@ -299,3 +298,7 @@ const string SCHEMA_HISTORY_CONSUMER_SSL_CIPHER_SUITES = "schema.history.interna
 const string SCHEMA_HISTORY_CONSUMER_SSL_PROTOCOL = "schema.history.internal.consumer.ssl.protocol";
 const string SCHEMA_HISTORY_CONSUMER_SSL_ENABLED_PROTOCOLS = "schema.history.internal.consumer.ssl.enabled.protocols";
 const string SCHEMA_HISTORY_CONSUMER_SSL_PROVIDER = "schema.history.internal.consumer.ssl.provider";
+
+// Common boolean value representations
+const string TRUE_VALUE = "true";
+const string FALSE_VALUE = "false";

@@ -17,7 +17,6 @@ import ballerina/crypto;
 import ballerina/io;
 import ballerina/log;
 
-
 # Processes the given configuration and populates the map with the necessary debezium properties.
 #
 # + config - listener configuration
@@ -28,8 +27,8 @@ public isolated function populateDebeziumProperties(ListenerConfiguration config
     populateOffsetStorageConfigurations(config.offsetStorage, configMap);
 
     // The following values cannot be overridden by the user
-    configMap[TOMBSTONES_ON_DELETE] = "false";
-    configMap[INCLUDE_SCHEMA_CHANGES] = "false";
+    configMap[TOMBSTONES_ON_DELETE] = FALSE_VALUE;
+    configMap[INCLUDE_SCHEMA_CHANGES] = FALSE_VALUE;
 }
 
 # Processes the given configuration and populates the map with the necessary listener-specific properties.
@@ -304,6 +303,8 @@ public isolated function populateOptions(Options options, map<string> configMap,
     TransactionMetadataConfiguration? transactionMetadataConfig = options.transactionMetadataConfig;
     if transactionMetadataConfig is TransactionMetadataConfiguration {
         populateTransactionMetadataConfiguration(transactionMetadataConfig, configMap);
+    } else {
+        configMap[PROVIDE_TRANSACTION_METADATA] = FALSE_VALUE;
     }
 
     ColumnTransformConfiguration? columnTransformConfig = options.columnTransformConfig;
@@ -324,16 +325,6 @@ public isolated function populateOptions(Options options, map<string> configMap,
     PerformanceConfiguration? performanceConfig = options.performanceConfig;
     if performanceConfig is PerformanceConfiguration {
         populatePerformanceConfiguration(performanceConfig, configMap);
-    }
-
-    MonitoringConfiguration? monitoringConfig = options.monitoringConfig;
-    if monitoringConfig is MonitoringConfiguration {
-        populateMonitoringConfiguration(monitoringConfig, configMap);
-    }
-
-    GuardrailConfiguration? guardrailConfig = options.guardrailConfig;
-    if guardrailConfig is GuardrailConfiguration {
-        populateGuardrailConfiguration(guardrailConfig, configMap);
     }
 
     populateAdditionalConfigurations(options, configMap, optionsSubType);
@@ -663,7 +654,7 @@ public isolated function populateIncrementalSnapshotConfiguration(IncrementalSna
 # + config - transaction metadata configuration
 # + configMap - map to populate with transaction metadata properties
 public isolated function populateTransactionMetadataConfiguration(TransactionMetadataConfiguration config, map<string> configMap) {
-    configMap[PROVIDE_TRANSACTION_METADATA] = config.enabled.toString();
+    configMap[PROVIDE_TRANSACTION_METADATA] = TRUE_VALUE;
     configMap[TRANSACTION_TOPIC] = config.topicName;
 }
 
@@ -677,7 +668,8 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
         foreach var mask in maskWithHash {
             string|string[] patterns = mask.regexPatterns;
             string patternStr = patterns is string ? patterns : string:'join(", ", ...patterns);
-            string hashKey = string `column.mask.hash.v2.${mask.algorithm}.with.salt.${mask.salt}`;
+            string hashVersionStr = mask.version == HASH_V2? "v2" : "";
+            string hashKey = string `column.mask.hash.${hashVersionStr}.${mask.algorithm}.with.salt.${mask.salt}`;
             configMap[hashKey] = patternStr;
         }
     }
@@ -739,31 +731,6 @@ public isolated function populateErrorHandlingConfiguration(ConnectionRetryConfi
 public isolated function populatePerformanceConfiguration(PerformanceConfiguration config, map<string> configMap) {
     configMap[MAX_QUEUE_SIZE_IN_BYTES] = config.maxQueueSizeInBytes.toString();
     configMap[POLL_INTERVAL_MS] = getMillisecondValueOf(config.pollInterval);
-
-    int? queryFetchSize = config.queryFetchSize;
-    if queryFetchSize is int {
-        configMap[QUERY_FETCH_SIZE] = queryFetchSize.toString();
-    }
-}
-
-# Populates monitoring configuration properties.
-#
-# + config - monitoring configuration
-# + configMap - map to populate with monitoring properties
-public isolated function populateMonitoringConfiguration(MonitoringConfiguration config, map<string> configMap) {
-    string? customMetricTags = config.customMetricTags;
-    if customMetricTags is string {
-        configMap[CUSTOM_METRIC_TAGS] = customMetricTags;
-    }
-}
-
-# Populates guardrailConfig configuration properties.
-#
-# + config - guardrailConfig configuration
-# + configMap - map to populate with guardrailConfig properties
-public isolated function populateGuardrailConfiguration(GuardrailConfiguration config, map<string> configMap) {
-    // Note: Debezium doesn't have direct guardrailConfig properties
-    // This is a placeholder for future implementation
 }
 
 # Populates JDBC schema history configuration properties.
@@ -832,7 +799,7 @@ public isolated function populateRedisSchemaHistoryConfiguration(RedisInternalSc
     RedisSecureSocket? secureSocket = storage.secureSocket;
     if secureSocket is RedisSecureSocket {
         // SSL is enabled when secureSocket is present
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_ENABLED] = "true";
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_ENABLED] = TRUE_VALUE;
         configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = secureSocket.verifyHostName.toString();
 
         // Handle cert - can be crypto:TrustStore or string path
@@ -855,8 +822,8 @@ public isolated function populateRedisSchemaHistoryConfiguration(RedisInternalSc
         }
     } else {
         // SSL is disabled when secureSocket is not present
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_ENABLED] = "false";
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = "false";
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_ENABLED] = FALSE_VALUE;
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = FALSE_VALUE;
     }
 
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_CONNECTION_TIMEOUT_MS] = getMillisecondValueOf(storage.connectTimeout);
@@ -866,17 +833,17 @@ public isolated function populateRedisSchemaHistoryConfiguration(RedisInternalSc
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_RETRY_MAX_ATTEMPTS] = storage.retryConfig.maxAttempts.toString();
     RedisWaitConfiguration? waitConfig = storage.waitConfig;
     if waitConfig is RedisWaitConfiguration {
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = "true";
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = TRUE_VALUE;
         configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(waitConfig.timeout);
         decimal? retryDelay = waitConfig.retryDelay;
         if retryDelay is decimal {
-            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = "true";
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = TRUE_VALUE;
             configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(retryDelay);
         } else {
-            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = "false";
+            configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_RETRY_ENABLED] = FALSE_VALUE;
         }
     } else {
-        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = "false";
+        configMap[SCHEMA_HISTORY_INTERNAL_REDIS_WAIT_ENABLED] = FALSE_VALUE;
     }
     configMap[SCHEMA_HISTORY_INTERNAL_REDIS_CLUSTER_ENABLED] = storage.clusterEnabled.toString();
 }
@@ -978,7 +945,7 @@ public isolated function populateRedisOffsetStorageConfiguration(RedisOffsetStor
     RedisSecureSocket? secureSocket = storage.secureSocket;
     if secureSocket is RedisSecureSocket {
         // SSL is enabled when secureSocket is present
-        configMap[OFFSET_STORAGE_REDIS_SSL_ENABLED] = "true";
+        configMap[OFFSET_STORAGE_REDIS_SSL_ENABLED] = TRUE_VALUE;
         configMap[OFFSET_STORAGE_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = secureSocket.verifyHostName.toString();
 
         // Handle cert - can be crypto:TrustStore or string path
@@ -1001,8 +968,8 @@ public isolated function populateRedisOffsetStorageConfiguration(RedisOffsetStor
         }
     } else {
         // SSL is disabled when secureSocket is not present
-        configMap[OFFSET_STORAGE_REDIS_SSL_ENABLED] = "false";
-        configMap[OFFSET_STORAGE_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = "false";
+        configMap[OFFSET_STORAGE_REDIS_SSL_ENABLED] = FALSE_VALUE;
+        configMap[OFFSET_STORAGE_REDIS_SSL_HOSTNAME_VERIFICATION_ENABLED] = FALSE_VALUE;
     }
 
     configMap[OFFSET_STORAGE_REDIS_CONNECTION_TIMEOUT_MS] = getMillisecondValueOf(storage.connectTimeout);
@@ -1012,17 +979,17 @@ public isolated function populateRedisOffsetStorageConfiguration(RedisOffsetStor
     configMap[OFFSET_STORAGE_REDIS_RETRY_MAX_ATTEMPTS] = storage.retryConfig.maxAttempts.toString();
     RedisWaitConfiguration? waitConfig = storage.waitConfig;
     if waitConfig is RedisWaitConfiguration {
-        configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = "true";
+        configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = TRUE_VALUE;
         configMap[OFFSET_STORAGE_REDIS_WAIT_TIMEOUT_MS] = getMillisecondValueOf(waitConfig.timeout);
         decimal? retryDelay = waitConfig.retryDelay;
         if retryDelay is decimal {
-            configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = "true";
+            configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = TRUE_VALUE;
             configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_DELAY_MS] = getMillisecondValueOf(retryDelay);
         } else {
-            configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = "false";
+            configMap[OFFSET_STORAGE_REDIS_WAIT_RETRY_ENABLED] = FALSE_VALUE;
         }
     } else {
-        configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = "false";
+        configMap[OFFSET_STORAGE_REDIS_WAIT_ENABLED] = FALSE_VALUE;
     }
     configMap[OFFSET_STORAGE_REDIS_CLUSTER_ENABLED] = storage.clusterEnabled.toString();
 }

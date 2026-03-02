@@ -116,9 +116,7 @@ function testPopulateOptionsWithTransactionMetadata() {
     };
 
     SampleDBOptions options = {
-        transactionMetadataConfig: {
-            enabled: true
-        }
+        transactionMetadataConfig: {}
     };
 
     map<string> actualProperties = {};
@@ -257,12 +255,16 @@ function testPopulateOptionsWithErrorHandling() {
 function testPopulateOptionsWithPerformance() {
     map<string> expectedProperties = {
         "max.queue.size": "16384",
-        "max.batch.size": "4096"
+        "max.batch.size": "4096",
+        "max.queue.size.in.bytes": "1048576"
     };
 
     SampleDBOptions options = {
         maxQueueSize: 16384,
-        maxBatchSize: 4096
+        maxBatchSize: 4096,
+        performanceConfig: {
+            maxQueueSizeInBytes: 1048576
+        }
     };
 
     map<string> actualProperties = {};
@@ -274,46 +276,9 @@ function testPopulateOptionsWithPerformance() {
     test:assertEquals(actualProperties["max.batch.size"],
         expectedProperties["max.batch.size"],
         msg = "Max batch size does not match.");
-}
-
-@test:Config {groups: ["options-monitoring"]}
-function testPopulateOptionsWithMonitoring() {
-    map<string> expectedProperties = {
-        "max.queue.size.in.bytes": "1048576"
-    };
-
-    SampleDBOptions options = {
-        performanceConfig: {
-            maxQueueSizeInBytes: 1048576
-        }
-    };
-
-    map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
-
     test:assertEquals(actualProperties["max.queue.size.in.bytes"],
         expectedProperties["max.queue.size.in.bytes"],
         msg = "Max queue size in bytes does not match.");
-}
-
-@test:Config {groups: ["options-guardrail"]}
-function testPopulateOptionsWithGuardrail() {
-    map<string> expectedProperties = {
-        "query.fetch.size": "1000"
-    };
-
-    SampleDBOptions options = {
-        performanceConfig: {
-            queryFetchSize: 1000
-        }
-    };
-
-    map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
-
-    test:assertEquals(actualProperties["query.fetch.size"],
-        expectedProperties["query.fetch.size"],
-        msg = "Query fetch size does not match.");
 }
 
 @test:Config {groups: ["options-additional"]}

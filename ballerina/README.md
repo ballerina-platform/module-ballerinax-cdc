@@ -1,11 +1,13 @@
 ## Overview
 
-The Ballerina Change Data Capture (CDC) module provides APIs to capture and process database change events in real-time. This module enables developers to define services that handle change capture events such as inserts, updates, and deletes. It is built on top of the Debezium framework and supports popular databases like MySQL and Microsoft SQL Server.
+The Ballerina Change Data Capture (CDC) module provides APIs to capture and process database change events in real-time. This module enables developers to define services that handle change capture events such as inserts, updates, and deletes. It is built on top of the Debezium framework and supports popular databases like MySQL, Microsoft SQL Server, and PostgreSQL.
 
 With the CDC module, you can:
 - Capture real-time changes from databases.
 - Process and react to database events programmatically.
 - Build event-driven applications with ease.
+- Configure storage backends for offset tracking and schema history (File, Kafka, Memory, JDBC, Redis, Amazon S3, Azure Blob, RocketMQ).
+- Configure advanced CDC features: heartbeats, signals, column transforms, topic routing, connection retry, and guardrails.
 
 ## Quickstart
 
