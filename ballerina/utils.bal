@@ -413,12 +413,16 @@ public isolated function populateTableAndColumnConfigurations(
 #
 # + messageKeyColumns - Composite message key columns specification
 # + configMap - map to populate with message key columns configuration
-public isolated function populateMessageKeyColumnsConfiguration(
-        string? messageKeyColumns,
-        map<string> configMap) {
-
+public isolated function populateMessageKeyColumnsConfiguration(MessageKeyColumns[]? messageKeyColumns, map<string> configMap) {
     if messageKeyColumns !is () {
-        configMap[MESSAGE_KEY_COLUMNS] = messageKeyColumns;
+        string[] entries = [];
+        // <fully-qualified_tableName>:<keyColumn>,<keyColumn>
+        foreach MessageKeyColumns entry in messageKeyColumns {
+            string tableName = entry.tableName;
+            string columns = string:'join(",", ...entry.columns);
+            entries.push(string `${tableName}:${columns}`);
+        }
+        configMap[MESSAGE_KEY_COLUMNS] = string:'join(";", ...entries);
     }
 }
 
@@ -616,11 +620,6 @@ public isolated function populateRelationalExtendedSnapshotConfiguration(Relatio
     populateExtendedSnapshotConfiguration(config, configMap);
 
     // Then populate relational-specific properties
-    SnapshotIsolationMode? isolationMode = config.isolationMode;
-    if isolationMode is SnapshotIsolationMode {
-        configMap[SNAPSHOT_ISOLATION_MODE] = isolationMode;
-    }
-
     SnapshotLockingMode? lockingMode = config.lockingMode;
     if lockingMode is SnapshotLockingMode {
         configMap[SNAPSHOT_LOCKING_MODE] = lockingMode;

@@ -526,10 +526,10 @@ public type JdbcOffsetStorage record {|
 
 # Heartbeat configuration for detecting idle or stale connections.
 #
-# + interval - Interval in seconds between heartbeats (0 = disabled)
+# + interval - Interval in seconds between heartbeats
 # + actionQuery - SQL query executed with each heartbeat to keep the connection active
 public type HeartbeatConfiguration record {|
-    decimal interval = 0.0;
+    decimal interval = 10.0;
     string actionQuery?;
 |};
 
@@ -612,16 +612,24 @@ public type ExtendedSnapshotConfiguration record {
 
 # Extended snapshot configuration for relational databases.
 #
-# + isolationMode - Transaction isolation level during snapshot
 # + lockingMode - Table locking strategy during snapshot
 # + selectStatementOverrides - Custom SELECT statements per table for filtering snapshot data
 # + queryMode - Query strategy for snapshot execution
 public type RelationalExtendedSnapshotConfiguration record {|
     *ExtendedSnapshotConfiguration;
-    SnapshotIsolationMode isolationMode?;
     SnapshotLockingMode lockingMode?;
     string|string[] selectStatementOverrides?;
     SnapshotQueryMode queryMode?;
+|};
+
+# A list of expressions that specify the columns to be included in the message key for change events. 
+# Each entry specifies a table and the columns from that table to include in the message key.
+# 
+# + tableName - The fully qualified name of the table (including database name if necessary) for which to specify message key columns
+# + columns - A list of column names from the specified table to include in the message key
+public type MessageKeyColumns record {|
+    string tableName;
+    string[] columns;
 |};
 
 # Transaction boundary event configuration. 
