@@ -17,9 +17,8 @@
 // Sample database options for testing (mimics database-specific modules)
 public type SampleDBOptions record {|
     *Options;
-    // Sample-specific options for testing
     ExtendedSnapshotConfiguration extendedSnapshot?;
-    // Can add more sample-specific options here if needed
+    RelationalHeartbeatConfiguration heartbeatConfig?;
 |};
 
 // Sample database listener configuration for testing
@@ -35,12 +34,14 @@ isolated function populateSampleDBDebeziumProperties(SampleDBListenerConfigurati
 
 // Populates SampleDB-specific options (mimics database-specific modules)
 isolated function populateSampleDBOptions(SampleDBOptions options, map<string> configMap) {
-    // Populate common options from cdc module
-    populateOptions(options, configMap, typeof options);
-
     // Populate extended snapshot configuration if present
     ExtendedSnapshotConfiguration? extendedSnapshot = options.extendedSnapshot;
     if extendedSnapshot is ExtendedSnapshotConfiguration {
         populateExtendedSnapshotConfiguration(extendedSnapshot, configMap);
     }
+    RelationalHeartbeatConfiguration? heartbeatConfig = options.heartbeatConfig;
+    if heartbeatConfig is RelationalHeartbeatConfiguration {
+        populateRelationalHeartbeatConfiguration(heartbeatConfig, configMap);
+    }
+    populateAdditionalConfigurations(options, configMap, typeof options);
 }

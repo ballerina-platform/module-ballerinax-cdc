@@ -354,8 +354,7 @@ public type RedisInternalSchemaStorage record {|
 |};
 
 # Amazon S3-based schema history storage configuration.
-# Using this storage backend requires additional dependencies to be declared in your
-# `Ballerina.toml`. Refer to the official documentation for the required `[[platform.java21.dependency]]` entries.
+# Using this storage backend requires importing the `ballerinax/cdc.storage.aws.s3.driver` module.
 #
 # + className - Fully-qualified class name of the S3 schema history implementation
 # + accessKeyId - AWS access key ID for authentication
@@ -376,8 +375,7 @@ public type AmazonS3InternalSchemaStorage record {|
 |};
 
 # Azure Blob Storage-based schema history storage configuration.
-# Using this storage backend requires additional dependencies to be declared in your
-# `Ballerina.toml`. Refer to the official documentation for the required `[[platform.java21.dependency]]` entries.
+# Using this storage backend requires importing the `ballerinax/cdc.storage.azure.blob.driver` module.
 #
 # + className - Fully-qualified class name of the Azure Blob schema history implementation
 # + connectionString - Azure Storage connection string
@@ -394,8 +392,7 @@ public type AzureBlobInternalSchemaStorage record {|
 |};
 
 # RocketMQ-based schema history storage configuration.
-# Using this storage backend requires additional dependencies to be declared in your
-# `Ballerina.toml`. Refer to the official documentation for the required `[[platform.java21.dependency]]` entries.
+# Using this storage backend requires importing the `ballerinax/cdc.storage.rocketmq.driver` module.
 #
 # + className - Fully-qualified class name of the RocketMQ schema history implementation
 # + topicName - RocketMQ topic for schema history
@@ -527,9 +524,17 @@ public type JdbcOffsetStorage record {|
 # Heartbeat configuration for detecting idle or stale connections.
 #
 # + interval - Interval in seconds between heartbeats
-# + actionQuery - SQL query executed with each heartbeat to keep the connection active
-public type HeartbeatConfiguration record {|
+public type HeartbeatConfiguration record {
     decimal interval = 10.0;
+};
+
+# Heartbeat configuration for relational database connectors.
+# Extends the base heartbeat configuration with an optional SQL action query.
+#
+# + actionQuery - SQL query executed by Debezium with each heartbeat to keep the replication slot or binlog position
+#                 active. Applicable only to relational databases (MySQL, PostgreSQL, MSSQL).
+public type RelationalHeartbeatConfiguration record {|
+    *HeartbeatConfiguration;
     string actionQuery?;
 |};
 
@@ -573,15 +578,15 @@ public type JmxSignalConfiguration record {|
 
 # All supported signal channel configurations for ad-hoc control of the CDC connector.
 #
-# + sourceConfig - Configuration for a signal channel implemented using a database table
-# + kafkaConfig - Configuration for a signal channel implemented using Kafka topics
-# + fileConfig - Configuration for a signal channel implemented using file monitoring
-# + jmxConfig - Configuration for a signal channel implemented using JMX
+# + source - Configuration for a signal channel implemented using a database table
+# + kafka - Configuration for a signal channel implemented using Kafka topics
+# + file - Configuration for a signal channel implemented using file monitoring
+# + jmx - Configuration for a signal channel implemented using JMX
 public type SignalConfiguration record {
-    SourceSignalConfiguration sourceConfig?;
-    KafkaSignalConfiguration kafkaConfig?;
-    FileSignalConfiguration fileConfig?;
-    JmxSignalConfiguration jmxConfig?;
+    SourceSignalConfiguration 'source?;
+    KafkaSignalConfiguration kafka?;
+    FileSignalConfiguration file?;
+    JmxSignalConfiguration jmx?;
 };
 
 # Incremental (non-blocking) snapshot configuration.
@@ -685,10 +690,8 @@ public type ColumnTransformConfiguration record {|
 # Topic naming configuration for change event kafka topics.
 #
 # + delimiter - Delimiter between topic name components
-# + namingStrategy - Fully-qualified class name of a custom topic naming strategy
 public type TopicConfiguration record {|
     string delimiter = ".";
-    string namingStrategy = "io.debezium.schema.SchemaTopicNamingStrategy";
 |};
 
 # Data type handling configuration.
@@ -701,8 +704,10 @@ public type DataTypeConfiguration record {
 };
 
 # Error handling configuration for connector failure and recovery behavior.
+# Retry delays increase exponentially (×2 per attempt) from `retryInitialDelay` up to `retryMaxDelay`.
 #
-# + maxAttempts - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled)
+# + maxAttempts - Maximum retry attempts for retriable errors (-1 = unlimited, 0 = disabled).
+#                 When the limit is reached, the connector stops with a fatal error.
 # + retryInitialDelay - Wait time in seconds before restarting after a retriable error
 # + retryMaxDelay - Maximum wait time in seconds before restarting after a retriable error
 public type ConnectionRetryConfiguration record {|
@@ -713,10 +718,11 @@ public type ConnectionRetryConfiguration record {|
 
 # Performance tuning configuration.
 #
-# + maxQueueSizeInBytes - Maximum queue size in bytes for memory-based backpressure (0 = unlimited)
+# + maxQueueSizeInBytes - Maximum queue size in bytes for memory-based backpressure. If not set, remains unlimited.
+#                         When both maxQueueSizeInBytes and maxQueueSize (from Options) are set, the lower of the two limits will apply.
 # + pollInterval - Interval in seconds between database polls for new events
 public type PerformanceConfiguration record {|
-    int maxQueueSizeInBytes = 0;
+    int maxQueueSizeInBytes?;
     decimal pollInterval = 0.5;
 |};
 
@@ -730,7 +736,7 @@ public type PerformanceConfiguration record {|
 # + connectTimeout - Connection timeout in seconds
 # + tasksMax - Maximum number of connector tasks
 # + secure - SSL/TLS connection configuration
-public type DatabaseConnection record {|
+public type DatabaseConnection record {
     string connectorClass;
     string hostname;
     int port;
@@ -739,7 +745,7 @@ public type DatabaseConnection record {|
     decimal connectTimeout?;
     int tasksMax = 1;
     SecureDatabaseConnection secure?;
-|};
+};
 
 # Common CDC options applicable to all database connectors.
 #
@@ -758,6 +764,7 @@ public type DatabaseConnection record {|
 # + topicConfig - Topic naming and routing configuration
 # + connectionRetryConfig - Error handling and retry configuration
 # + performanceConfig - Performance tuning configuration
+# + extendedSnapshot - Extended snapshot configuration for fine-tuning snapshot behavior
 public type Options record {
     SnapshotMode snapshotMode = INITIAL;
     EventProcessingFailureHandlingMode eventProcessingFailureHandlingMode = WARN;
@@ -774,6 +781,7 @@ public type Options record {
     TopicConfiguration topicConfig?;
     ConnectionRetryConfiguration connectionRetryConfig?;
     PerformanceConfiguration performanceConfig?;
+    ExtendedSnapshotConfiguration extendedSnapshot?;
 };
 
 # Union type representing all supported internal schema history storage configurations.
@@ -796,9 +804,13 @@ public type OffsetStorage FileOffsetStorage|KafkaOffsetStorage|MemoryOffsetStora
 # + internalSchemaStorage - Schema history storage configuration
 # + offsetStorage - Offset storage configuration
 # + livenessInterval - Interval in seconds for checking CDC listener liveness
-public type ListenerConfiguration record {
+# + database - Database connection configuration (provided by DB-specific listener configs)
+# + options - Connector options
+public type ListenerConfiguration record {|
     string engineName = "ballerina-cdc-connector";
-    InternalSchemaStorage internalSchemaStorage = <FileInternalSchemaStorage>{};
-    OffsetStorage offsetStorage = <FileOffsetStorage>{};
+    InternalSchemaStorage internalSchemaStorage = {fileName: "tmp/dbhistory.dat"};
+    OffsetStorage offsetStorage = {fileName: "tmp/debezium-offsets.dat"};
     decimal livenessInterval = 60.0;
-};
+    DatabaseConnection database;
+    Options options = {};
+|};

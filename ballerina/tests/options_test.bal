@@ -20,7 +20,7 @@ import ballerina/test;
 function testPopulateOptionsWithDefaults() {
     SampleDBOptions options = {};
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     // Should have default values populated
     test:assertEquals(actualProperties["snapshot.mode"], "initial");
@@ -42,7 +42,7 @@ function testPopulateOptionsWithHeartbeat() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["heartbeat.interval.ms"],
         expectedProperties["heartbeat.interval.ms"],
@@ -61,14 +61,14 @@ function testPopulateOptionsWithFileSignal() {
 
     SampleDBOptions options = {
         signalConfig: {
-            fileConfig: {
+            file: {
                 fileName: "/tmp/signals.txt"
             }
         }
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["signal.enabled.channels"],
         expectedProperties["signal.enabled.channels"],
@@ -88,7 +88,7 @@ function testPopulateOptionsWithKafkaSignal() {
 
     SampleDBOptions options = {
         signalConfig: {
-            kafkaConfig: {
+            kafka: {
                 topicName: "cdc-signals",
                 bootstrapServers: "localhost:9092"
             }
@@ -96,7 +96,7 @@ function testPopulateOptionsWithKafkaSignal() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["signal.enabled.channels"],
         expectedProperties["signal.enabled.channels"],
@@ -120,7 +120,7 @@ function testPopulateOptionsWithTransactionMetadata() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["provide.transaction.metadata"],
         expectedProperties["provide.transaction.metadata"],
@@ -146,7 +146,7 @@ function testPopulateOptionsWithColumnHashMask() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["column.mask.hash.v2.SHA-256.with.salt.CzQMA0cB5K"],
         expectedProperties["column.mask.hash.v2.SHA-256.with.salt.CzQMA0cB5K"],
@@ -176,7 +176,7 @@ function testPopulateOptionsWithColumnCharMask() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["column.mask.with.10.chars"],
         expectedProperties["column.mask.with.10.chars"],
@@ -204,7 +204,7 @@ function testPopulateOptionsWithColumnTruncate() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["column.truncate.to.20.chars"],
         expectedProperties["column.truncate.to.20.chars"],
@@ -224,7 +224,7 @@ function testPopulateOptionsWithTopicConfig() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["topic.delimiter"],
         expectedProperties["topic.delimiter"],
@@ -244,7 +244,7 @@ function testPopulateOptionsWithErrorHandling() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["errors.max.retries"],
         expectedProperties["errors.max.retries"],
@@ -268,7 +268,7 @@ function testPopulateOptionsWithPerformance() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     test:assertEquals(actualProperties["max.queue.size"],
         expectedProperties["max.queue.size"],
@@ -294,7 +294,7 @@ function testPopulateOptionsWithAdditionalProperties() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     // Verify all primitive properties are present and converted to strings
     test:assertEquals(actualProperties["custom.string.property"], "stringValue",
@@ -325,7 +325,7 @@ function testUnsupportedAdditionalPropertiesIgnored() {
     };
 
     map<string> actualProperties = {};
-    populateSampleDBOptions(options, actualProperties);
+    populateAllOptions(options, actualProperties);
 
     // Valid primitive properties should be present
     test:assertTrue(actualProperties.hasKey("valid.string.property"),
@@ -342,3 +342,7 @@ function testUnsupportedAdditionalPropertiesIgnored() {
         msg = "Invalid array property should be ignored.");
 }
 
+function populateAllOptions(SampleDBOptions options, map<string> properties) {
+    populateOptions(options, properties);
+    populateSampleDBOptions(options, properties);
+}

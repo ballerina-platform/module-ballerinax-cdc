@@ -17,6 +17,14 @@
 import ballerina/crypto;
 import ballerina/test;
 
+final DatabaseConnection databaseConn = {
+    connectorClass: "io.debezium.connector.mysql.MySqlConnector", 
+    hostname: "localhost", 
+    port: 3306,
+    username: "username",
+    password: "password"
+};
+
 @test:Config {}
 function testGetDebeziumProperties() {
     // Expected properties map
@@ -50,10 +58,17 @@ function testGetDebeziumProperties() {
         "security.protocol": "PLAINTEXT",
         "include.schema.changes": "false",
         "database.query.timeout.ms": "60000",
-        "provide.transaction.metadata": "false"
+        "provide.transaction.metadata": "false",
+        "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+        "database.hostname": "localhost",
+        "database.port": "3306",
+        "database.user": "username",
+        "database.password": "password",
+        "tasks.max": "1"
     };
 
-    SampleDBListenerConfiguration config = {
+    ListenerConfiguration config = {
+        database: databaseConn,
         offsetStorage: {
             bootstrapServers: ""
         },
@@ -64,7 +79,7 @@ function testGetDebeziumProperties() {
 
     map<string> actualProperties = {};
     // Call the function to test
-    populateSampleDBDebeziumProperties(config, actualProperties);
+    populateDebeziumProperties(config, actualProperties);
 
     // Validate the returned properties
     test:assertEquals(actualProperties, expectedProperties, msg = "Debezium properties do not match the expected values.");
@@ -132,7 +147,22 @@ function testKafkaOffsetStorageWithSslAuth() {
         "ssl.keystore.password": "keystore-password",
         "ssl.truststore.location": "/path/to/truststore.jks",
         "ssl.truststore.password": "truststore-password",
-        "include.schema.changes": "false"
+        "include.schema.changes": "false",
+        "max.queue.size": "8192",
+        "max.batch.size": "2048",
+        "event.processing.failure.handling.mode": "warn",
+        "snapshot.mode": "initial",
+        "skipped.operations": "t",
+        "skip.messages.without.change": "false",
+        "decimal.handling.mode": "double",
+        "database.query.timeout.ms": "60000",
+        "provide.transaction.metadata": "false",
+        "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+        "database.hostname": "localhost",
+        "database.port": "3306",
+        "database.user": "username",
+        "database.password": "password",
+        "tasks.max": "1"
     };
 
     ListenerConfiguration config = {
@@ -146,6 +176,7 @@ function testKafkaOffsetStorageWithSslAuth() {
                 }
             }
         },
+        database: databaseConn,
         internalSchemaStorage: <FileInternalSchemaStorage>{}
     };
 
@@ -175,10 +206,26 @@ function testKafkaOffsetStorageWithSaslAuth() {
         "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"user\" password=\"pass\";",
         "ssl.truststore.location": "/path/to/truststore.jks",
         "ssl.truststore.password": "truststore-password",
-        "include.schema.changes": "false"
+        "include.schema.changes": "false",
+        "max.queue.size": "8192",
+        "max.batch.size": "2048",
+        "event.processing.failure.handling.mode": "warn",
+        "snapshot.mode": "initial",
+        "skipped.operations": "t",
+        "skip.messages.without.change": "false",
+        "decimal.handling.mode": "double",
+        "database.query.timeout.ms": "60000",
+        "provide.transaction.metadata": "false",
+        "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+        "database.hostname": "localhost",
+        "database.port": "3306",
+        "database.user": "username",
+        "database.password": "password",
+        "tasks.max": "1"
     };
 
     ListenerConfiguration config = {
+        database: databaseConn,
         offsetStorage: {
             bootstrapServers: "localhost:9093",
             securityProtocol: PROTOCOL_SASL_SSL,
@@ -226,10 +273,26 @@ function testKafkaSchemaHistoryWithAuth() {
         "offset.flush.interval.ms": "60000",
         "offset.flush.timeout.ms": "5000",
         "offset.storage.file.filename": "tmp/debezium-offsets.dat",
-        "include.schema.changes": "false"
+        "include.schema.changes": "false",
+        "max.queue.size": "8192",
+        "max.batch.size": "2048",
+        "event.processing.failure.handling.mode": "warn",
+        "snapshot.mode": "initial",
+        "skipped.operations": "t",
+        "skip.messages.without.change": "false",
+        "decimal.handling.mode": "double",
+        "database.query.timeout.ms": "60000",
+        "provide.transaction.metadata": "false",
+        "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+        "database.hostname": "localhost",
+        "database.port": "3306",
+        "database.user": "username",
+        "database.password": "password",
+        "tasks.max": "1"
     };
 
     ListenerConfiguration config = {
+        database: databaseConn,
         internalSchemaStorage: {
             bootstrapServers: "localhost:9093",
             securityProtocol: PROTOCOL_SASL_SSL,
@@ -252,7 +315,7 @@ function testKafkaSchemaHistoryWithAuth() {
 @test:Config {}
 function testBothKafkaStoragesWithAuth() {
     // Test that both offset storage and schema history can have independent auth configurations
-    map<string> expectedProperties = {
+    map<string> expectedProperties = {        
         "name": "ballerina-cdc-connector",
         "tombstones.on.delete": "false",
         "schema.history.internal": "io.debezium.storage.kafka.history.KafkaSchemaHistory",
@@ -283,10 +346,26 @@ function testBothKafkaStoragesWithAuth() {
         "security.protocol": "SASL_PLAINTEXT",
         "sasl.mechanism": "SCRAM-SHA-512",
         "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"offsetuser\" password=\"offsetpass\";",
-        "include.schema.changes": "false"
+        "include.schema.changes": "false",
+        "max.queue.size": "8192",
+        "max.batch.size": "2048",
+        "event.processing.failure.handling.mode": "warn",
+        "snapshot.mode": "initial",
+        "skipped.operations": "t",
+        "skip.messages.without.change": "false",
+        "decimal.handling.mode": "double",
+        "database.query.timeout.ms": "60000",
+        "provide.transaction.metadata": "false",
+        "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+        "database.hostname": "localhost",
+        "database.port": "3306",
+        "database.user": "username",
+        "database.password": "password",
+        "tasks.max": "1"
     };
 
     ListenerConfiguration config = {
+        database: databaseConn,
         offsetStorage: {
             bootstrapServers: "kafka2:9093",
                 securityProtocol: PROTOCOL_SASL_PLAINTEXT,
@@ -353,10 +432,26 @@ function testBothKafkaStoragesWithCertKey() {
         "ssl.key.password": "offset-key-password",
         "ssl.truststore.location": "truststore2.pem",
         "ssl.truststore.type": "PEM",
-        "include.schema.changes": "false"
+        "include.schema.changes": "false",
+        "max.queue.size": "8192",
+        "max.batch.size": "2048",
+        "event.processing.failure.handling.mode": "warn",
+        "snapshot.mode": "initial",
+        "skipped.operations": "t",
+        "skip.messages.without.change": "false",
+        "decimal.handling.mode": "double",
+        "database.query.timeout.ms": "60000",
+        "provide.transaction.metadata": "false",
+        "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+        "database.hostname": "localhost",
+        "database.port": "3306",
+        "database.user": "username",
+        "database.password": "password",
+        "tasks.max": "1"
     };
 
     ListenerConfiguration config = {
+        database: databaseConn,
         offsetStorage: {
             bootstrapServers: "kafka2:9093",
             securityProtocol: PROTOCOL_SSL,

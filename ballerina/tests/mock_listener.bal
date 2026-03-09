@@ -86,9 +86,9 @@ public type MySqlOptions record {|
 |};
 
 public type MySqlListenerConfiguration record {|
+    *ListenerConfiguration;
     MySqlDatabaseConnection database;
     MySqlOptions options = {};
-    *ListenerConfiguration;
 |};
 
 public type MySqlDatabaseConnection record {|
@@ -111,25 +111,15 @@ isolated function populateMySqlDebeziumProperties(MySqlListenerConfiguration con
     populateDebeziumProperties({
         engineName: config.engineName,
         offsetStorage: config.offsetStorage,
-        internalSchemaStorage: config.internalSchemaStorage
+        internalSchemaStorage: config.internalSchemaStorage,
+        database: config.database,
+        options: config.options
         }, debeziumConfigs);
     populateMySqlDatabaseConfigurations(config.database, debeziumConfigs);
     populateMySqlOptions(config.options, debeziumConfigs);
 }
 
-isolated function populateMySqlDatabaseConfigurations(MySqlDatabaseConnection database, map<string> debeziumConfigs) {
-    // Populate generic CDC connection fields
-    populateDatabaseConfigurations({
-        connectorClass: database.connectorClass,
-        hostname: database.hostname,
-        port: database.port,
-        username: database.username,
-        password: database.password,
-        connectTimeout: database.connectTimeout,
-        tasksMax: database.tasksMax,
-        secure: database.secure
-        }, debeziumConfigs);
-
+isolated function populateMySqlDatabaseConfigurations(MySqlDatabaseConnection database, map<string> debeziumConfigs) {    
     // Populate MySQL-specific relational filtering
     populateTableAndColumnConfigurations(
         database.includedTables,
@@ -154,6 +144,5 @@ isolated function populateMySqlDatabaseConfigurations(MySqlDatabaseConnection da
 isolated function populateMySqlOptions(MySqlOptions options, map<string> debeziumConfigs) {
     // MySQL-specific options would be populated here if any
 
-    // Populate common options from cdc module
-    populateOptions(options, debeziumConfigs, typeof options);
+    populateAdditionalConfigurations(options, debeziumConfigs, typeof options);
 }

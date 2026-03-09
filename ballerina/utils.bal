@@ -29,6 +29,9 @@ public isolated function populateDebeziumProperties(ListenerConfiguration config
     // The following values cannot be overridden by the user
     configMap[TOMBSTONES_ON_DELETE] = FALSE_VALUE;
     configMap[INCLUDE_SCHEMA_CHANGES] = FALSE_VALUE;
+
+    populateDatabaseConfigurations(config.database, configMap);
+    populateOptions(config.options, configMap);
 }
 
 # Processes the given configuration and populates the map with the necessary listener-specific properties.
@@ -195,7 +198,7 @@ isolated function populateSchemaHistorySecureSocketConfigurations(KafkaSecureSoc
         configMap[SCHEMA_HISTORY_CONSUMER_SSL_CIPHER_SUITES] = cipherSuites;
     }
 
-    var protocolConfig = secure.protocol;
+    record {|KafkaSecureSocketProtocol name; string[] versions?;|}? protocolConfig = secure.protocol;
     if protocolConfig is record {| KafkaSecureSocketProtocol name; string[] versions?; |} {
         configMap[SCHEMA_HISTORY_PRODUCER_SSL_PROTOCOL] = protocolConfig.name.toString();
         configMap[SCHEMA_HISTORY_CONSUMER_SSL_PROTOCOL] = protocolConfig.name.toString();
@@ -280,7 +283,7 @@ isolated function populateOffsetSecureSocketConfigurations(KafkaSecureSocket sec
     }
 }
 
-public isolated function populateOptions(Options options, map<string> configMap, typedesc<Options> optionsSubType) {
+public isolated function populateOptions(Options options, map<string> configMap) {
     configMap[MAX_QUEUE_SIZE] = options.maxQueueSize.toString();
     configMap[MAX_BATCH_SIZE] = options.maxBatchSize.toString();
     configMap[EVENT_PROCESSING_FAILURE_HANDLING_MODE] = options.eventProcessingFailureHandlingMode;
@@ -326,8 +329,6 @@ public isolated function populateOptions(Options options, map<string> configMap,
     if performanceConfig is PerformanceConfiguration {
         populatePerformanceConfiguration(performanceConfig, configMap);
     }
-
-    populateAdditionalConfigurations(options, configMap, optionsSubType);
 }
 
 # Populates the database configurations in the given map.
@@ -451,7 +452,13 @@ isolated function readFileContent(string filePath) returns string|error {
 # + configMap - map to populate with heartbeat properties
 public isolated function populateHeartbeatConfiguration(HeartbeatConfiguration config, map<string> configMap) {
     configMap[HEARTBEAT_INTERVAL_MS] = getMillisecondValueOf(config.interval);
+}
 
+# Populates relational heartbeat configuration properties (includes SQL action query).
+#
+# + config - relational heartbeat configuration
+# + configMap - map to populate with heartbeat properties
+public isolated function populateRelationalHeartbeatConfiguration(RelationalHeartbeatConfiguration config, map<string> configMap) {
     string? actionQuery = config.actionQuery;
     if actionQuery is string {
         configMap[HEARTBEAT_ACTION_QUERY] = actionQuery;
@@ -465,52 +472,52 @@ public isolated function populateHeartbeatConfiguration(HeartbeatConfiguration c
 public isolated function populateSignalConfiguration(SignalConfiguration config, map<string> configMap) {
     string[] enabledChannels = [];
 
-    SourceSignalConfiguration? sourceConfig = config.sourceConfig;
-    if sourceConfig is SourceSignalConfiguration {
+    SourceSignalConfiguration? 'source = config.'source;
+    if 'source is SourceSignalConfiguration {
         enabledChannels.push(SOURCE);
-        configMap[SIGNAL_DATA_COLLECTION] = sourceConfig.dataCollectionTable;
+        configMap[SIGNAL_DATA_COLLECTION] = 'source.dataCollectionTable;
     }
 
-    KafkaSignalConfiguration? kafkaConfig = config.kafkaConfig;
-    if kafkaConfig is KafkaSignalConfiguration {
+    KafkaSignalConfiguration? kafka = config.kafka;
+    if kafka is KafkaSignalConfiguration {
         enabledChannels.push(KAFKA);
-        configMap[SIGNAL_KAFKA_TOPIC] = kafkaConfig.topicName;
+        configMap[SIGNAL_KAFKA_TOPIC] = kafka.topicName;
 
-        string|string[]? bootstrapServers = kafkaConfig.bootstrapServers;
+        string|string[]? bootstrapServers = kafka.bootstrapServers;
         if bootstrapServers is string {
             configMap[SIGNAL_KAFKA_BOOTSTRAP_SERVERS] = bootstrapServers;
         } else if bootstrapServers is string[] {
             configMap[SIGNAL_KAFKA_BOOTSTRAP_SERVERS] = string:'join(",", ...bootstrapServers);
         }
 
-        configMap[SIGNAL_KAFKA_GROUP_ID] = kafkaConfig.groupId;
+        configMap[SIGNAL_KAFKA_GROUP_ID] = kafka.groupId;
 
-        KafkaSecurityProtocol? securityProtocol = kafkaConfig.securityProtocol;
+        KafkaSecurityProtocol? securityProtocol = kafka.securityProtocol;
         if securityProtocol is KafkaSecurityProtocol {
             configMap[SIGNAL_CONSUMER_SECURITY_PROTOCOL] = securityProtocol;
         }
 
-        KafkaAuthenticationConfiguration? auth = kafkaConfig.auth;
+        KafkaAuthenticationConfiguration? auth = kafka.auth;
         if auth is KafkaAuthenticationConfiguration {
             populateSignalConsumerAuthConfigurations(auth, configMap);
         }
 
-        KafkaSecureSocket? secureSocket = kafkaConfig.secureSocket;
+        KafkaSecureSocket? secureSocket = kafka.secureSocket;
         if secureSocket is KafkaSecureSocket {
             populateSignalConsumerSecureSocketConfigurations(secureSocket, configMap);
         }
 
-        configMap[SIGNAL_KAFKA_POLL_TIMEOUT] = getMillisecondValueOf(kafkaConfig.pollTimeout);
+        configMap[SIGNAL_KAFKA_POLL_TIMEOUT] = getMillisecondValueOf(kafka.pollTimeout);
     }
 
-    FileSignalConfiguration? fileConfig = config.fileConfig;
-    if fileConfig is FileSignalConfiguration {
+    FileSignalConfiguration? file = config.file;
+    if file is FileSignalConfiguration {
         enabledChannels.push(FILE);
-        configMap[SIGNAL_FILE] = fileConfig.fileName;
+        configMap[SIGNAL_FILE] = file.fileName;
     }
 
-    JmxSignalConfiguration? jmxConfig = config.jmxConfig;
-    if jmxConfig is JmxSignalConfiguration {
+    JmxSignalConfiguration? jmx = config.jmx;
+    if jmx is JmxSignalConfiguration {
         enabledChannels.push(JMX);
         // JMX requires no additional configuration
     }
@@ -616,9 +623,6 @@ public isolated function populateExtendedSnapshotConfiguration(ExtendedSnapshotC
 # + config - relational extended snapshot configuration
 # + configMap - map to populate with relational snapshot properties
 public isolated function populateRelationalExtendedSnapshotConfiguration(RelationalExtendedSnapshotConfiguration config, map<string> configMap) {
-    // First populate the common extended snapshot properties
-    populateExtendedSnapshotConfiguration(config, configMap);
-
     // Then populate relational-specific properties
     SnapshotLockingMode? lockingMode = config.lockingMode;
     if lockingMode is SnapshotLockingMode {
@@ -664,7 +668,7 @@ public isolated function populateTransactionMetadataConfiguration(TransactionMet
 public isolated function populateColumnTransformConfiguration(ColumnTransformConfiguration config, map<string> configMap) {
     ColumnHashMask[]? maskWithHash = config.maskWithHash;
     if maskWithHash is ColumnHashMask[] {
-        foreach var mask in maskWithHash {
+        foreach ColumnHashMask mask in maskWithHash {
             string|string[] patterns = mask.regexPatterns;
             string patternStr = patterns is string ? patterns : string:'join(", ", ...patterns);
             string hashVersionStr = mask.version == HASH_V2? "v2" : "";
@@ -675,7 +679,7 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
 
     ColumnCharMask[]? maskWithChars = config.maskWithChars;
     if maskWithChars is ColumnCharMask[] {
-        foreach var mask in maskWithChars {
+        foreach ColumnCharMask mask in maskWithChars {
             string|string[] patterns = mask.regexPatterns;
             string patternStr = patterns is string ? patterns : string:'join(", ", ...patterns);
             // Format: column.mask.with.<length>.chars = <pattern>
@@ -686,7 +690,7 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
 
     ColumnTruncate[]? truncateToChars = config.truncateToChars;
     if truncateToChars is ColumnTruncate[] {
-        foreach var truncate in truncateToChars {
+        foreach ColumnTruncate truncate in truncateToChars {
             string|string[] patterns = truncate.regexPatterns;
             string patternStr = patterns is string ? patterns : string:'join(", ", ...patterns);
             string truncateKey = string `column.truncate.to.${truncate.length}.chars`;
@@ -701,7 +705,7 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
 # + configMap - map to populate with topic properties
 public isolated function populateTopicConfiguration(TopicConfiguration config, map<string> configMap) {
     configMap[TOPIC_DELIMITER] = config.delimiter;
-    configMap[TOPIC_NAMING_STRATEGY] = config.namingStrategy;
+    configMap[TOPIC_NAMING_STRATEGY] = "io.debezium.schema.SchemaTopicNamingStrategy";
 }
 
 # Populates data type configuration properties.
@@ -728,7 +732,12 @@ public isolated function populateErrorHandlingConfiguration(ConnectionRetryConfi
 # + config - performance configuration
 # + configMap - map to populate with performance properties
 public isolated function populatePerformanceConfiguration(PerformanceConfiguration config, map<string> configMap) {
-    configMap[MAX_QUEUE_SIZE_IN_BYTES] = config.maxQueueSizeInBytes.toString();
+    int? maxQueueSizeInBytes = config.maxQueueSizeInBytes;
+    if maxQueueSizeInBytes is int {
+        configMap[MAX_QUEUE_SIZE_IN_BYTES] = maxQueueSizeInBytes.toString();
+    } else {
+        configMap[MAX_QUEUE_SIZE_IN_BYTES] = "0"; // Default to 0 (unlimited) if not specified
+    }
     configMap[POLL_INTERVAL_MS] = getMillisecondValueOf(config.pollInterval);
 }
 
@@ -1042,7 +1051,7 @@ public isolated function populateJdbcOffsetStorageConfiguration(JdbcOffsetStorag
 # + options - Options record containing additional properties
 # + configMap - Map to populate with additional configuration properties
 # + optionsSubType - Type descriptor for the options subtype
-isolated function populateAdditionalConfigurations(Options options, map<string> configMap, typedesc<Options> optionsSubType) {
+public isolated function populateAdditionalConfigurations(Options options, map<string> configMap, typedesc<Options> optionsSubType) {
     string[] additionalConfigKeys = getAdditionalConfigKeys(options, optionsSubType);
     foreach string key in additionalConfigKeys {
         anydata value = options[key];

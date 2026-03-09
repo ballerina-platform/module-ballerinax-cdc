@@ -24,15 +24,13 @@ function testKafkaSchemaHistoryWithExtendedOptions() {
         "schema.history.internal.kafka.topic": "schema-changes"
     };
 
-    ListenerConfiguration config = {
-        internalSchemaStorage: <KafkaInternalSchemaStorage>{
-            bootstrapServers: "localhost:9092",
-            topicName: "schema-changes"
-        }
+    InternalSchemaStorage schemaStorage = {
+        bootstrapServers: "localhost:9092",
+        topicName: "schema-changes"
     };
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
 
     test:assertEquals(actualProperties["schema.history.internal"],
         expectedProperties["schema.history.internal"],
@@ -48,12 +46,10 @@ function testMemorySchemaHistory() {
         "schema.history.internal": "io.debezium.relational.history.MemorySchemaHistory"
     };
 
-    ListenerConfiguration config = {
-        internalSchemaStorage: <MemoryInternalSchemaStorage>{}
-    };
+    InternalSchemaStorage schemaStorage = <MemoryInternalSchemaStorage>{};
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
 
     test:assertEquals(actualProperties["schema.history.internal"],
         expectedProperties["schema.history.internal"],
@@ -68,16 +64,14 @@ function testJdbcSchemaHistory() {
         "schema.history.internal.jdbc.user": "dbuser"
     };
 
-    ListenerConfiguration config = {
-        internalSchemaStorage: <JdbcInternalSchemaStorage>{
-            url: "jdbc:mysql://localhost:3306/history",
-            username: "dbuser",
-            password: "dbpass"
-        }
+    InternalSchemaStorage schemaStorage = <JdbcInternalSchemaStorage>{
+        url: "jdbc:mysql://localhost:3306/history",
+        username: "dbuser",
+        password: "dbpass"
     };
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
 
     test:assertEquals(actualProperties["schema.history.internal"],
         expectedProperties["schema.history.internal"],
@@ -87,7 +81,6 @@ function testJdbcSchemaHistory() {
 @test:Config {groups: ["schema-history"]}
 function testRedisSchemaHistory() {
     map<string> expectedProperties = {
-        "name": "ballerina-cdc-connector",
         "topic.prefix": "bal_cdc_schema_history",
         "schema.history.internal": "io.debezium.storage.redis.history.RedisSchemaHistory",
         "schema.history.internal.redis.address": "localhost:6379",
@@ -111,25 +104,23 @@ function testRedisSchemaHistory() {
         "offset.storage": "org.apache.kafka.connect.storage.FileOffsetBackingStore",
         "offset.flush.interval.ms": "60000",
         "offset.flush.timeout.ms": "5000",
-        "offset.storage.file.filename": "tmp/debezium-offsets.dat",
-        "tombstones.on.delete": "false",
-        "include.schema.changes": "false"
+        "offset.storage.file.filename": "tmp/debezium-offsets.dat"
     };
 
-    ListenerConfiguration config = {
-        internalSchemaStorage: <RedisInternalSchemaStorage>{
-            address: "localhost:6379",
-            secureSocket: {
-                cert: {path: "/path/to/truststore.jks", password: "trustpass"},
-                key: {path: "/path/to/keystore.jks", password: "keypass"},
-                verifyHostName: true
-            }
+    InternalSchemaStorage schemaStorage = {
+        address: "localhost:6379",
+        secureSocket: {
+            cert: {path: "/path/to/truststore.jks", password: "trustpass"},
+            key: {path: "/path/to/keystore.jks", password: "keypass"},
+            verifyHostName: true
         }
     };
 
-    map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    OffsetStorage offsetStorage = <FileOffsetStorage>{};
 
+    map<string> actualProperties = {};
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
+    populateOffsetStorageConfigurations(offsetStorage, actualProperties);
     test:assertEquals(actualProperties, expectedProperties, msg = "Redis schema history properties do not match.");
 }
 
@@ -141,16 +132,14 @@ function testS3SchemaHistory() {
         "schema.history.internal.s3.region.name": "us-east-1"
     };
 
-    ListenerConfiguration config = {
-        internalSchemaStorage: <AmazonS3InternalSchemaStorage>{
-            bucketName: "my-bucket",
-            objectName: "schema-history",
-            region: "us-east-1"
-        }
+    InternalSchemaStorage schemaStorage = {
+        bucketName: "my-bucket",
+        objectName: "schema-history",
+        region: "us-east-1"
     };
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
 
     test:assertEquals(actualProperties["schema.history.internal"],
         expectedProperties["schema.history.internal"],
@@ -165,17 +154,15 @@ function testAzureBlobSchemaHistory() {
         "schema.history.internal.azure.storage.container.name": "mycontainer"
     };
 
-    ListenerConfiguration config = {
-        internalSchemaStorage: <AzureBlobInternalSchemaStorage>{
-            connectionString: "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey",
-            accountName: "myaccount",
-            containerName: "mycontainer",
-            blobName: "schema-history"
-        }
+    InternalSchemaStorage schemaStorage = {
+        connectionString: "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey",
+        accountName: "myaccount",
+        containerName: "mycontainer",
+        blobName: "schema-history"
     };
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
 
     test:assertEquals(actualProperties["schema.history.internal"],
         expectedProperties["schema.history.internal"],
@@ -189,19 +176,17 @@ function testRocketMQSchemaHistory() {
         "schema.history.internal.rocketmq.name.srv.addr": "localhost:9876"
     };
 
-    ListenerConfiguration config = {
-        internalSchemaStorage: <RocketMQInternalSchemaStorage>{
-            topicName: "schema-history",
-            nameServerAddress: "localhost:9876",
-            accessKey: "accessKey",
-            secretKey: "secretKey",
-            recoveryAttempts: 10,
-            storeRecordTimeout: 3.0
-        }
+    InternalSchemaStorage schemaStorage = {
+        topicName: "schema-history",
+        nameServerAddress: "localhost:9876",
+        accessKey: "accessKey",
+        secretKey: "secretKey",
+        recoveryAttempts: 10,
+        storeRecordTimeout: 3.0
     };
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
 
     test:assertEquals(actualProperties["schema.history.internal"],
         expectedProperties["schema.history.internal"],
@@ -214,12 +199,10 @@ function testMemoryOffsetStorage() {
         "offset.storage": "org.apache.kafka.connect.storage.MemoryOffsetBackingStore"
     };
 
-    ListenerConfiguration config = {
-        offsetStorage: <MemoryOffsetStorage>{}
-    };
+    OffsetStorage offsetStorage = <MemoryOffsetStorage>{};
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateOffsetStorageConfigurations(offsetStorage, actualProperties);
 
     test:assertEquals(actualProperties["offset.storage"],
         expectedProperties["offset.storage"],
@@ -229,10 +212,6 @@ function testMemoryOffsetStorage() {
 @test:Config {groups: ["offset-storage"]}
 function testRedisOffsetStorage() {
     map<string> expectedProperties = {
-        "name": "ballerina-cdc-connector",
-        "schema.history.internal": "io.debezium.storage.file.history.FileSchemaHistory",
-        "topic.prefix": "bal_cdc_schema_history",
-        "schema.history.internal.file.filename": "tmp/dbhistory.dat",
         "offset.storage": "io.debezium.storage.redis.offset.RedisOffsetBackingStore",
         "offset.storage.redis.address": "localhost:6379",
         "offset.storage.redis.key": "metadata:debezium:offsets",
@@ -250,22 +229,18 @@ function testRedisOffsetStorage() {
         "offset.storage.redis.wait.enabled": "false",
         "offset.storage.redis.cluster.enabled": "false",
         "offset.flush.interval.ms": "60000",
-        "offset.flush.timeout.ms": "5000",
-        "tombstones.on.delete": "false",
-        "include.schema.changes": "false"
+        "offset.flush.timeout.ms": "5000"
     };
 
-    ListenerConfiguration config = {
-        offsetStorage: <RedisOffsetStorage>{
-            address: "localhost:6379",
-            secureSocket: {
-                cert: {path: "/path/to/truststore.jks", password: "password"}
-            }
+    OffsetStorage offsetStorage = <RedisOffsetStorage>{
+        address: "localhost:6379",
+        secureSocket: {
+            cert: {path: "/path/to/truststore.jks", password: "password"}
         }
     };
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateOffsetStorageConfigurations(offsetStorage, actualProperties);
 
     test:assertEquals(actualProperties, expectedProperties, msg = "Redis offset storage properties do not match.");
 }
@@ -278,16 +253,14 @@ function testJdbcOffsetStorage() {
         "offset.storage.jdbc.user": "dbuser"
     };
 
-    ListenerConfiguration config = {
-        offsetStorage: <JdbcOffsetStorage>{
-            url: "jdbc:mysql://localhost:3306/offsets",
-            username: "dbuser",
-            password: "dbpass"
-        }
+    OffsetStorage offsetStorage = <JdbcOffsetStorage>{
+        url: "jdbc:mysql://localhost:3306/offsets",
+        username: "dbuser",
+        password: "dbpass"
     };
 
     map<string> actualProperties = {};
-    populateDebeziumProperties(config, actualProperties);
+    populateOffsetStorageConfigurations(offsetStorage, actualProperties);
 
     test:assertEquals(actualProperties["offset.storage"],
         expectedProperties["offset.storage"],
@@ -297,7 +270,6 @@ function testJdbcOffsetStorage() {
 @test:Config {groups: ["snapshot"]}
 function testExtendedSnapshotConfiguration() {
     map<string> expectedProperties = {
-        "snapshot.mode": "no_data",
         "snapshot.delay.ms": "10000",
         "snapshot.fetch.size": "1000"
     };
@@ -313,9 +285,6 @@ function testExtendedSnapshotConfiguration() {
     map<string> actualProperties = {};
     populateSampleDBOptions(options, actualProperties);
 
-    test:assertEquals(actualProperties["snapshot.mode"],
-        expectedProperties["snapshot.mode"],
-        msg = "Snapshot mode does not match.");
     test:assertEquals(actualProperties["snapshot.delay.ms"],
         expectedProperties["snapshot.delay.ms"],
         msg = "Snapshot delay does not match.");
