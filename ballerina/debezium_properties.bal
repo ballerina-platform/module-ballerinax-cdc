@@ -95,9 +95,9 @@ const string SCHEMA_HISTORY_INTERNAL_S3_OBJECT_NAME = "schema.history.internal.s
 const string SCHEMA_HISTORY_INTERNAL_S3_ENDPOINT = "schema.history.internal.s3.endpoint";
 
 // Azure Blob schema history properties
-const string SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_CONNECTION_STRING = "schema.history.internal.azure.storage.connection.string";
+const string SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_CONNECTION_STRING = "schema.history.internal.azure.storage.account.connectionstring";
 const string SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_ACCOUNT_NAME = "schema.history.internal.azure.storage.account.name";
-const string SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_CONTAINER_NAME = "schema.history.internal.azure.storage.container.name";
+const string SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_CONTAINER_NAME = "schema.history.internal.azure.storage.account.container.name";
 const string SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_BLOB_NAME = "schema.history.internal.azure.storage.blob.name";
 
 // RocketMQ schema history properties
