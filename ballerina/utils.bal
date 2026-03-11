@@ -671,8 +671,8 @@ public isolated function populateColumnTransformConfiguration(ColumnTransformCon
         foreach ColumnHashMask mask in maskWithHash {
             string|string[] patterns = mask.regexPatterns;
             string patternStr = patterns is string ? patterns : string:'join(", ", ...patterns);
-            string hashVersionStr = mask.version == HASH_V2? "v2" : "";
-            string hashKey = string `column.mask.hash.${hashVersionStr}.${mask.algorithm}.with.salt.${mask.salt}`;
+            string hashVersionSegment = mask.version == HASH_V2 ? "v2." : "";
+            string hashKey = string `column.mask.hash.${hashVersionSegment}${mask.algorithm}.with.salt.${mask.salt}`;
             configMap[hashKey] = patternStr;
         }
     }
