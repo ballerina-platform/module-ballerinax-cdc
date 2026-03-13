@@ -1,9 +1,9 @@
 # Specification: Ballerina CDC Library
 
-_Authors_: [@niveathika](https://github.com/niveathika) \
+_Authors_: [@niveathika](https://github.com/niveathika) [@gayaldassanayake](https://github.com/gayaldassanayake) \
 _Reviewers_: [@daneshk](https://github.com/daneshk) [@ThisaruGuruge](https://github.com/ThisaruGuruge) \
 _Created_: 2025/04/23 \
-_Updated_: 2025/05/19 \
+_Updated_: 2026/03/01 \
 _Edition_: Swan Lake 
 
 ## Introduction
@@ -40,7 +40,11 @@ The conforming implementation of the specification is released and included in t
         - [2.2.4.5 `onTruncate`](#2245-ontruncate)
         - [2.2.4.6 `onError`](#2246-onerror)
       - [2.2.5 Service Configuration](#225-service-configuration)
-    - [2.2 Using health checks](#23-using-health-checks) 
+    - [2.3 Using health checks](#23-using-health-checks)
+    - [2.4 Listener Configuration](#24-listener-configuration)
+      - [2.4.1 Offset Storage](#241-offset-storage)
+      - [2.4.2 Schema History Storage](#242-schema-history-storage)
+    - [2.5 CDC Options](#25-cdc-options)
   - [3. Errors](#3-errors)
     - [3.1 Service Error Handling](#31-service-error-handling)
           - [Example: `onCreate` Throwing an Error](#example-oncreate-throwing-an-error)
@@ -59,7 +63,7 @@ The conforming implementation of the specification is released and included in t
 
 ## 1. Overview
 
-The Ballerina CDC (Change Data Capture) library provides a robust framework for capturing and processing changes in data sources in real time. It is designed to enable developers to build reactive applications that respond to database events such as inserts, updates, and deletes. By leveraging the CDC library, developers can seamlessly integrate with databases like MySQL and MSSQL to monitor and act on data changes.
+The Ballerina CDC (Change Data Capture) library provides a robust framework for capturing and processing changes in data sources in real time. It is designed to enable developers to build reactive applications that respond to database events such as inserts, updates, and deletes. By leveraging the CDC library, developers can seamlessly integrate with databases like MySQL, MSSQL, and PostgreSQL to monitor and act on data changes.
 
 The library offers two primary components: listeners and services. Listeners, such as `MySqlListener` and `MsSqlListener`, are responsible for capturing changes from the database. Services, on the other hand, define the logic for processing these changes. Together, these components provide a flexible and efficient way to handle data change events.
 
@@ -321,6 +325,183 @@ service on new http:Listener(...) {
         return http:SERVICE_UNAVAILABLE;
     }
 }
+```
+
+### 2.4 Listener Configuration
+
+The `ListenerConfiguration` record controls how the CDC engine persists its state. It is an open record, so additional Debezium properties can be passed directly as extra fields when needed.
+
+```ballerina
+public type ListenerConfiguration record {
+    string engineName = "ballerina-cdc-connector";
+    InternalSchemaStorage internalSchemaStorage = <FileInternalSchemaStorage>{};
+    OffsetStorage offsetStorage = <FileOffsetStorage>{};
+    decimal livenessInterval = 60.0;
+};
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `engineName` | `string` | Debezium engine instance name |
+| `offsetStorage` | `OffsetStorage` | Where connector checkpoints (offsets) are stored |
+| `internalSchemaStorage` | `InternalSchemaStorage` | Where schema history is stored (relational connectors only) |
+| `livenessInterval` | `decimal` | Interval in seconds for the liveness check |
+
+#### 2.4.1 Offset Storage
+
+The `OffsetStorage` union type selects where the connector saves its read position (offset). The default is `FileOffsetStorage`.
+
+```ballerina
+public type OffsetStorage FileOffsetStorage|KafkaOffsetStorage|MemoryOffsetStorage|JdbcOffsetStorage|RedisOffsetStorage;
+```
+
+| Type | Description |
+|------|-------------|
+| `FileOffsetStorage` | Local file (default). Fields: `fileName` |
+| `KafkaOffsetStorage` | Kafka topic. Fields: `bootstrapServers`, `topicName`, `partitions`, `replicationFactor`, `securityProtocol`, `auth`, `secureSocket` |
+| `MemoryOffsetStorage` | In-memory (testing only — not persistent across restarts) |
+| `JdbcOffsetStorage` | Relational DB via JDBC. Fields: `url`, `username`, `password`, `tableName`, `retryConfig` |
+| `RedisOffsetStorage` | Redis. Fields: `address`, `key`, `username`, `password`, `dbIndex`, `secureSocket`, `retryConfig`, `waitConfig`, `clusterEnabled` |
+
+#### 2.4.2 Schema History Storage
+
+The `InternalSchemaStorage` union type selects where schema history is stored. Required for relational connectors (MySQL, MSSQL). The default is `FileInternalSchemaStorage`.
+
+```ballerina
+public type InternalSchemaStorage
+    FileInternalSchemaStorage
+    |KafkaInternalSchemaStorage
+    |MemoryInternalSchemaStorage
+    |JdbcInternalSchemaStorage
+    |RedisInternalSchemaStorage
+    |AmazonS3InternalSchemaStorage
+    |AzureBlobInternalSchemaStorage
+    |RocketMQInternalSchemaStorage;
+```
+
+| Type | Description |
+|------|-------------|
+| `FileInternalSchemaStorage` | Local file (default). Field: `fileName` |
+| `KafkaInternalSchemaStorage` | Kafka topic. Uses the same `KafkaSecurityProtocol` / `KafkaAuthenticationConfiguration` / `KafkaSecureSocket` types as offset storage |
+| `MemoryInternalSchemaStorage` | In-memory (testing only) |
+| `JdbcInternalSchemaStorage` | Relational DB via JDBC. Same fields as `JdbcOffsetStorage` |
+| `RedisInternalSchemaStorage` | Redis. Same fields as `RedisOffsetStorage` |
+| `AmazonS3InternalSchemaStorage` | Amazon S3. Fields: `bucketName`, `objectName`, `accessKeyId`, `secretAccessKey`, `region`, `endpoint`. Requires additional Java dependencies |
+| `AzureBlobInternalSchemaStorage` | Azure Blob Storage. Fields: `connectionString`, `containerName`, `blobName`, `accountName`. Requires additional Java dependencies |
+| `RocketMQInternalSchemaStorage` | Apache RocketMQ. Fields: `topicName`, `nameServerAddress`, `aclEnabled`, `accessKey`, `secretKey`. Requires additional Java dependencies |
+
+### 2.5 CDC Options
+
+The `Options` record configures the CDC connector's runtime behavior. It is an open record, allowing raw Debezium properties to be passed directly as extra fields.
+
+```ballerina
+public type Options record {
+    SnapshotMode snapshotMode = INITIAL;
+    EventProcessingFailureHandlingMode eventProcessingFailureHandlingMode = WARN;
+    Operation[] skippedOperations = [TRUNCATE];
+    boolean skipMessagesWithoutChange = false;
+    DecimalHandlingMode decimalHandlingMode = DOUBLE;
+    int maxQueueSize = 8192;
+    int maxBatchSize = 2048;
+    decimal queryTimeout = 60;
+    HeartbeatConfiguration heartbeatConfig?;
+    SignalConfiguration signalConfig?;
+    TransactionMetadataConfiguration transactionMetadataConfig?;
+    ColumnTransformConfiguration columnTransformConfig?;
+    TopicConfiguration topicConfig?;
+    ConnectionRetryConfiguration connectionRetryConfig?;
+    PerformanceConfiguration performanceConfig?;
+    MonitoringConfiguration monitoringConfig?;
+    GuardrailConfiguration guardrailConfig?;
+};
+```
+
+#### `heartbeatConfig` — `HeartbeatConfiguration`
+
+Sends periodic heartbeat events to detect idle or stale connections.
+
+```ballerina
+public type HeartbeatConfiguration record {|
+    decimal interval = 0.0;  // seconds; 0 = disabled
+    string actionQuery?;     // SQL executed on each heartbeat
+|};
+```
+
+#### `signalConfig` — `SignalConfiguration`
+
+Controls the connector at runtime by sending signals through one or more channels.
+
+```ballerina
+public type SignalConfiguration record {
+    SourceSignalConfiguration sourceConfig?;   // database table
+    KafkaSignalConfiguration kafkaConfig?;     // Kafka topic
+    FileSignalConfiguration fileConfig?;       // file
+    JmxSignalConfiguration jmxConfig?;        // JMX
+};
+```
+
+- `SourceSignalConfiguration` — `dataCollectionTable`: fully-qualified table name
+- `KafkaSignalConfiguration` — `topicName`, `bootstrapServers`, `groupId`, `securityProtocol`, `auth`, `secureSocket`, `pollTimeout`
+- `FileSignalConfiguration` — `fileName`
+- `JmxSignalConfiguration` — no fields (JMX MBean is auto-registered)
+
+#### `transactionMetadataConfig` — `TransactionMetadataConfiguration`
+
+Emits `BEGIN`/`END` boundary events annotated with transaction IDs.
+
+```ballerina
+public type TransactionMetadataConfiguration record {|
+    string topicName = "transaction";
+|};
+```
+
+#### `columnTransformConfig` — `ColumnTransformConfiguration`
+
+Masks or truncates column values before they are emitted.
+
+```ballerina
+public type ColumnTransformConfiguration record {|
+    ColumnHashMask[] maskWithHash?;     // irreversible SHA/MD5 hash
+    ColumnCharMask[] maskWithChars?;    // fixed-length character mask
+    ColumnTruncate[] truncateToChars?;  // truncate to N characters
+|};
+```
+
+Each entry targets columns by `regexPatterns` (fully-qualified column name patterns).
+
+#### `topicConfig` — `TopicConfiguration`
+
+Overrides topic naming conventions.
+
+```ballerina
+public type TopicConfiguration record {|
+    string delimiter = ".";
+    string namingStrategy = "io.debezium.schema.SchemaTopicNamingStrategy";
+|};
+```
+
+#### `connectionRetryConfig` — `ConnectionRetryConfiguration`
+
+Configures retry behavior when the connector loses its database connection.
+
+```ballerina
+public type ConnectionRetryConfiguration record {|
+    int maxAttempts = -1;          // -1 = unlimited
+    decimal retryInitialDelay = 0.3;
+    decimal retryMaxDelay = 10.0;
+|};
+```
+
+#### `performanceConfig` — `PerformanceConfiguration`
+
+Tunes batch sizes, poll intervals, and queue sizes.
+
+```ballerina
+public type PerformanceConfiguration record {|
+    int maxQueueSizeInBytes = 0;  // 0 = unlimited
+    decimal pollInterval = 0.5;
+    int queryFetchSize?;
+|};
 ```
 
 ## 3. Errors
