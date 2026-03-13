@@ -1,6 +1,6 @@
 # Specification: Ballerina CDC Library
 
-_Authors_: [@niveathika](https://github.com/niveathika) \
+_Authors_: [@niveathika](https://github.com/niveathika) [@gayaldassanayake](https://github.com/gayaldassanayake) \
 _Reviewers_: [@daneshk](https://github.com/daneshk) [@ThisaruGuruge](https://github.com/ThisaruGuruge) \
 _Created_: 2025/04/23 \
 _Updated_: 2026/03/01 \
