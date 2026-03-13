@@ -41,11 +41,11 @@ public isolated function externDetach(Listener cdcListener, Service cdcService) 
 # + cdcListener - the cdc listener object
 # + config - the configuration map containing debezium properties
 # + return - an error if the listener cannot be started, or `()` if successful
-# Use `externStartWithSeparateConfigs` instead, which separates debezium properties from
+# Use `externStartWithExtendedConfigs` instead, which separates debezium properties from
 # listener-specific properties into distinct maps.
 #
 # # Deprecated
-# Use `externStartWithSeparateConfigs` instead.
+# Use `externStartWithExtendedConfigs` instead.
 @deprecated
 public isolated function externStart(Listener cdcListener, map<anydata> config) returns Error? = @java:Method {
     name: "start",
@@ -58,7 +58,7 @@ public isolated function externStart(Listener cdcListener, map<anydata> config) 
 # + debeziumConfigs - the configuration map containing debezium properties
 # + listenerConfigs - the configuration map containing listener-specific properties
 # + return - an error if the listener cannot be started, or `()` if successful
-public isolated function externStartWithSeparateConfigs(Listener cdcListener, map<anydata> debeziumConfigs, map<anydata> listenerConfigs) returns Error? = @java:Method {
+public isolated function externStartWithExtendedConfigs(Listener cdcListener, map<anydata> debeziumConfigs, map<anydata> listenerConfigs) returns Error? = @java:Method {
     name: "startWithSeparateConfigs",
     'class: "io.ballerina.lib.cdc.Listener"
 } external;

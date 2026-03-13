@@ -49,7 +49,7 @@ public isolated class MockListener {
     #
     # + return - An error if the listener cannot be started, or `()` if successful
     public isolated function 'start() returns Error? {
-        check externStartWithSeparateConfigs(self, self.debeziumConfigs, self.listenerConfigs);
+        check externStartWithExtendedConfigs(self, self.debeziumConfigs, self.listenerConfigs);
     }
 
     # Detaches a CDC service from the MySQL listener.
