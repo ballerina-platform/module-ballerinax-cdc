@@ -91,6 +91,11 @@ public isolated function isLive(Listener cdc) returns boolean|Error = @java:Meth
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
 
+# Retrieves additional configuration keys for the given options.
+#
+# + options - The options instance to retrieve additional configuration keys from
+# + optionsSubType - The type descriptor of the options
+# + return - An array of additional configuration keys
 public isolated function externGetAdditionalConfigKeys(Options options, typedesc<Options> optionsSubType) returns string[] = @java:Method {
     name: "getAdditionalConfigKeys",
     'class: "io.ballerina.lib.cdc.utils.Utils"

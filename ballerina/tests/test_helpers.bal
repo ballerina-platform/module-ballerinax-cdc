@@ -15,14 +15,14 @@
 // under the License.
 
 // Sample database options for testing (mimics database-specific modules)
-public type SampleDBOptions record {|
+type SampleDBOptions record {|
     *Options;
     ExtendedSnapshotConfiguration extendedSnapshot?;
     RelationalHeartbeatConfiguration heartbeatConfig?;
 |};
 
 // Sample database listener configuration for testing
-public type SampleDBListenerConfiguration record {|
+type SampleDBListenerConfiguration record {|
     *ListenerConfiguration;
     SampleDBOptions options = {};
 |};

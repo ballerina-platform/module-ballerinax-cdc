@@ -16,7 +16,7 @@
 import ballerina/random;
 
 # Represents a Ballerina CDC MySQL Listener.
-public isolated class MockListener {
+isolated class MockListener {
     *Listener;
 
     private final map<string> & readonly debeziumConfigs;
@@ -27,7 +27,7 @@ public isolated class MockListener {
     # Initializes the MySQL listener with the given configuration.
     #
     # + config - The configuration for the MySQL connector
-    public isolated function init(*MySqlListenerConfiguration config) {
+    isolated function init(*MySqlListenerConfiguration config) {
         map<string> debeziumConfigs = {};
         map<anydata> listenerConfigs = {};
         populateMySqlDebeziumProperties(config, debeziumConfigs);
@@ -80,18 +80,18 @@ const string MYSQL_DATABASE_INCLUDE_LIST = "database.include.list";
 const string MYSQL_DATABASE_EXCLUDE_LIST = "database.exclude.list";
 
 // MySQL-specific options (mimics actual MySQL module)
-public type MySqlOptions record {|
+type MySqlOptions record {|
     *Options;
     // MySQL-specific options can be added here
 |};
 
-public type MySqlListenerConfiguration record {|
+type MySqlListenerConfiguration record {|
     *ListenerConfiguration;
     MySqlDatabaseConnection database;
     MySqlOptions options = {};
 |};
 
-public type MySqlDatabaseConnection record {|
+type MySqlDatabaseConnection record {|
     *DatabaseConnection;
     string connectorClass = "io.debezium.connector.mysql.MySqlConnector";
     string hostname = "localhost";
