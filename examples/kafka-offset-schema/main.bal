@@ -15,15 +15,14 @@
 // under the License.
 
 import ballerina/log;
-import ballerina/os;
 import ballerinax/cdc;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string hostname = os:getEnv("DB_HOSTNAME");
-configurable string username = os:getEnv("DB_USERNAME");
-configurable string password = os:getEnv("DB_PASSWORD");
-configurable string kafkaBootstrapServers = os:getEnv("KAFKA_BOOTSTRAP_SERVERS");
+configurable string hostname;
+configurable string username;
+configurable string password;
+configurable string kafkaBootstrapServers;
 
 listener mysql:CdcListener inventoryListener = new (
     database = {

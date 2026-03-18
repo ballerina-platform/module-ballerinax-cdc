@@ -15,14 +15,13 @@
 // under the License.
 
 import ballerina/log;
-import ballerina/os;
 import ballerinax/cdc;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string hostname = os:getEnv("DB_HOSTNAME");
-configurable string username = os:getEnv("DB_USERNAME");
-configurable string password = os:getEnv("DB_PASSWORD");
+configurable string hostname;
+configurable string username;
+configurable string password;
 
 listener mysql:CdcListener financeDbListener = new (
     database = {

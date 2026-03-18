@@ -15,18 +15,17 @@
 // under the License.
 
 import ballerina/log;
-import ballerina/os;
 import ballerinax/cdc;
 import ballerinax/cdc.schema.aws.s3.driver as _;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string hostname = os:getEnv("DB_HOSTNAME");
-configurable string username = os:getEnv("DB_USERNAME");
-configurable string password = os:getEnv("DB_PASSWORD");
-configurable string accessKeyId = os:getEnv("AWS_ACCESS_KEY_ID");
-configurable string secretAccessKey = os:getEnv("AWS_SECRET_ACCESS_KEY");
-configurable string region = os:getEnv("AWS_REGION");
+configurable string hostname;
+configurable string username;
+configurable string password;
+configurable string accessKeyId;
+configurable string secretAccessKey;
+configurable string region;
 
 listener mysql:CdcListener auditDbListener = new (
     database = {

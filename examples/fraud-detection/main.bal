@@ -14,20 +14,19 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/log;
-import ballerina/os;
 import ballerinax/cdc;
 import ballerinax/googleapis.gmail;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string refreshToken = os:getEnv("REFRESH_TOKEN");
-configurable string clientId = os:getEnv("CLIENT_ID");
-configurable string clientSecret = os:getEnv("CLIENT_SECRET");
-configurable string recipient = os:getEnv("RECIPIENT");
-configurable string sender = os:getEnv("SENDER");
+configurable string refreshToken;
+configurable string clientId;
+configurable string clientSecret;
+configurable string recipient;
+configurable string sender;
 
-configurable string username = os:getEnv("DB_USERNAME");
-configurable string password = os:getEnv("DB_PASSWORD");
+configurable string username;
+configurable string password;
 
 listener mysql:CdcListener financeDBListener = new (
     database = {
