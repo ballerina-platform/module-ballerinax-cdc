@@ -143,6 +143,7 @@ public class Listener {
         }
     }
 
+    @Deprecated(since = "1.3.0")
     public static Object start(Environment environment, BObject listener, BMap<BString, Object> config) {
         String id = getListenerId(listener);
         ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
@@ -162,8 +163,6 @@ public class Listener {
                         "Cannot start the listener without at least one attached service.");
             }
 
-            Properties engineProperties = populateEngineProperties(config);
-
             Long livenessInterval;
             if (config.containsKey(LIVENESS_INTERVAL_CONFIG_KEY)) {
                 livenessInterval = ((BDecimal) config.get(LIVENESS_INTERVAL_CONFIG_KEY))
@@ -174,47 +173,96 @@ public class Listener {
                 livenessInterval = DEFAULT_LIVENESS_INTERVAL_MILLIS;
             }
 
-            @SuppressWarnings("unchecked")
-            ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
-                    .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
+            config.remove(LIVENESS_INTERVAL_CONFIG_KEY);
+            Properties engineProperties = populateEngineProperties(config);
 
-            CompletableFuture<EngineResult> comFuture = new CompletableFuture<>();
-            CdcCompletionCallback completionCallback = new CdcCompletionCallback();
-            BalChangeConsumer changeConsumer = new BalChangeConsumer(serviceMap, environment.getRuntime());
-            ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
-            DebeziumEngine<ChangeEvent<String, String>> engine = create(Json.class)
-                    .using(engineProperties)
-                    .notifying(changeConsumer)
-                    .using(new DebeziumEngine.ConnectorCallback() {
-                        @Override
-                        public void taskStarted() {
-                            EngineResult result = new EngineResult();
-                            result.success = true;
-                            comFuture.complete(result);
-                        }
-                    })
-                    .using(completionCallback)
-                    .build();
-            executor.submit(engine);
-
-            EngineResult engineResult = comFuture.get();
-            if (engineResult.success) {
-                listener.addNativeData(DEBEZIUM_ENGINE_KEY, engine);
-                listener.addNativeData(EXECUTOR_SERVICE_KEY, executor);
-                listener.addNativeData(CHANGE_CONSUMER_KEY, changeConsumer);
-                listener.addNativeData(COMP_CALLBACK_KEY, completionCallback);
-                listener.addNativeData(LIVENESS_INTERVAL_KEY, livenessInterval);
-                listener.addNativeData(LISTENER_START_TIME_KEY, Instant.now());
-            } else {
-                return createCdcError("Failed to start the Debezium engine due to unknown error");
-            }
-            listener.addNativeData(IS_STARTED_KEY, true);
-            return null;
+            return startEngine(environment, listener, engineProperties, livenessInterval);
         } catch (Throwable t) {
             return createCdcError("Failed to start the Debezium engine: " + t.getMessage());
         } finally {
             lock.unlock();
         }
+    }
+
+    public static Object startWithSeparateConfigs(Environment environment, BObject listener,
+                                          BMap<BString, Object> debeziumConfigs,
+                                          BMap<BString, Object> listenerConfigs) {
+        String id = getListenerId(listener);
+        ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
+
+        lock.lock();
+        try {
+            Object isStartedKey = listener.getNativeData(IS_STARTED_KEY);
+            boolean isStarted = isStartedKey != null && ((Boolean) isStartedKey);
+            if (isStarted) {
+                return null;
+            }
+
+            Object hasAttachedServiceObj = listener.getNativeData(HAS_ATTACHED_SERVICE_KEY);
+            boolean hasAttachedService = hasAttachedServiceObj != null && ((Boolean) hasAttachedServiceObj);
+            if (!hasAttachedService) {
+                return ErrorUtils.createError(BallerinaErrors.OPERATION_NOT_PERMITTED_ERROR,
+                        "Cannot start the listener without at least one attached service.");
+            }
+
+            Properties engineProperties = populateEngineProperties(debeziumConfigs);
+
+            Long livenessInterval;
+            if (listenerConfigs.containsKey(LIVENESS_INTERVAL_CONFIG_KEY)) {
+                livenessInterval = ((BDecimal) listenerConfigs.get(LIVENESS_INTERVAL_CONFIG_KEY))
+                        .decimalValue()
+                        .multiply(BigDecimal.valueOf(1000))
+                        .longValue();
+            } else {
+                livenessInterval = DEFAULT_LIVENESS_INTERVAL_MILLIS;
+            }
+
+            return startEngine(environment, listener, engineProperties, livenessInterval);
+        } catch (Throwable t) {
+            return createCdcError("Failed to start the Debezium engine: " + t.getMessage());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private static Object startEngine(Environment environment, BObject listener, Properties engineProperties,
+                                      Long livenessInterval) throws Exception {
+        @SuppressWarnings("unchecked")
+        ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
+                .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
+
+        CompletableFuture<EngineResult> comFuture = new CompletableFuture<>();
+        CdcCompletionCallback completionCallback = new CdcCompletionCallback();
+        BalChangeConsumer changeConsumer = new BalChangeConsumer(serviceMap, environment.getRuntime());
+        ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+        DebeziumEngine<ChangeEvent<String, String>> engine = create(Json.class)
+                .using(engineProperties)
+                .notifying(changeConsumer)
+                .using(new DebeziumEngine.ConnectorCallback() {
+                    @Override
+                    public void taskStarted() {
+                        EngineResult result = new EngineResult();
+                        result.success = true;
+                        comFuture.complete(result);
+                    }
+                })
+                .using(completionCallback)
+                .build();
+        executor.submit(engine);
+
+        EngineResult engineResult = comFuture.get();
+        if (engineResult.success) {
+            listener.addNativeData(DEBEZIUM_ENGINE_KEY, engine);
+            listener.addNativeData(EXECUTOR_SERVICE_KEY, executor);
+            listener.addNativeData(CHANGE_CONSUMER_KEY, changeConsumer);
+            listener.addNativeData(COMP_CALLBACK_KEY, completionCallback);
+            listener.addNativeData(LIVENESS_INTERVAL_KEY, livenessInterval);
+            listener.addNativeData(LISTENER_START_TIME_KEY, Instant.now());
+        } else {
+            return createCdcError("Failed to start the Debezium engine due to unknown error");
+        }
+        listener.addNativeData(IS_STARTED_KEY, true);
+        return null;
     }
 
     public static Object gracefulStop(BObject listener) {
@@ -396,9 +444,6 @@ public class Listener {
     private static Properties populateEngineProperties(BMap<BString, Object> config) {
         Properties engineProperties = new Properties();
         for (Map.Entry<BString, Object> configEntry : config.entrySet()) {
-            if (configEntry.getKey().equals(LIVENESS_INTERVAL_CONFIG_KEY)) {
-                continue;
-            }
             engineProperties.setProperty(configEntry.getKey().getValue(), configEntry.getValue().toString());
         }
         return engineProperties;

@@ -33,6 +33,9 @@ public final class Constants {
     public static final String ANN_NAME_EVENTS_FROM = "ServiceConfig";
     public static final BString ANN_CONFIG_TABLES = StringUtils.fromString("tables");
 
+    // Debezium heartbeat topic prefix
+    public static final String DEBEZIUM_HEARTBEAT_TOPIC_PREFIX = "__debezium-heartbeat.";
+
     // Service Map all key
     public static final String SERVICE_MAP_ALL_KEY = "*";
 

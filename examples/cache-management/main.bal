@@ -15,14 +15,22 @@
 // under the License.
 
 import ballerina/log;
-import ballerina/os;
 import ballerinax/cdc;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 import ballerinax/redis;
 
-configurable string username = os:getEnv("DB_USERNAME");
-configurable string password = os:getEnv("DB_PASSWORD");
+configurable string username = ?;
+configurable string password = ?;
+
+type Entity record {
+    int id;
+};
+
+type ProductReviews record {
+    int product_id;
+    int rating;
+};
 
 listener mysql:CdcListener mysqlListener = new (
     database = {
@@ -42,15 +50,6 @@ final redis:Client redis = check new (
         port: 6379
     }
 );
-
-type Entity record {
-    int id;
-};
-
-type ProductReviews record {
-    int product_id;
-    int rating;
-};
 
 @cdc:ServiceConfig {
     tables: ["store_db.products", "store_db.vendors"]

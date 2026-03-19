@@ -14,20 +14,27 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/log;
-import ballerina/os;
 import ballerinax/cdc;
 import ballerinax/googleapis.gmail;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string refreshToken = os:getEnv("REFRESH_TOKEN");
-configurable string clientId = os:getEnv("CLIENT_ID");
-configurable string clientSecret = os:getEnv("CLIENT_SECRET");
-configurable string recipient = os:getEnv("RECIPIENT");
-configurable string sender = os:getEnv("SENDER");
+configurable string refreshToken = ?;
+configurable string clientId = ?;
+configurable string clientSecret = ?;
+configurable string recipient = ?;
+configurable string sender = ?;
 
-configurable string username = os:getEnv("DB_USERNAME");
-configurable string password = os:getEnv("DB_PASSWORD");
+configurable string username = ?;
+configurable string password = ?;
+
+type Transactions record {|
+    int tx_id;
+    int user_id;
+    float amount;
+    string status;
+    int created_at;
+|};
 
 listener mysql:CdcListener financeDBListener = new (
     database = {
@@ -71,11 +78,3 @@ service cdc:Service on financeDBListener {
         log:printInfo(`Error occurred: ${e.message()}`);
     }
 }
-
-type Transactions record {|
-    int tx_id;
-    int user_id;
-    float amount;
-    string status;
-    int created_at;
-|};

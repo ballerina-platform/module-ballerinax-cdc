@@ -73,6 +73,28 @@ dependencies {
     externalJars(group: 'io.debezium', name: 'debezium-storage-kafka', version: debeziumVersion) {
         transitive false
     }
+    externalJars(group: 'io.debezium', name: 'debezium-storage-redis', version: debeziumVersion) {
+        transitive false
+    }
+    externalJars(group: 'io.debezium', name: 'debezium-storage-jdbc', version: debeziumVersion) {
+        transitive false
+    }
+
+    externalJars(group: 'redis.clients', name: 'jedis', version: jedisVersion) {
+        transitive false
+    }
+    externalJars(group: 'io.smallrye.reactive', name: 'mutiny', version: mutinyVersion) {
+        transitive false
+    }
+    externalJars(group: 'io.smallrye.common', name: 'smallrye-common-annotation', version: smallryeCommonVersion) {
+        transitive false
+    }
+    externalJars(group: 'org.apache.commons', name: 'commons-pool2', version: commonsPool2Version) {
+        transitive false
+    }
+    externalJars(group: 'org.jctools', name: 'jctools-core', version: jctoolsVersion) {
+        transitive false
+    }
 
     externalJars(group: 'org.apache.kafka', name: 'connect-runtime', version: kafkaVersion) {
         exclude group: 'org.slf4j', module: 'slf4j-api'
@@ -117,6 +139,11 @@ tasks.register('updateTomlFiles') {
         newBallerinaToml = newBallerinaToml.replace("@debezium.version@", debeziumVersion)
         newBallerinaToml = newBallerinaToml.replace("@kafka.version@", kafkaVersion)
         newBallerinaToml = newBallerinaToml.replace("@fasterxml.version@", fasterxmlVersion)
+        newBallerinaToml = newBallerinaToml.replace("@jedis.version@", jedisVersion)
+        newBallerinaToml = newBallerinaToml.replace("@mutiny.version@", mutinyVersion)
+        newBallerinaToml = newBallerinaToml.replace("@smallrye.common.version@", smallryeCommonVersion)
+        newBallerinaToml = newBallerinaToml.replace("@commons.pool2.version@", commonsPool2Version)
+        newBallerinaToml = newBallerinaToml.replace("@jctools.version@", jctoolsVersion)
         ballerinaTomlFile.text = newBallerinaToml
 
         def newCompilerPluginToml = compilerPluginTomlFilePlaceHolder.text.replace("@project.version@", project.version)

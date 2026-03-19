@@ -50,6 +50,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.ballerina.lib.cdc.utils.Constants.ALLOW_DATA_PROJECTION;
+import static io.ballerina.lib.cdc.utils.Constants.DEBEZIUM_HEARTBEAT_TOPIC_PREFIX;
 import static io.ballerina.lib.cdc.utils.Constants.BallerinaErrors.EVENT_PROCESSING_ERROR;
 import static io.ballerina.lib.cdc.utils.Constants.BallerinaErrors.EVENT_PROCESSING_ERROR_DETAIL;
 import static io.ballerina.lib.cdc.utils.Constants.BallerinaErrors.EVENT_PROCESSING_ERROR_DETAIL_PAYLOAD_FIELD;
@@ -93,6 +94,10 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
             updateLastEventReceivedTime();
         }
         for (ChangeEvent<String, String> record : records) {
+            if (isHeartbeatEvent(record)) {
+                committer.markProcessed(record);
+                continue;
+            }
             Service selectedService = null;
             try {
                 JsonObject jsonEvent = new Gson().fromJson(record.value(), JsonObject.class);
@@ -227,6 +232,10 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
         BMap<BString, Object> detail = getEventProcessingErrorDetail(payload.toString());
         return createError(EVENT_PROCESSING_ERROR, "Function '" + methodName + "' is not available.",
                 null, ValueCreator.createRecordValue(getModule(), EVENT_PROCESSING_ERROR_DETAIL, detail));
+    }
+
+    private boolean isHeartbeatEvent(ChangeEvent<String, String> record) {
+        return record.destination() != null && record.destination().startsWith(DEBEZIUM_HEARTBEAT_TOPIC_PREFIX);
     }
 
     private void updateLastEventReceivedTime() {
