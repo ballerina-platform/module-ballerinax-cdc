@@ -24,6 +24,14 @@ configurable string username = ?;
 configurable string password = ?;
 configurable string kafkaBootstrapServers = ?;
 
+type Product record {|
+    int product_id;
+    string name;
+    int quantity;
+    decimal price;
+    string category;
+|};
+
 listener mysql:CdcListener inventoryListener = new (
     database = {
         hostname,
@@ -79,11 +87,3 @@ service cdc:Service on inventoryListener {
         log:printError(string `Error occurred while processing inventory change events: ${e.message()}`);
     }
 }
-
-type Product record {|
-    int product_id;
-    string name;
-    int quantity;
-    decimal price;
-    string category;
-|};

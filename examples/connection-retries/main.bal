@@ -23,6 +23,14 @@ configurable string hostname = ?;
 configurable string username = ?;
 configurable string password = ?;
 
+type Order record {|
+    int order_id;
+    int customer_id;
+    decimal total;
+    string status;
+    string created_at;
+|};
+
 listener mysql:CdcListener orderDbListener = new (
     database = {
         hostname,
@@ -74,11 +82,3 @@ service cdc:Service on orderDbListener {
         log:printError(string `Error occurred while processing order change events: ${e.message()}`);
     }
 }
-
-type Order record {|
-    int order_id;
-    int customer_id;
-    decimal total;
-    string status;
-    string created_at;
-|};

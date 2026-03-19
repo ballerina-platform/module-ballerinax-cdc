@@ -28,6 +28,14 @@ configurable string sender = ?;
 configurable string username = ?;
 configurable string password = ?;
 
+type Transactions record {|
+    int tx_id;
+    int user_id;
+    float amount;
+    string status;
+    int created_at;
+|};
+
 listener mysql:CdcListener financeDBListener = new (
     database = {
         username,
@@ -70,11 +78,3 @@ service cdc:Service on financeDBListener {
         log:printInfo(`Error occurred: ${e.message()}`);
     }
 }
-
-type Transactions record {|
-    int tx_id;
-    int user_id;
-    float amount;
-    string status;
-    int created_at;
-|};

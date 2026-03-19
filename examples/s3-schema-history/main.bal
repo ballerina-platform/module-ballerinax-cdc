@@ -27,6 +27,15 @@ configurable string accessKeyId = ?;
 configurable string secretAccessKey = ?;
 configurable string region = ?;
 
+type AuditEntry record {|
+    int entry_id;
+    string entity_type;
+    int entity_id;
+    string action;
+    string changed_by;
+    string changed_at;
+|};
+
 listener mysql:CdcListener auditDbListener = new (
     database = {
         hostname,
@@ -80,12 +89,3 @@ service cdc:Service on auditDbListener {
         log:printError(string `Error occurred while processing audit log change events: ${e.message()}`);
     }
 }
-
-type AuditEntry record {|
-    int entry_id;
-    string entity_type;
-    int entity_id;
-    string action;
-    string changed_by;
-    string changed_at;
-|};

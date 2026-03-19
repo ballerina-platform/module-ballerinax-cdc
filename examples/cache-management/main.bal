@@ -23,6 +23,15 @@ import ballerinax/redis;
 configurable string username = ?;
 configurable string password = ?;
 
+type Entity record {
+    int id;
+};
+
+type ProductReviews record {
+    int product_id;
+    int rating;
+};
+
 listener mysql:CdcListener mysqlListener = new (
     database = {
         username,
@@ -41,15 +50,6 @@ final redis:Client redis = check new (
         port: 6379
     }
 );
-
-type Entity record {
-    int id;
-};
-
-type ProductReviews record {
-    int product_id;
-    int rating;
-};
 
 @cdc:ServiceConfig {
     tables: ["store_db.products", "store_db.vendors"]
