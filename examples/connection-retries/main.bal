@@ -19,9 +19,9 @@ import ballerinax/cdc;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string hostname;
-configurable string username;
-configurable string password;
+configurable string hostname = ?;
+configurable string username = ?;
+configurable string password = ?;
 
 listener mysql:CdcListener orderDbListener = new (
     database = {

@@ -19,9 +19,18 @@ import ballerinax/cdc;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string hostname;
-configurable string username;
-configurable string password;
+configurable string hostname = ?;
+configurable string username = ?;
+configurable string password = ?;
+
+type Transaction record {|
+    int tx_id;
+    int account_id;
+    decimal amount;
+    string 'type;
+    string status;
+    string created_at;
+|};
 
 listener mysql:CdcListener financeDbListener = new (
     database = {
@@ -75,12 +84,3 @@ service cdc:Service on financeDbListener {
         log:printError(string `Error occurred while processing transaction change events: ${e.message()}`);
     }
 }
-
-type Transaction record {|
-    int tx_id;
-    int account_id;
-    decimal amount;
-    string 'type;
-    string status;
-    string created_at;
-|};

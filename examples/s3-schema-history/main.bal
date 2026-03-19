@@ -20,12 +20,12 @@ import ballerinax/cdc.schema.aws.s3.driver as _;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string hostname;
-configurable string username;
-configurable string password;
-configurable string accessKeyId;
-configurable string secretAccessKey;
-configurable string region;
+configurable string hostname = ?;
+configurable string username = ?;
+configurable string password = ?;
+configurable string accessKeyId = ?;
+configurable string secretAccessKey = ?;
+configurable string region = ?;
 
 listener mysql:CdcListener auditDbListener = new (
     database = {

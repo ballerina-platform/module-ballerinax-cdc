@@ -19,10 +19,10 @@ import ballerinax/cdc;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string hostname;
-configurable string username;
-configurable string password;
-configurable string kafkaBootstrapServers;
+configurable string hostname = ?;
+configurable string username = ?;
+configurable string password = ?;
+configurable string kafkaBootstrapServers = ?;
 
 listener mysql:CdcListener inventoryListener = new (
     database = {
@@ -32,12 +32,12 @@ listener mysql:CdcListener inventoryListener = new (
         password,
         includedDatabases: "inventory_db"
     },
-    offsetStorage = <cdc:KafkaOffsetStorage>{
+    offsetStorage = {
         bootstrapServers: kafkaBootstrapServers,
         topicName: "cdc-offsets",
         replicationFactor: 1
     },
-    internalSchemaStorage = <cdc:KafkaInternalSchemaStorage>{
+    internalSchemaStorage = {
         bootstrapServers: kafkaBootstrapServers,
         topicName: "cdc-schema-history"
     },

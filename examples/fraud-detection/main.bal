@@ -19,14 +19,14 @@ import ballerinax/googleapis.gmail;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
 
-configurable string refreshToken;
-configurable string clientId;
-configurable string clientSecret;
-configurable string recipient;
-configurable string sender;
+configurable string refreshToken = ?;
+configurable string clientId = ?;
+configurable string clientSecret = ?;
+configurable string recipient = ?;
+configurable string sender = ?;
 
-configurable string username;
-configurable string password;
+configurable string username = ?;
+configurable string password = ?;
 
 listener mysql:CdcListener financeDBListener = new (
     database = {
