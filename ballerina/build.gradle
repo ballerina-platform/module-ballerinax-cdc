@@ -139,6 +139,7 @@ tasks.register('updateTomlFiles') {
         newBallerinaToml = newBallerinaToml.replace("@debezium.version@", debeziumVersion)
         newBallerinaToml = newBallerinaToml.replace("@kafka.version@", kafkaVersion)
         newBallerinaToml = newBallerinaToml.replace("@fasterxml.version@", fasterxmlVersion)
+        newBallerinaToml = newBallerinaToml.replace("@fasterxml.afterburner.version@", fasterxmlAfterburnerVersion)
         newBallerinaToml = newBallerinaToml.replace("@jedis.version@", jedisVersion)
         newBallerinaToml = newBallerinaToml.replace("@mutiny.version@", mutinyVersion)
         newBallerinaToml = newBallerinaToml.replace("@smallrye.common.version@", smallryeCommonVersion)
