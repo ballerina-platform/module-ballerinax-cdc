@@ -54,14 +54,11 @@ ballerina {
 }
 
 configurations.externalJars.resolutionStrategy.eachDependency { details ->
-    if (details.requested.group == 'com.fasterxml.jackson.core') {
+    if (details.requested.group == 'com.fasterxml.jackson.core' ||
+            (details.requested.group == 'com.fasterxml.jackson.module' &&
+            details.requested.name == 'jackson-module-afterburner')) {
         details.useVersion fasterxmlVersion
-        details.because 'CVE GHSA-72hv-8253-57qq: force jackson-core/annotations/databind upgrade'
-    }
-    if (details.requested.group == 'com.fasterxml.jackson.module' &&
-            details.requested.name == 'jackson-module-afterburner') {
-        details.useVersion fasterxmlAfterburnerVersion
-        details.because 'CVE GHSA-72hv-8253-57qq: latest available afterburner in 2.18.x'
+        details.because 'CVE GHSA-72hv-8253-57qq: force jackson upgrade'
     }
 }
 
@@ -151,7 +148,6 @@ tasks.register('updateTomlFiles') {
         newBallerinaToml = newBallerinaToml.replace("@debezium.version@", debeziumVersion)
         newBallerinaToml = newBallerinaToml.replace("@kafka.version@", kafkaVersion)
         newBallerinaToml = newBallerinaToml.replace("@fasterxml.version@", fasterxmlVersion)
-        newBallerinaToml = newBallerinaToml.replace("@fasterxml.afterburner.version@", fasterxmlAfterburnerVersion)
         newBallerinaToml = newBallerinaToml.replace("@jedis.version@", jedisVersion)
         newBallerinaToml = newBallerinaToml.replace("@mutiny.version@", mutinyVersion)
         newBallerinaToml = newBallerinaToml.replace("@smallrye.common.version@", smallryeCommonVersion)
