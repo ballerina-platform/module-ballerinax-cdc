@@ -53,6 +53,15 @@ ballerina {
     testCoverageParam = "--code-coverage --coverage-format=xml --includes=io.ballerina.lib.cdc.*:ballerinax.cdc.*"
 }
 
+configurations.externalJars.resolutionStrategy.eachDependency { details ->
+    if (details.requested.group == 'com.fasterxml.jackson.core' ||
+            (details.requested.group == 'com.fasterxml.jackson.module' &&
+            details.requested.name == 'jackson-module-afterburner')) {
+        details.useVersion fasterxmlVersion
+        details.because 'CVE GHSA-72hv-8253-57qq: force jackson upgrade'
+    }
+}
+
 dependencies {
 
     externalJars(group: 'io.debezium', name: 'debezium-embedded', version: debeziumVersion) {

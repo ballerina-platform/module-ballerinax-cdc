@@ -123,7 +123,7 @@ version = "@fasterxml.version@"
 path = "./lib/jackson-core-@fasterxml.version@.jar"
 
 [[platform.java21.dependency]]
-groupId = "com.fasterxml.jackson.core"
+groupId = "com.fasterxml.jackson.module"
 artifactId = "jackson-module-afterburner"
 version = "@fasterxml.version@"
 path = "./lib/jackson-module-afterburner-@fasterxml.version@.jar"
