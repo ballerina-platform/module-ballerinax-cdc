@@ -41,6 +41,7 @@ import io.ballerina.runtime.api.values.BTypedesc;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 
+import java.io.PrintStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,6 +68,7 @@ import static java.lang.Boolean.FALSE;
  * Handles change events from the Debezium engine and invokes the appropriate Ballerina service methods.
  */
 public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<String, String>> {
+    private static final PrintStream ERR_OUT = System.err;
 
     private final Map<String, Service> serviceMap;
     private final boolean isSingleServiceAttached;
@@ -214,7 +216,7 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
                         ServiceMethodNames.ON_ERROR, metaData, bError);
                 handleReturnValue(returnValue);
             } else {
-                bError.printStackTrace();
+                ERR_OUT.println("warning: " + bError.getPrintableStackTrace());
             }
         } catch (BError balError) {
             balError.printStackTrace();
