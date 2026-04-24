@@ -109,7 +109,9 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
                 String methodName = getMethodName(payload.getOp());
                 Method method = selectedService.getMethod(methodName);
                 if (method == null) {
-                    throw createMethodNotFoundError(payload, methodName);
+                    ERR_OUT.println("warning: Function '" + methodName + "' is not available.");
+                    committer.markProcessed(record);
+                    continue;
                 }
 
                 boolean isIsolated = selectedService.isIsolated() && method.isIsolated();
@@ -169,10 +171,6 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
 
     private Object[] processParameters(Service service, String functionName, Payload payload) {
         Method method = service.getMethod(functionName);
-        if (method == null) {
-            throw createMethodNotFoundError(payload, functionName);
-        }
-
         List<Object> parameters = new ArrayList<>();
         if (method.hasBeforeParam()) {
             parameters.add(processParameterToIntendedType(payload, EventMembers.BEFORE, method.beforeParamType()));
@@ -216,7 +214,7 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
                         ServiceMethodNames.ON_ERROR, metaData, bError);
                 handleReturnValue(returnValue);
             } else {
-                ERR_OUT.println("warning: " + bError.getPrintableStackTrace());
+                bError.printStackTrace();
             }
         } catch (BError balError) {
             balError.printStackTrace();
@@ -228,12 +226,6 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
         if (returnValue instanceof BError) {
             ((BError) returnValue).printStackTrace();
         }
-    }
-
-    private BError createMethodNotFoundError(Payload payload, String methodName) {
-        BMap<BString, Object> detail = getEventProcessingErrorDetail(payload.toString());
-        return createError(EVENT_PROCESSING_ERROR, "Function '" + methodName + "' is not available.",
-                null, ValueCreator.createRecordValue(getModule(), EVENT_PROCESSING_ERROR_DETAIL, detail));
     }
 
     private boolean isHeartbeatEvent(ChangeEvent<String, String> record) {
