@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/file;
 import ballerina/test;
 import ballerina/lang.runtime;
 
@@ -215,4 +216,18 @@ function testLivenessWithoutReceivingEvents() returns error? {
     boolean liveness = check isLive(mysqlListener);
     test:assertFalse(liveness, "Liveness check passes even after not receiving events within the liveness interval");
     check mysqlListener.gracefulStop();
+}
+
+@test:Config {}
+function testOffsetStorageParentDirCreation() returns error? {
+    MockListener mysqlListener = new ({
+        database: {username, password, port},
+        options: {snapshotMode: NO_DATA},
+        offsetStorage: {fileName: "tmp/nested/offsets.dat"}
+    });
+    check mysqlListener.attach(testService);
+    check mysqlListener.'start();
+    test:assertTrue(check file:test("tmp/nested", file:EXISTS),
+            msg = "Parent directory for offset storage file was not created.");
+    check mysqlListener.immediateStop();
 }

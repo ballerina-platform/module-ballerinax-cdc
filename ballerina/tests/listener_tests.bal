@@ -112,8 +112,8 @@ function testMockListenerEvents() returns error? {
         `INSERT INTO vendors (id, name, contact_info) 
         VALUES (201, 'Vendor A', 'contact@vendora.com')`);
     runtime:sleep(3);
+    // Missing onRead on vendors triggers a warning, not an error — only the binding failure reaches onError
     test:assertEquals(onErrorCount, 1, msg = "Error count mismatch.");
-    // 1,2 for onRead method not present, 3 for payload binding failure
 
     check testListener.gracefulStop();
 }
