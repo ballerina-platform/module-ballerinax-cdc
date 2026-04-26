@@ -11,7 +11,7 @@
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express q or implied. See the License for the
+ * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
  */
@@ -36,6 +36,9 @@ import io.debezium.engine.format.Json;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -227,6 +230,8 @@ public class Listener {
 
     private static Object startEngine(Environment environment, BObject listener, Properties engineProperties,
                                       Long livenessInterval) throws Exception {
+        createParentDirectoriesIfNeeded(engineProperties);
+
         @SuppressWarnings("unchecked")
         ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
                 .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
@@ -365,6 +370,22 @@ public class Listener {
             return createCdcError("Failed to invoke the liveliness check for the Debezium engine: " + e.getMessage());
         } finally {
             lock.unlock();
+        }
+    }
+
+    private static void createParentDirectoriesIfNeeded(Properties engineProperties) throws IOException {
+        String[] fileProps = {
+                "offset.storage.file.filename",
+                "schema.history.internal.file.filename"
+        };
+        for (String prop : fileProps) {
+            String filePath = engineProperties.getProperty(prop);
+            if (filePath != null) {
+                Path parent = Paths.get(filePath).getParent();
+                if (parent != null) {
+                    Files.createDirectories(parent);
+                }
+            }
         }
     }
 

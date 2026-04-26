@@ -271,7 +271,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "mysql.cdc.driver"
-version = "1.0.1"
+version = "1.0.2"
 scope = "testOnly"
 dependencies = [
 	{org = "ballerinax", name = "mysql.driver"}
@@ -283,6 +283,6 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "mysql.driver"
-version = "1.8.0"
+version = "1.8.1"
 scope = "testOnly"
 
