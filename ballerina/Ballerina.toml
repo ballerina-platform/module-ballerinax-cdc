@@ -95,26 +95,26 @@ path = "./lib/jctools-core-4.0.5.jar"
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "kafka-clients"
-version = "3.9.2"
-path = "./lib/kafka-clients-3.9.2.jar"
+version = "3.9.1"
+path = "./lib/kafka-clients-3.9.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-api"
-version = "3.9.2"
-path = "./lib/connect-api-3.9.2.jar"
+version = "3.9.1"
+path = "./lib/connect-api-3.9.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-json"
-version = "3.9.2"
-path = "./lib/connect-json-3.9.2.jar"
+version = "3.9.1"
+path = "./lib/connect-json-3.9.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-runtime"
-version = "3.9.2"
-path = "./lib/connect-runtime-3.9.2.jar"
+version = "3.9.1"
+path = "./lib/connect-runtime-3.9.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
