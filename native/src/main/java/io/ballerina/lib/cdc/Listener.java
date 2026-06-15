@@ -326,6 +326,12 @@ public class Listener {
 
         lock.lock();
         try {
+            Object isStartedObj = listener.getNativeData(IS_STARTED_KEY);
+            boolean isStarted = isStartedObj != null && ((Boolean) isStartedObj);
+            if (!isStarted) {
+                return false;
+            }
+
             Object completionCallback = listener.getNativeData(COMP_CALLBACK_KEY);
             if (completionCallback != null) {
                 boolean invoked = ((CdcCompletionCallback) completionCallback).isInvoked();
