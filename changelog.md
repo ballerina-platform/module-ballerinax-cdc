@@ -5,7 +5,17 @@ This file contains all the notable changes done to the Ballerina `cdc` package t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.2]
+
+### Changed
+- Fix liveness check to report not-live immediately after the listener stops
+
+## [1.3.1]
+
+### Changed
+- Downgrade no-such-function error when user hasn't created a method, to a warning
+
+## [1.3.0]
 
 ### Added
 - [Introduce additional Debezium properties](https://github.com/ballerina-platform/ballerina-library/issues/8572)
