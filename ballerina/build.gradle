@@ -56,7 +56,7 @@ ballerina {
 configurations.externalJars.resolutionStrategy.eachDependency { details ->
     if (details.requested.group == 'com.fasterxml.jackson.core' ||
             (details.requested.group == 'com.fasterxml.jackson.module' &&
-            details.requested.name == 'jackson-module-afterburner')) {
+            details.requested.name == 'jackson-module-blackbird')) {
         details.useVersion fasterxmlVersion
         details.because 'CVE GHSA-72hv-8253-57qq: force jackson upgrade'
     }
@@ -139,6 +139,18 @@ dependencies {
     externalJars(group: 'org.apache.kafka', name: 'kafka-clients', version: kafkaVersion) {
         transitive false
     }
+    externalJars(group: 'org.apache.maven', name: 'maven-artifact', version: mavenArtifactVersion) {
+        transitive false
+    }
+    externalJars(group: 'org.lz4', name: 'lz4-java', version: lz4Version) {
+        transitive false
+    }
+    externalJars(group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion) {
+        transitive false
+    }
+    externalJars(group: 'com.github.luben', name: 'zstd-jni', version: zstdVersion) {
+        transitive false
+    }
 }
 
 tasks.register('updateTomlFiles') {
@@ -147,6 +159,10 @@ tasks.register('updateTomlFiles') {
         newBallerinaToml = newBallerinaToml.replace("@toml.version@", tomlVersion)
         newBallerinaToml = newBallerinaToml.replace("@debezium.version@", debeziumVersion)
         newBallerinaToml = newBallerinaToml.replace("@kafka.version@", kafkaVersion)
+        newBallerinaToml = newBallerinaToml.replace("@maven.artifact.version@", mavenArtifactVersion)
+        newBallerinaToml = newBallerinaToml.replace("@lz4.version@", lz4Version)
+        newBallerinaToml = newBallerinaToml.replace("@snappy.version@", snappyVersion)
+        newBallerinaToml = newBallerinaToml.replace("@zstd.version@", zstdVersion)
         newBallerinaToml = newBallerinaToml.replace("@fasterxml.version@", fasterxmlVersion)
         newBallerinaToml = newBallerinaToml.replace("@jedis.version@", jedisVersion)
         newBallerinaToml = newBallerinaToml.replace("@mutiny.version@", mutinyVersion)

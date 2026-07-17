@@ -47,8 +47,10 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static io.ballerina.lib.cdc.utils.Constants.ANN_CONFIG_TABLES;
@@ -70,6 +72,7 @@ public class Listener {
     private static final String LISTENER_START_TIME_KEY = "ListenerStartTime";
     private static final BString LIVENESS_INTERVAL_CONFIG_KEY = StringUtils.fromString("livenessInterval");
     private static final long DEFAULT_LIVENESS_INTERVAL_MILLIS = 60000;
+    private static final long EXECUTOR_SHUTDOWN_TIMEOUT_MILLIS = 60000;
 
     public static final String TABLE_TO_SERVICE_MAP_KEY = "TABLE_TO_SERVICE_MAP";
     public static final String DEBEZIUM_ENGINE_KEY = "DEB_ENGINE";
@@ -237,7 +240,7 @@ public class Listener {
                 .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
 
         CompletableFuture<EngineResult> comFuture = new CompletableFuture<>();
-        CdcCompletionCallback completionCallback = new CdcCompletionCallback();
+        CdcCompletionCallback completionCallback = new CdcCompletionCallback(comFuture);
         BalChangeConsumer changeConsumer = new BalChangeConsumer(serviceMap, environment.getRuntime());
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
         DebeziumEngine<ChangeEvent<String, String>> engine = create(Json.class)
@@ -255,7 +258,15 @@ public class Listener {
                 .build();
         executor.submit(engine);
 
-        EngineResult engineResult = comFuture.get();
+        EngineResult engineResult;
+        try {
+            engineResult = comFuture.get();
+        } catch (ExecutionException e) {
+            executor.shutdownNow();
+            Throwable cause = e.getCause();
+            return createCdcError("Failed to start the Debezium engine: "
+                    + (cause != null ? cause.getMessage() : e.getMessage()));
+        }
         if (engineResult.success) {
             listener.addNativeData(DEBEZIUM_ENGINE_KEY, engine);
             listener.addNativeData(EXECUTOR_SERVICE_KEY, executor);
@@ -264,6 +275,7 @@ public class Listener {
             listener.addNativeData(LIVENESS_INTERVAL_KEY, livenessInterval);
             listener.addNativeData(LISTENER_START_TIME_KEY, Instant.now());
         } else {
+            executor.shutdownNow();
             return createCdcError("Failed to start the Debezium engine due to unknown error");
         }
         listener.addNativeData(IS_STARTED_KEY, true);
@@ -284,7 +296,13 @@ public class Listener {
 
             Object executor = listener.getNativeData(EXECUTOR_SERVICE_KEY);
             if (executor != null) {
-                ((ExecutorService) executor).shutdown();
+                ExecutorService executorService = (ExecutorService) executor;
+                executorService.shutdown();
+                try {
+                    executorService.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 listener.addNativeData(EXECUTOR_SERVICE_KEY, null);
             }
 

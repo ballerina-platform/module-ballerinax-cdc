@@ -22,6 +22,7 @@ import io.debezium.engine.DebeziumEngine;
 
 import java.io.PrintStream;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -31,6 +32,22 @@ public class CdcCompletionCallback implements DebeziumEngine.CompletionCallback 
     private static final PrintStream ERR_OUT = System.err;
 
     private final AtomicBoolean invoked = new AtomicBoolean(false);
+    private final CompletableFuture<?> startupFuture;
+
+    public CdcCompletionCallback() {
+        this(null);
+    }
+
+    /**
+     * @param startupFuture the future awaited by the engine starter. If the engine terminates with a
+     *                      failure before it ever started (so {@code taskStarted()} never completes the
+     *                      future), this callback completes it exceptionally so the starter surfaces a
+     *                      clean error instead of blocking forever. Once the engine has started the
+     *                      future is already completed, so a later failure here is a no-op for it.
+     */
+    public CdcCompletionCallback(CompletableFuture<?> startupFuture) {
+        this.startupFuture = startupFuture;
+    }
 
     @Override
     public void handle(boolean success, String message, Throwable error) {
@@ -44,6 +61,10 @@ public class CdcCompletionCallback implements DebeziumEngine.CompletionCallback 
             errorMsg = errorMsg + ": " + error.getMessage();
         }
         ERR_OUT.println(errorMsg);
+
+        if (startupFuture != null && !startupFuture.isDone()) {
+            startupFuture.completeExceptionally(new IllegalStateException(errorMsg, error));
+        }
     }
 
     public boolean isInvoked() {
