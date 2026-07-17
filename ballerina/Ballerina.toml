@@ -26,9 +26,6 @@ artifactId = "debezium-api"
 version = "3.5.1.Final"
 path = "./lib/debezium-api-3.5.1.Final.jar"
 
-# Debezium 3.5 turned debezium-core into a pom-only aggregator (no jar). The classes that
-# used to live inside debezium-core in 3.0.x are now split across the modules below, which
-# are required at runtime.
 [[platform.java21.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-config"
