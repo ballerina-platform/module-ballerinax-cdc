@@ -245,11 +245,41 @@ dependencies = [
 	{org = "ballerina", name = "random"},
 	{org = "ballerina", name = "test"},
 	{org = "ballerinai", name = "observe"},
+	{org = "ballerinax", name = "cdc.schema.aws.s3.driver"},
+	{org = "ballerinax", name = "cdc.schema.azure.blob.driver"},
+	{org = "ballerinax", name = "cdc.schema.rocketmq.driver"},
 	{org = "ballerinax", name = "java.jdbc"},
 	{org = "ballerinax", name = "mysql.cdc.driver"}
 ]
 modules = [
 	{org = "ballerinax", packageName = "cdc", moduleName = "cdc"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "cdc.schema.aws.s3.driver"
+version = "1.1.0"
+scope = "testOnly"
+modules = [
+	{org = "ballerinax", packageName = "cdc.schema.aws.s3.driver", moduleName = "cdc.schema.aws.s3.driver"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "cdc.schema.azure.blob.driver"
+version = "1.1.0"
+scope = "testOnly"
+modules = [
+	{org = "ballerinax", packageName = "cdc.schema.azure.blob.driver", moduleName = "cdc.schema.azure.blob.driver"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "cdc.schema.rocketmq.driver"
+version = "1.1.0"
+scope = "testOnly"
+modules = [
+	{org = "ballerinax", packageName = "cdc.schema.rocketmq.driver", moduleName = "cdc.schema.rocketmq.driver"}
 ]
 
 [[package]]

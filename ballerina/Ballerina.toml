@@ -11,6 +11,26 @@ license = ["Apache-2.0"]
 [build-options]
 observabilityIncluded = true
 
+# Temporary local dependencies used by the schema-history integration tests.
+# Replace these with Central dependencies when the matching driver releases are published.
+[[dependency]]
+org = "ballerinax"
+name = "cdc.schema.azure.blob.driver"
+version = "1.1.0"
+repository = "local"
+
+[[dependency]]
+org = "ballerinax"
+name = "cdc.schema.aws.s3.driver"
+version = "1.1.0"
+repository = "local"
+
+[[dependency]]
+org = "ballerinax"
+name = "cdc.schema.rocketmq.driver"
+version = "1.1.0"
+repository = "local"
+
 [platform.java21]
 graalvmCompatible=true
 
