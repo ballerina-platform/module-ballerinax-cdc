@@ -358,7 +358,7 @@ public type RedisInternalSchemaStorage record {|
 |};
 
 # Amazon S3-based schema history storage configuration.
-# Using this storage backend requires importing the `ballerinax/cdc.storage.aws.s3.driver` module.
+# Using this storage backend requires importing the `ballerinax/cdc.schema.aws.s3.driver` module.
 #
 # + className - Fully-qualified class name of the S3 schema history implementation
 # + accessKeyId - AWS access key ID for authentication
@@ -381,7 +381,7 @@ public type AmazonS3InternalSchemaStorage record {|
 |};
 
 # Azure Blob Storage-based schema history storage configuration.
-# Using this storage backend requires importing the `ballerinax/cdc.storage.azure.blob.driver` module.
+# Using this storage backend requires importing the `ballerinax/cdc.schema.azure.blob.driver` module.
 #
 # + className - Fully-qualified class name of the Azure Blob schema history implementation
 # + connectionString - Azure Storage connection string
@@ -398,7 +398,7 @@ public type AzureBlobInternalSchemaStorage record {|
 |};
 
 # RocketMQ-based schema history storage configuration.
-# Using this storage backend requires importing the `ballerinax/cdc.storage.rocketmq.driver` module.
+# Using this storage backend requires importing the `ballerinax/cdc.schema.rocketmq.driver` module.
 #
 # + className - Fully-qualified class name of the RocketMQ schema history implementation
 # + topicName - RocketMQ topic for schema history
