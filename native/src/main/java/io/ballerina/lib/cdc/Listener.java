@@ -248,7 +248,7 @@ public class Listener {
                 .notifying(changeConsumer)
                 .using(new DebeziumEngine.ConnectorCallback() {
                     @Override
-                    public void taskStarted() {
+                    public void pollingStarted() {
                         EngineResult result = new EngineResult();
                         result.success = true;
                         comFuture.complete(result);
@@ -261,6 +261,10 @@ public class Listener {
         EngineResult engineResult;
         try {
             engineResult = comFuture.get();
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+            return createCdcError("Failed to start the Debezium engine: " + e.getMessage());
         } catch (ExecutionException e) {
             executor.shutdownNow();
             Throwable cause = e.getCause();
