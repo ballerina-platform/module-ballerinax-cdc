@@ -298,24 +298,39 @@ public class Listener {
                 listener.addNativeData(DEBEZIUM_ENGINE_KEY, null);
             }
 
+            Object terminationError = null;
             Object executor = listener.getNativeData(EXECUTOR_SERVICE_KEY);
             if (executor != null) {
                 ExecutorService executorService = (ExecutorService) executor;
                 executorService.shutdown();
-                try {
-                    executorService.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                boolean terminated = awaitTermination(executorService, EXECUTOR_SHUTDOWN_TIMEOUT_MILLIS);
+                if (!terminated) {
+                    executorService.shutdownNow();
+                    terminated = awaitTermination(executorService, EXECUTOR_SHUTDOWN_TIMEOUT_MILLIS);
                 }
-                listener.addNativeData(EXECUTOR_SERVICE_KEY, null);
+                if (terminated) {
+                    listener.addNativeData(EXECUTOR_SERVICE_KEY, null);
+                } else {
+                    terminationError = createCdcError(
+                            "Failed to stop the Debezium engine: executor did not terminate within the timeout");
+                }
             }
 
             listener.addNativeData(IS_STARTED_KEY, false);
-            return null;
+            return terminationError;
         } catch (IOException e) {
             return createCdcError("Failed to stop the Debezium engine: " + e.getMessage());
         } finally {
             lock.unlock();
+        }
+    }
+
+    private static boolean awaitTermination(ExecutorService executorService, long timeoutMillis) {
+        try {
+            return executorService.awaitTermination(timeoutMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
         }
     }
 

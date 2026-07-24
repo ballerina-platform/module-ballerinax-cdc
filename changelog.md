@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Upgraded the embedded Debezium runtime to 3.5.1.Final.
 - Fixed `Listener.start()` to surface Debezium engine startup failures immediately instead of hanging forever.
-- Fixed `Listener.gracefulStop()` to wait for the executor to actually terminate instead of returning immediately.
+- Fixed `Listener.gracefulStop()` to wait (bounded by a timeout, escalating to a forced shutdown) for the executor to actually terminate instead of returning immediately, and to report an error rather than discard the executor if it still hasn't terminated.
 
 ### Deprecated
 - Deprecated the `SCHEMA_ONLY` snapshot mode in favor of `NO_DATA` (Debezium removed `schema_only` in 3.3 / DBZ-8171); `SCHEMA_ONLY` is still accepted and mapped to `no_data`.
