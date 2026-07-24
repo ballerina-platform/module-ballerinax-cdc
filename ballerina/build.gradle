@@ -204,7 +204,7 @@ tasks.register('startTestEnvironment') {
         def cmd = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c'] : ['sh', '-c']
         exec {
             commandLine cmd + ["docker compose -p ${testComposeProjectName} -f ${testComposeFile} " +
-                "up -d --wait mysql azurite minio rocketmq-namesrv rocketmq-broker && " +
+                "up -d --wait --wait-timeout 120 mysql azurite minio rocketmq-namesrv rocketmq-broker && " +
                 "docker compose -p ${testComposeProjectName} -f ${testComposeFile} run --rm minio-init && " +
                 "docker compose -p ${testComposeProjectName} -f ${testComposeFile} run --rm rocketmq-init"]
         }
