@@ -27,6 +27,19 @@ function testPopulateOptionsWithDefaults() {
     test:assertEquals(actualProperties["decimal.handling.mode"], "double");
 }
 
+@test:Config {groups: ["options-basic"]}
+function testPopulateOptionsWithDeprecatedSchemaOnlySnapshotMode() {
+    SampleDBOptions options = {
+        snapshotMode: SCHEMA_ONLY
+    };
+
+    map<string> actualProperties = {};
+    populateAllOptions(options, actualProperties);
+
+    test:assertEquals(actualProperties["snapshot.mode"], "no_data",
+        msg = "Deprecated SCHEMA_ONLY snapshot mode should map to 'no_data' for backward compatibility.");
+}
+
 @test:Config {groups: ["options-heartbeat"]}
 function testPopulateOptionsWithHeartbeat() {
     map<string> expectedProperties = {
