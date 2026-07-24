@@ -11,26 +11,6 @@ license = ["Apache-2.0"]
 [build-options]
 observabilityIncluded = true
 
-# Temporary local dependencies used by the schema-history integration tests.
-# Replace these with Central dependencies when the matching driver releases are published.
-[[dependency]]
-org = "ballerinax"
-name = "cdc.schema.azure.blob.driver"
-version = "1.1.0"
-repository = "local"
-
-[[dependency]]
-org = "ballerinax"
-name = "cdc.schema.aws.s3.driver"
-version = "1.1.0"
-repository = "local"
-
-[[dependency]]
-org = "ballerinax"
-name = "cdc.schema.rocketmq.driver"
-version = "1.1.0"
-repository = "local"
-
 [platform.java21]
 graalvmCompatible=true
 
@@ -133,26 +113,26 @@ path = "./lib/jctools-core-4.0.5.jar"
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "kafka-clients"
-version = "4.1.1"
-path = "./lib/kafka-clients-4.1.1.jar"
+version = "4.1.2"
+path = "./lib/kafka-clients-4.1.2.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-api"
-version = "4.1.1"
-path = "./lib/connect-api-4.1.1.jar"
+version = "4.1.2"
+path = "./lib/connect-api-4.1.2.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-json"
-version = "4.1.1"
-path = "./lib/connect-json-4.1.1.jar"
+version = "4.1.2"
+path = "./lib/connect-json-4.1.2.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-runtime"
-version = "4.1.1"
-path = "./lib/connect-runtime-4.1.1.jar"
+version = "4.1.2"
+path = "./lib/connect-runtime-4.1.2.jar"
 
 # Required at runtime by connect-runtime for connector version comparison (ComparableVersion).
 [[platform.java21.dependency]]
@@ -163,10 +143,10 @@ path = "./lib/maven-artifact-3.9.6.jar"
 
 # Kafka 4.x compression codecs required at runtime by kafka-clients/connect.
 [[platform.java21.dependency]]
-groupId = "org.lz4"
+groupId = "at.yawk.lz4"
 artifactId = "lz4-java"
-version = "1.8.0"
-path = "./lib/lz4-java-1.8.0.jar"
+version = "1.10.1"
+path = "./lib/lz4-java-1.10.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.xerial.snappy"
@@ -183,24 +163,24 @@ path = "./lib/zstd-jni-1.5.6-10.jar"
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-core"
-version = "2.19.0"
-path = "./lib/jackson-core-2.19.0.jar"
+version = "2.21.4"
+path = "./lib/jackson-core-2.21.4.jar"
 
 # Debezium/Jackson 2.19 replaced the deprecated afterburner module with blackbird.
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.module"
 artifactId = "jackson-module-blackbird"
-version = "2.19.0"
-path = "./lib/jackson-module-blackbird-2.19.0.jar"
+version = "2.21.4"
+path = "./lib/jackson-module-blackbird-2.21.4.jar"
 
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-annotations"
-version = "2.19.0"
-path = "./lib/jackson-annotations-2.19.0.jar"
+version = "2.21"
+path = "./lib/jackson-annotations-2.21.jar"
 
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-databind"
-version = "2.19.0"
-path = "./lib/jackson-databind-2.19.0.jar"
+version = "2.21.4"
+path = "./lib/jackson-databind-2.21.4.jar"
