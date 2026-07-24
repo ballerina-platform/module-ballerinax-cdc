@@ -14,6 +14,25 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/random;
+import ballerina/test;
+
+MockListener[] trackedMockListeners = [];
+
+function trackMockListener(MockListener cdcListener) returns MockListener {
+    trackedMockListeners.push(cdcListener);
+    return cdcListener;
+}
+
+@test:AfterEach
+function cleanupTrackedMockListeners() {
+    foreach MockListener cdcListener in trackedMockListeners {
+        ignoreMockListenerCleanupError(cdcListener.immediateStop());
+    }
+    trackedMockListeners = [];
+}
+
+function ignoreMockListenerCleanupError(error? ignoredStopError) {
+}
 
 # Represents a Ballerina CDC MySQL Listener.
 isolated class MockListener {

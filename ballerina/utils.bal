@@ -883,6 +883,11 @@ public isolated function populateS3SchemaHistoryConfiguration(AmazonS3InternalSc
     if endpoint is string {
         configMap[SCHEMA_HISTORY_INTERNAL_S3_ENDPOINT] = endpoint;
     }
+
+    boolean? forcePathStyle = storage.forcePathStyle;
+    if forcePathStyle is boolean {
+        configMap[SCHEMA_HISTORY_INTERNAL_S3_FORCE_PATH_STYLE] = forcePathStyle.toString();
+    }
 }
 
 # Populates Azure Blob schema history configuration properties.

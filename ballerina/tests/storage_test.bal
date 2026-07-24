@@ -147,6 +147,23 @@ function testS3SchemaHistory() {
 }
 
 @test:Config {groups: ["schema-history"]}
+function testS3SchemaHistoryWithPathStyleEndpoint() {
+    InternalSchemaStorage schemaStorage = {
+        bucketName: "my-bucket",
+        objectName: "schema-history",
+        region: "us-east-1",
+        endpoint: "http://localhost:9000",
+        forcePathStyle: true
+    };
+
+    map<string> actualProperties = {};
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
+
+    test:assertEquals(actualProperties["schema.history.internal.s3.endpoint"], "http://localhost:9000");
+    test:assertEquals(actualProperties["schema.history.internal.s3.forcePathStyle"], "true");
+}
+
+@test:Config {groups: ["schema-history"]}
 function testAzureBlobSchemaHistory() {
     map<string> expectedProperties = {
         "schema.history.internal": "io.debezium.storage.azure.blob.history.AzureBlobSchemaHistory",
@@ -191,6 +208,9 @@ function testRocketMQSchemaHistory() {
     test:assertEquals(actualProperties["schema.history.internal"],
         expectedProperties["schema.history.internal"],
         msg = "RocketMQ schema history does not match.");
+    test:assertEquals(actualProperties["schema.history.internal.rocketmq.name.srv.addr"],
+        expectedProperties["schema.history.internal.rocketmq.name.srv.addr"],
+        msg = "RocketMQ NameServer address does not match.");
 }
 
 @test:Config {groups: ["offset-storage"]}

@@ -367,6 +367,7 @@ public type RedisInternalSchemaStorage record {|
 # + bucketName - S3 bucket name for schema history
 # + objectName - S3 object (file) name within the bucket
 # + endpoint - Custom S3-compatible endpoint URL; uses the AWS endpoint if not set
+# + forcePathStyle - Uses path-style S3 URLs, required by local S3-compatible endpoints such as MinIO
 public type AmazonS3InternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.s3.history.S3SchemaHistory";
@@ -376,6 +377,7 @@ public type AmazonS3InternalSchemaStorage record {|
     string bucketName;
     string objectName;
     string endpoint?;
+    boolean forcePathStyle?;
 |};
 
 # Azure Blob Storage-based schema history storage configuration.

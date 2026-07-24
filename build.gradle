@@ -93,6 +93,9 @@ subprojects {
 
         ballerinaStdLibs "io.ballerina.lib:mysql.cdc.driver-ballerina:${stdlibMysqlCdcDriverVersion}"
         ballerinaStdLibs "io.ballerina.stdlib:mysql.driver-ballerina:${stdlibMysqlDriverVersion}"
+        ballerinaStdLibs "io.ballerina.lib:cdc.schema.azure.blob.driver-ballerina:${stdlibCdcSchemaAzureBlobDriverVersion}"
+        ballerinaStdLibs "io.ballerina.lib:cdc.schema.aws.s3.driver-ballerina:${stdlibCdcSchemaAwsS3DriverVersion}"
+        ballerinaStdLibs "io.ballerina.lib:cdc.schema.rocketmq.driver-ballerina:${stdlibCdcSchemaRocketmqDriverVersion}"
 
         ballerinaStdLibs "io.ballerina.stdlib:observe-ballerina:${observeVersion}"
         ballerinaStdLibs "io.ballerina:observe-ballerina:${observeInternalVersion}"

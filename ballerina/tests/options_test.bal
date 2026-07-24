@@ -112,7 +112,8 @@ function testPopulateOptionsWithKafkaSignal() {
 @test:Config {groups: ["options-transaction"]}
 function testPopulateOptionsWithTransactionMetadata() {
     map<string> expectedProperties = {
-        "provide.transaction.metadata": "true"
+        "provide.transaction.metadata": "true",
+        "topic.transaction": "transaction"
     };
 
     SampleDBOptions options = {
@@ -125,6 +126,30 @@ function testPopulateOptionsWithTransactionMetadata() {
     test:assertEquals(actualProperties["provide.transaction.metadata"],
         expectedProperties["provide.transaction.metadata"],
         msg = "Transaction metadata does not match.");
+    test:assertEquals(actualProperties["topic.transaction"],
+        expectedProperties["topic.transaction"],
+        msg = "Transaction metadata topic name property key does not match.");
+}
+
+@test:Config {groups: ["options-transaction"]}
+function testPopulateOptionsWithTransactionMetadataCustomTopicName() {
+    map<string> expectedProperties = {
+        "provide.transaction.metadata": "true",
+        "topic.transaction": "txn"
+    };
+
+    SampleDBOptions options = {
+        transactionMetadataConfig: {
+            topicName: "txn"
+        }
+    };
+
+    map<string> actualProperties = {};
+    populateAllOptions(options, actualProperties);
+
+    test:assertEquals(actualProperties["topic.transaction"],
+        expectedProperties["topic.transaction"],
+        msg = "Custom transaction metadata topic name does not match.");
 }
 
 @test:Config {groups: ["options-column"]}

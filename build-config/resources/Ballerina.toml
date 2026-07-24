@@ -143,7 +143,7 @@ path = "./lib/maven-artifact-@maven.artifact.version@.jar"
 
 # Kafka 4.x compression codecs required at runtime by kafka-clients/connect.
 [[platform.java21.dependency]]
-groupId = "org.lz4"
+groupId = "at.yawk.lz4"
 artifactId = "lz4-java"
 version = "@lz4.version@"
 path = "./lib/lz4-java-@lz4.version@.jar"
@@ -176,8 +176,8 @@ path = "./lib/jackson-module-blackbird-@fasterxml.version@.jar"
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-annotations"
-version = "@fasterxml.version@"
-path = "./lib/jackson-annotations-@fasterxml.version@.jar"
+version = "@jackson.annotations.version@"
+path = "./lib/jackson-annotations-@jackson.annotations.version@.jar"
 
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"

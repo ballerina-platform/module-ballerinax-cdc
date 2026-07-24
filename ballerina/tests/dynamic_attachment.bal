@@ -94,7 +94,7 @@ function testStartWithServicesWithSameAnnotation() returns error? {
 
 @test:Config {}
 function testAttachAfterStart() returns error? {
-    MockListener mysqlListener = new ({
+    MockListener mysqlListener = trackMockListener(new ({
         database: {
             username,
             password,
@@ -103,7 +103,7 @@ function testAttachAfterStart() returns error? {
         options: {
             snapshotMode: NO_DATA
         }
-    });
+    }));
     check mysqlListener.attach(testService);
     check mysqlListener.'start();
     error? result = mysqlListener.attach(testService);
@@ -115,7 +115,7 @@ function testAttachAfterStart() returns error? {
 @test:Config {
 }
 function testDetachAfterStart() returns error? {
-    MockListener mysqlListener = new ({
+    MockListener mysqlListener = trackMockListener(new ({
         database: {
             username,
             password,
@@ -124,7 +124,7 @@ function testDetachAfterStart() returns error? {
         options: {
             snapshotMode: NO_DATA
         }
-    });
+    }));
 
     check mysqlListener.attach(testService);
     check mysqlListener.'start();
@@ -138,7 +138,7 @@ function testDetachAfterStart() returns error? {
     groups: ["liveness"]
 }
 function testLivenessBeforeListenerStart() returns error? {
-    MockListener mysqlListener = new ({
+    MockListener mysqlListener = trackMockListener(new ({
         database: {
             username,
             password,
@@ -147,7 +147,7 @@ function testLivenessBeforeListenerStart() returns error? {
         options: {
             snapshotMode: NO_DATA
         }
-    });
+    }));
     check mysqlListener.attach(testService);
     boolean liveness = check isLive(mysqlListener);
     test:assertFalse(liveness, "Liveness check passes even before listener starts");
@@ -157,7 +157,7 @@ function testLivenessBeforeListenerStart() returns error? {
     groups: ["liveness"]
 }
 function testLivenessWithStartedListener() returns error? {
-    MockListener mysqlListener = new ({
+    MockListener mysqlListener = trackMockListener(new ({
         database: {
             username,
             password,
@@ -166,7 +166,7 @@ function testLivenessWithStartedListener() returns error? {
         options: {
             snapshotMode: NO_DATA
         }
-    });
+    }));
     check mysqlListener.attach(testService);
     check mysqlListener.'start();
     boolean liveness = check isLive(mysqlListener);
@@ -178,7 +178,7 @@ function testLivenessWithStartedListener() returns error? {
     groups: ["liveness"]
 }
 function testLivenessAfterListenerStop() returns error? {
-    MockListener mysqlListener = new ({
+    MockListener mysqlListener = trackMockListener(new ({
         database: {
             username,
             password,
@@ -187,7 +187,7 @@ function testLivenessAfterListenerStop() returns error? {
         options: {
             snapshotMode: NO_DATA
         }
-    });
+    }));
     check mysqlListener.attach(testService);
     check mysqlListener.'start();
     check mysqlListener.gracefulStop();
@@ -199,7 +199,7 @@ function testLivenessAfterListenerStop() returns error? {
     groups: ["liveness"]
 }
 function testLivenessWithoutReceivingEvents() returns error? {
-    MockListener mysqlListener = new ({
+    MockListener mysqlListener = trackMockListener(new ({
         database: {
             username,
             password,
@@ -209,7 +209,7 @@ function testLivenessWithoutReceivingEvents() returns error? {
             snapshotMode: NO_DATA
         },
         livenessInterval: 5.0
-    });
+    }));
     check mysqlListener.attach(testService);
     check mysqlListener.'start();
     runtime:sleep(10);
