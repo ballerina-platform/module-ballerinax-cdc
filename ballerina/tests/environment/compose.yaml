@@ -64,11 +64,18 @@ services:
       - "10911:10911"
     volumes:
       - ./rocketmq-broker.conf:/home/rocketmq/rocketmq-5.2.0/conf/broker.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "sh mqadmin topicList -n rocketmq-namesrv:9876 >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 30s
+      retries: 12
+      start_period: 30s
 
   rocketmq-init:
     image: apache/rocketmq:5.2.0
     depends_on:
-      - rocketmq-broker
+      rocketmq-broker:
+        condition: service_healthy
     entrypoint: >
       /bin/sh -c "
       for i in $(seq 1 30); do

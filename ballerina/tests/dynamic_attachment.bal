@@ -40,6 +40,23 @@ function testStartingWithoutAService() returns error? {
 }
 
 @test:Config {}
+function testStartSurfacesInvalidConnectorFailure() returns error? {
+    MockListener mysqlListener = trackMockListener(new ({
+        database: {
+            username: "testUser",
+            password: "testPassword",
+            connectorClass: "example.invalid.MissingConnector"
+        }
+    }));
+    check mysqlListener.attach(testService);
+    error? result = mysqlListener.'start();
+    test:assertTrue(result is error, "An invalid connector must return a startup error instead of blocking.");
+    if result is error {
+        test:assertTrue(result.message().includes("Failed to start the Debezium engine"));
+    }
+}
+
+@test:Config {}
 function testStopWithoutStart() returns error? {
     MockListener mysqlListener = getDummyMySqlListener();
     error? result = mysqlListener.gracefulStop();

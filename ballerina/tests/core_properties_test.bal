@@ -26,6 +26,112 @@ final DatabaseConnection databaseConn = {
 };
 
 @test:Config {}
+function testKafkaSchemaHistoryMapsPemSecurityOptions() {
+    InternalSchemaStorage storage = {
+        bootstrapServers: ["broker-1:9092", "broker-2:9092"],
+        securityProtocol: PROTOCOL_SASL_SSL,
+        auth: {mechanism: AUTH_SASL_PLAIN, username: "schema-user", password: "schema-pass"},
+        secureSocket: {
+            cert: "tests/resources/test-cert.pem",
+            key: {
+                certFile: "tests/resources/test-cert.pem",
+                keyFile: "tests/resources/test-key.pem",
+                keyPassword: "key-pass"
+            },
+            ciphers: ["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384"],
+            protocol: {name: TLS, versions: ["TLSv1.2", "TLSv1.3"]},
+            provider: "SunJSSE"
+        }
+    };
+    map<string> actual = {};
+    populateSchemaHistoryConfigurations(storage, actual);
+
+    test:assertEquals(actual["schema.history.internal.kafka.bootstrap.servers"], "broker-1:9092,broker-2:9092");
+    test:assertEquals(actual["schema.history.internal.producer.sasl.mechanism"], "PLAIN");
+    test:assertEquals(actual["schema.history.internal.consumer.sasl.jaas.config"],
+        "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"schema-user\" password=\"schema-pass\";");
+    test:assertEquals(actual["schema.history.internal.producer.ssl.truststore.type"], "PEM");
+    test:assertEquals(actual["schema.history.internal.consumer.ssl.keystore.type"], "PEM");
+    test:assertEquals(actual["schema.history.internal.producer.ssl.key.password"], "key-pass");
+    test:assertEquals(actual["schema.history.internal.consumer.ssl.cipher.suites"],
+        "TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384");
+    test:assertEquals(actual["schema.history.internal.producer.ssl.enabled.protocols"], "TLSv1.2,TLSv1.3");
+    test:assertEquals(actual["schema.history.internal.consumer.ssl.provider"], "SunJSSE");
+}
+
+@test:Config {}
+function testKafkaStorageIgnoresUnreadablePemFiles() {
+    InternalSchemaStorage schemaStorage = {
+        bootstrapServers: "broker:9092",
+        secureSocket: {
+            cert: "tests/resources/test-cert.pem",
+            key: {certFile: "missing-cert.pem", keyFile: "missing-key.pem"}
+        }
+    };
+    map<string> schemaProperties = {};
+    populateSchemaHistoryConfigurations(schemaStorage, schemaProperties);
+    test:assertFalse(schemaProperties.hasKey("schema.history.internal.producer.ssl.keystore.key"));
+
+    OffsetStorage offsetStorage = {
+        bootstrapServers: "broker:9092",
+        secureSocket: {
+            cert: "tests/resources/test-cert.pem",
+            key: {certFile: "missing-cert.pem", keyFile: "missing-key.pem"}
+        }
+    };
+    map<string> offsetProperties = {};
+    populateOffsetStorageConfigurations(offsetStorage, offsetProperties);
+    test:assertFalse(offsetProperties.hasKey("ssl.keystore.key"));
+}
+
+@test:Config {}
+function testKafkaOffsetStorageMapsPemSecurityOptions() {
+    OffsetStorage storage = {
+        bootstrapServers: ["broker-1:9092", "broker-2:9092"],
+        securityProtocol: PROTOCOL_SSL,
+        secureSocket: {
+            cert: "tests/resources/test-cert.pem",
+            key: {
+                certFile: "tests/resources/test-cert.pem",
+                keyFile: "tests/resources/test-key.pem",
+                keyPassword: "offset-key-pass"
+            },
+            ciphers: ["TLS_AES_128_GCM_SHA256"],
+            protocol: {name: TLS, versions: ["TLSv1.3"]},
+            provider: "SunJSSE"
+        }
+    };
+    map<string> actual = {};
+    populateOffsetStorageConfigurations(storage, actual);
+
+    test:assertEquals(actual["bootstrap.servers"], "broker-1:9092,broker-2:9092");
+    test:assertEquals(actual["ssl.truststore.type"], "PEM");
+    test:assertEquals(actual["ssl.keystore.type"], "PEM");
+    test:assertEquals(actual["ssl.key.password"], "offset-key-pass");
+    test:assertEquals(actual["ssl.cipher.suites"], "TLS_AES_128_GCM_SHA256");
+    test:assertEquals(actual["ssl.enabled.protocols"], "TLSv1.3");
+    test:assertEquals(actual["ssl.provider"], "SunJSSE");
+}
+
+@test:Config {}
+function testRelationalFiltersAndMessageKeysMapAllEntries() {
+    map<string> filters = {};
+    populateTableAndColumnConfigurations(["db.orders", "db.customers"], "db.audit", "db.orders.id",
+        ["db.orders.secret", "db.customers.secret"], filters);
+    test:assertEquals(filters["table.include.list"], "db.orders,db.customers");
+    test:assertEquals(filters["table.exclude.list"], "db.audit");
+    test:assertEquals(filters["column.include.list"], "db.orders.id");
+    test:assertEquals(filters["column.exclude.list"], "db.orders.secret,db.customers.secret");
+
+    map<string> keys = {};
+    populateMessageKeyColumnsConfiguration([
+        {tableName: "db.orders", columns: ["tenant_id", "order_id"]},
+        {tableName: "db.customers", columns: ["customer_id"]}
+    ], keys);
+    test:assertEquals(keys["message.key.columns"], "db.orders:tenant_id,order_id;db.customers:customer_id");
+}
+
+@test:Config {}
 function testGetDebeziumProperties() {
     // Expected properties map
     map<string> expectedProperties = {

@@ -16,6 +16,103 @@
 
 import ballerina/test;
 
+@test:Config {groups: ["options-signal"]}
+function testSignalConfigurationMapsAllChannelsAndSecurity() {
+    SignalConfiguration signal = {
+        'source: {dataCollectionTable: "inventory.debezium_signal"},
+        kafka: {
+            topicName: "signals",
+            bootstrapServers: ["broker-1:9092", "broker-2:9092"],
+            groupId: "signal-consumers",
+            securityProtocol: PROTOCOL_SASL_SSL,
+            auth: {mechanism: AUTH_SASL_PLAIN, username: "signal-user", password: "signal-pass"},
+            secureSocket: {
+                cert: "tests/resources/test-cert.pem",
+                key: {
+                    certFile: "tests/resources/test-cert.pem",
+                    keyFile: "tests/resources/test-key.pem",
+                    keyPassword: "signal-key-pass"
+                },
+                ciphers: ["TLS_AES_128_GCM_SHA256"],
+                protocol: {name: TLS, versions: ["TLSv1.3"]},
+                provider: "SunJSSE"
+            },
+            pollTimeout: 2.5
+        },
+        file: {fileName: "/tmp/signals.txt"},
+        jmx: {}
+    };
+    map<string> actual = {};
+    populateSignalConfiguration(signal, actual);
+
+    test:assertEquals(actual["signal.enabled.channels"], "source,kafka,file,jmx");
+    test:assertEquals(actual["signal.data.collection"], "inventory.debezium_signal");
+    test:assertEquals(actual["signal.kafka.bootstrap.servers"], "broker-1:9092,broker-2:9092");
+    test:assertEquals(actual["signal.consumer.security.protocol"], "SASL_SSL");
+    test:assertEquals(actual["signal.consumer.sasl.mechanism"], "PLAIN");
+    test:assertEquals(actual["signal.consumer.ssl.keystore.type"], "PEM");
+    test:assertEquals(actual["signal.consumer.ssl.key.password"], "signal-key-pass");
+    test:assertEquals(actual["signal.consumer.ssl.cipher.suites"], "TLS_AES_128_GCM_SHA256");
+    test:assertEquals(actual["signal.consumer.ssl.enabled.protocols"], "TLSv1.3");
+    test:assertEquals(actual["signal.consumer.ssl.provider"], "SunJSSE");
+    test:assertEquals(actual["signal.kafka.poll.timeout.ms"], "2500");
+}
+
+@test:Config {groups: ["options-signal"]}
+function testSignalConfigurationIgnoresUnreadablePemFiles() {
+    map<string> actual = {};
+    populateSignalConfiguration({
+        kafka: {
+            secureSocket: {
+                cert: "tests/resources/test-cert.pem",
+                key: {certFile: "missing-cert.pem", keyFile: "missing-key.pem"}
+            }
+        }
+    }, actual);
+    test:assertFalse(actual.hasKey("signal.consumer.ssl.keystore.key"));
+}
+
+@test:Config {groups: ["snapshot"]}
+function testSnapshotConfigurationsMapRelationalAndIncrementalOptions() {
+    map<string> extended = {};
+    populateExtendedSnapshotConfiguration({
+        delay: 1.5,
+        fetchSize: 250,
+        maxThreads: 4,
+        includeCollectionList: ["inventory.orders", "inventory.customers"],
+        incrementalConfig: {chunkSize: 500, watermarkingStrategy: INSERT_DELETE, allowSchemaChanges: true}
+    }, extended);
+    test:assertEquals(extended["snapshot.include.collection.list"], "inventory.orders,inventory.customers");
+    test:assertEquals(extended["incremental.snapshot.chunk.size"], "500");
+    test:assertEquals(extended["incremental.snapshot.watermarking.strategy"], "insert_delete");
+    test:assertEquals(extended["incremental.snapshot.allow.schema.changes"], "true");
+
+    map<string> relational = {};
+    populateRelationalExtendedSnapshotConfiguration({
+        lockingMode: MINIMAL,
+        selectStatementOverrides: ["inventory.orders", "inventory.customers"],
+        queryMode: CUSTOM
+    }, relational);
+    test:assertEquals(relational["snapshot.locking.mode"], "minimal");
+    test:assertEquals(relational["snapshot.select.statement.overrides"], "inventory.orders,inventory.customers");
+    test:assertEquals(relational["snapshot.query.mode"], "custom");
+}
+
+@test:Config {groups: ["options-basic"]}
+function testDataTypeErrorAndPerformanceConfigurationsMapOptionalValues() {
+    map<string> actual = {};
+    populateDataTypeConfiguration({binaryHandlingMode: HEX, timePrecisionMode: NANOSECONDS}, actual);
+    populateErrorHandlingConfiguration({maxAttempts: 7, retryInitialDelay: 0.2, retryMaxDelay: 1.5}, actual);
+    populatePerformanceConfiguration({maxQueueSizeInBytes: (), pollInterval: 0.5}, actual);
+    test:assertEquals(actual["binary.handling.mode"], "hex");
+    test:assertEquals(actual["time.precision.mode"], "nanoseconds");
+    test:assertEquals(actual["errors.max.retries"], "7");
+    test:assertEquals(actual["errors.retry.delay.initial.ms"], "200");
+    test:assertEquals(actual["errors.retry.delay.max.ms"], "1500");
+    test:assertEquals(actual["max.queue.size.in.bytes"], "0");
+    test:assertEquals(actual["poll.interval.ms"], "500");
+}
+
 @test:Config {groups: ["options-basic"]}
 function testPopulateOptionsWithDefaults() {
     SampleDBOptions options = {};
