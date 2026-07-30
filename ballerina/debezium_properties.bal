@@ -93,6 +93,7 @@ const string SCHEMA_HISTORY_INTERNAL_S3_REGION = "schema.history.internal.s3.reg
 const string SCHEMA_HISTORY_INTERNAL_S3_BUCKET_NAME = "schema.history.internal.s3.bucket.name";
 const string SCHEMA_HISTORY_INTERNAL_S3_OBJECT_NAME = "schema.history.internal.s3.object.name";
 const string SCHEMA_HISTORY_INTERNAL_S3_ENDPOINT = "schema.history.internal.s3.endpoint";
+const string SCHEMA_HISTORY_INTERNAL_S3_FORCE_PATH_STYLE = "schema.history.internal.s3.forcePathStyle";
 
 // Azure Blob schema history properties
 const string SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_CONNECTION_STRING = "schema.history.internal.azure.storage.account.connectionstring";
@@ -102,7 +103,7 @@ const string SCHEMA_HISTORY_INTERNAL_AZURE_STORAGE_BLOB_NAME = "schema.history.i
 
 // RocketMQ schema history properties
 const string SCHEMA_HISTORY_INTERNAL_ROCKETMQ_TOPIC = "schema.history.internal.rocketmq.topic";
-const string SCHEMA_HISTORY_INTERNAL_ROCKETMQ_NAMESRV_ADDR = "schema.history.internal.rocketmq.namesrv.addr";
+const string SCHEMA_HISTORY_INTERNAL_ROCKETMQ_NAMESRV_ADDR = "schema.history.internal.rocketmq.name.srv.addr";
 const string SCHEMA_HISTORY_INTERNAL_ROCKETMQ_ACL_ENABLED = "schema.history.internal.rocketmq.acl.enabled";
 const string SCHEMA_HISTORY_INTERNAL_ROCKETMQ_ACCESS_KEY = "schema.history.internal.rocketmq.access.key";
 const string SCHEMA_HISTORY_INTERNAL_ROCKETMQ_SECRET_KEY = "schema.history.internal.rocketmq.secret.key";
@@ -177,7 +178,7 @@ const string INCREMENTAL_SNAPSHOT_ALLOW_SCHEMA_CHANGES = "incremental.snapshot.a
 
 // Transaction metadata properties
 const string PROVIDE_TRANSACTION_METADATA = "provide.transaction.metadata";
-const string TRANSACTION_TOPIC = "transaction.topic";
+const string TRANSACTION_TOPIC = "topic.transaction";
 
 // Column transformation properties
 const string COLUMN_MASK_HASH_WITH = "column.mask.hash.with";

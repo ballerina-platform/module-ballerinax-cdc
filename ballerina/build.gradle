@@ -54,11 +54,17 @@ ballerina {
 }
 
 configurations.externalJars.resolutionStrategy.eachDependency { details ->
-    if (details.requested.group == 'com.fasterxml.jackson.core' ||
+    if ((details.requested.group == 'com.fasterxml.jackson.core' &&
+            details.requested.name != 'jackson-annotations') ||
             (details.requested.group == 'com.fasterxml.jackson.module' &&
-            details.requested.name == 'jackson-module-afterburner')) {
+            details.requested.name == 'jackson-module-blackbird')) {
         details.useVersion fasterxmlVersion
         details.because 'CVE GHSA-72hv-8253-57qq: force jackson upgrade'
+    }
+    if (details.requested.group == 'org.eclipse.jetty' ||
+            details.requested.group == 'org.eclipse.jetty.ee10') {
+        details.useVersion jettyVersion
+        details.because 'CVE-2026-10050 and CVE-2026-2332: force Jetty upgrade'
     }
 }
 
@@ -139,6 +145,18 @@ dependencies {
     externalJars(group: 'org.apache.kafka', name: 'kafka-clients', version: kafkaVersion) {
         transitive false
     }
+    externalJars(group: 'org.apache.maven', name: 'maven-artifact', version: mavenArtifactVersion) {
+        transitive false
+    }
+    externalJars(group: 'at.yawk.lz4', name: 'lz4-java', version: lz4Version) {
+        transitive false
+    }
+    externalJars(group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion) {
+        transitive false
+    }
+    externalJars(group: 'com.github.luben', name: 'zstd-jni', version: zstdVersion) {
+        transitive false
+    }
 }
 
 tasks.register('updateTomlFiles') {
@@ -147,7 +165,12 @@ tasks.register('updateTomlFiles') {
         newBallerinaToml = newBallerinaToml.replace("@toml.version@", tomlVersion)
         newBallerinaToml = newBallerinaToml.replace("@debezium.version@", debeziumVersion)
         newBallerinaToml = newBallerinaToml.replace("@kafka.version@", kafkaVersion)
+        newBallerinaToml = newBallerinaToml.replace("@maven.artifact.version@", mavenArtifactVersion)
+        newBallerinaToml = newBallerinaToml.replace("@lz4.version@", lz4Version)
+        newBallerinaToml = newBallerinaToml.replace("@snappy.version@", snappyVersion)
+        newBallerinaToml = newBallerinaToml.replace("@zstd.version@", zstdVersion)
         newBallerinaToml = newBallerinaToml.replace("@fasterxml.version@", fasterxmlVersion)
+        newBallerinaToml = newBallerinaToml.replace("@jackson.annotations.version@", jacksonAnnotationsVersion)
         newBallerinaToml = newBallerinaToml.replace("@jedis.version@", jedisVersion)
         newBallerinaToml = newBallerinaToml.replace("@mutiny.version@", mutinyVersion)
         newBallerinaToml = newBallerinaToml.replace("@smallrye.common.version@", smallryeCommonVersion)
@@ -173,46 +196,26 @@ tasks.register('commitTomlFiles') {
     }
 }
 
-tasks.register('startMySQLServer') {
+def testComposeProjectName = 'ballerina-cdc-tests'
+def testComposeFile = 'tests/environment/compose.yaml'
+
+tasks.register('startTestEnvironment') {
     doLast {
-        def stdOut = new ByteArrayOutputStream()
         def cmd = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c'] : ['sh', '-c']
         exec {
-            commandLine cmd + ["docker ps --filter name=mysql-cdc"]
-            standardOutput = stdOut
-        }
-        if (!stdOut.toString().contains("mysql-cdc")) {
-            println "Starting MySQL server."
-            exec {
-                commandLine cmd + ["docker compose -f tests/environment/compose.yaml up -d"]
-                standardOutput = stdOut
-            }
-            println stdOut.toString()
-            sleep(20 * 1000)
-        } else {
-            println "MySQL server is already running."
+            commandLine cmd + ["docker compose -p ${testComposeProjectName} -f ${testComposeFile} " +
+                "up -d --wait --wait-timeout 120 mysql azurite minio rocketmq-namesrv rocketmq-broker && " +
+                "docker compose -p ${testComposeProjectName} -f ${testComposeFile} run --rm minio-init && " +
+                "docker compose -p ${testComposeProjectName} -f ${testComposeFile} run --rm rocketmq-init"]
         }
     }
 }
 
-tasks.register('stopMySQLServer') {
+tasks.register('stopTestEnvironment') {
     doLast {
-        def stdOut = new ByteArrayOutputStream()
         def cmd = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c'] : ['sh', '-c']
         exec {
-            commandLine cmd + ["docker ps --filter name=mysql-cdc"]
-            standardOutput = stdOut
-        }
-        if (stdOut.toString().contains("mysql-cdc")) {
-            println "Stopping MySQL server."
-            exec {
-                commandLine cmd + ["docker compose -f tests/environment/compose.yaml rm -svf"]
-                standardOutput = stdOut
-            }
-            println stdOut.toString()
-            sleep(5 * 1000)
-        } else {
-            println "MySQL server is not started."
+            commandLine cmd + ["docker compose -p ${testComposeProjectName} -f ${testComposeFile} down --volumes --remove-orphans"]
         }
     }
 }
@@ -237,8 +240,8 @@ publishing {
 updateTomlFiles.dependsOn copyStdlibs
 build.dependsOn "generatePomFileForMavenPublication"
 
-test.dependsOn "startMySQLServer"
-test.finalizedBy "stopMySQLServer"
+test.dependsOn "startTestEnvironment"
+test.finalizedBy "stopTestEnvironment"
 
 build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"

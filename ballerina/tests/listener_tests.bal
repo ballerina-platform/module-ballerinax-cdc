@@ -70,7 +70,10 @@ int onErrorCount = 0;
 @test:Config {
 }
 function testMockListenerEvents() returns error? {
-    MockListener testListener = new ({
+    _ = check mysqlClient->execute(`DELETE FROM products WHERE id = 1103`);
+    _ = check mysqlClient->execute(`DELETE FROM vendors WHERE id = 201`);
+
+    MockListener testListener = trackMockListener(new ({
         database: {
             username,
             password,
@@ -78,7 +81,7 @@ function testMockListenerEvents() returns error? {
             includedDatabases: database,
             includedTables: ["store_db.products", "store_db.vendors"]
         }
-    });
+    }));
 
     check testListener.attach(mysqlTestService);
     check testListener.attach(mysqlDataBindingFailService);
@@ -116,4 +119,5 @@ function testMockListenerEvents() returns error? {
     test:assertEquals(onErrorCount, 1, msg = "Error count mismatch.");
 
     check testListener.gracefulStop();
+    _ = check mysqlClient->execute(`DELETE FROM vendors WHERE id = 201`);
 }

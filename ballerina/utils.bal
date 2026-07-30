@@ -287,7 +287,7 @@ public isolated function populateOptions(Options options, map<string> configMap)
     configMap[MAX_QUEUE_SIZE] = options.maxQueueSize.toString();
     configMap[MAX_BATCH_SIZE] = options.maxBatchSize.toString();
     configMap[EVENT_PROCESSING_FAILURE_HANDLING_MODE] = options.eventProcessingFailureHandlingMode;
-    configMap[SNAPSHOT_MODE] = options.snapshotMode;
+    configMap[SNAPSHOT_MODE] = options.snapshotMode == "schema_only" ? NO_DATA : options.snapshotMode;
     configMap[SKIPPED_OPERATIONS] = string:'join(",", ...options.skippedOperations);
     configMap[SKIP_MESSAGES_WITHOUT_CHANGE] = options.skipMessagesWithoutChange.toString();
     configMap[DECIMAL_HANDLING_MODE] = options.decimalHandlingMode;
@@ -882,6 +882,11 @@ public isolated function populateS3SchemaHistoryConfiguration(AmazonS3InternalSc
     string? endpoint = storage.endpoint;
     if endpoint is string {
         configMap[SCHEMA_HISTORY_INTERNAL_S3_ENDPOINT] = endpoint;
+    }
+
+    boolean? forcePathStyle = storage.forcePathStyle;
+    if forcePathStyle is boolean {
+        configMap[SCHEMA_HISTORY_INTERNAL_S3_FORCE_PATH_STYLE] = forcePathStyle.toString();
     }
 }
 

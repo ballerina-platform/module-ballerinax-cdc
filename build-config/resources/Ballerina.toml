@@ -28,9 +28,27 @@ path = "./lib/debezium-api-@debezium.version@.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.debezium"
-artifactId = "debezium-core"
+artifactId = "debezium-config"
 version = "@debezium.version@"
-path = "./lib/debezium-core-@debezium.version@.jar"
+path = "./lib/debezium-config-@debezium.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-util"
+version = "@debezium.version@"
+path = "./lib/debezium-util-@debezium.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-connector-common"
+version = "@debezium.version@"
+path = "./lib/debezium-connector-common-@debezium.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "io.debezium"
+artifactId = "debezium-openlineage-api"
+version = "@debezium.version@"
+path = "./lib/debezium-openlineage-api-@debezium.version@.jar"
 
 [[platform.java21.dependency]]
 groupId = "io.debezium"
@@ -116,23 +134,50 @@ artifactId = "connect-runtime"
 version = "@kafka.version@"
 path = "./lib/connect-runtime-@kafka.version@.jar"
 
+# Required at runtime by connect-runtime for connector version comparison (ComparableVersion).
+[[platform.java21.dependency]]
+groupId = "org.apache.maven"
+artifactId = "maven-artifact"
+version = "@maven.artifact.version@"
+path = "./lib/maven-artifact-@maven.artifact.version@.jar"
+
+# Kafka 4.x compression codecs required at runtime by kafka-clients/connect.
+[[platform.java21.dependency]]
+groupId = "at.yawk.lz4"
+artifactId = "lz4-java"
+version = "@lz4.version@"
+path = "./lib/lz4-java-@lz4.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "org.xerial.snappy"
+artifactId = "snappy-java"
+version = "@snappy.version@"
+path = "./lib/snappy-java-@snappy.version@.jar"
+
+[[platform.java21.dependency]]
+groupId = "com.github.luben"
+artifactId = "zstd-jni"
+version = "@zstd.version@"
+path = "./lib/zstd-jni-@zstd.version@.jar"
+
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-core"
 version = "@fasterxml.version@"
 path = "./lib/jackson-core-@fasterxml.version@.jar"
 
+# Debezium/Jackson 2.19 replaced the deprecated afterburner module with blackbird.
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.module"
-artifactId = "jackson-module-afterburner"
+artifactId = "jackson-module-blackbird"
 version = "@fasterxml.version@"
-path = "./lib/jackson-module-afterburner-@fasterxml.version@.jar"
+path = "./lib/jackson-module-blackbird-@fasterxml.version@.jar"
 
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-annotations"
-version = "@fasterxml.version@"
-path = "./lib/jackson-annotations-@fasterxml.version@.jar"
+version = "@jackson.annotations.version@"
+path = "./lib/jackson-annotations-@jackson.annotations.version@.jar"
 
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"

@@ -37,6 +37,9 @@ public enum EventProcessingFailureHandlingMode {
 # + ALWAYS - Take a snapshot on every connector startup.
 # + INITIAL - Take a snapshot only on initial startup, then stream changes.
 # + INITIAL_ONLY - Take a snapshot on initial startup, then stop.
+# + SCHEMA_ONLY - Deprecated: use `NO_DATA`. Debezium removed the "schema_only" mode in 3.3
+#                 (DBZ-8171); this value is retained for backward compatibility and is sent to
+#                 Debezium as "no_data" (its functional equivalent).
 # + NO_DATA - Snapshot the schema only, without emitting READ events for existing rows.
 # + RECOVERY - Take a snapshot to restore lost schema history.
 # + WHEN_NEEDED - Take a snapshot only when offsets are missing or invalid.
@@ -46,6 +49,7 @@ public enum SnapshotMode {
     ALWAYS = "always",
     INITIAL = "initial",
     INITIAL_ONLY = "initial_only",
+    @deprecated
     SCHEMA_ONLY = "schema_only",
     NO_DATA = "no_data",
     RECOVERY = "recovery",
@@ -354,7 +358,7 @@ public type RedisInternalSchemaStorage record {|
 |};
 
 # Amazon S3-based schema history storage configuration.
-# Using this storage backend requires importing the `ballerinax/cdc.storage.aws.s3.driver` module.
+# Using this storage backend requires importing the `ballerinax/cdc.schema.aws.s3.driver` module.
 #
 # + className - Fully-qualified class name of the S3 schema history implementation
 # + accessKeyId - AWS access key ID for authentication
@@ -363,6 +367,7 @@ public type RedisInternalSchemaStorage record {|
 # + bucketName - S3 bucket name for schema history
 # + objectName - S3 object (file) name within the bucket
 # + endpoint - Custom S3-compatible endpoint URL; uses the AWS endpoint if not set
+# + forcePathStyle - Uses path-style S3 URLs, required by local S3-compatible endpoints such as MinIO
 public type AmazonS3InternalSchemaStorage record {|
     *SchemaHistoryInternal;
     string className = "io.debezium.storage.s3.history.S3SchemaHistory";
@@ -372,10 +377,11 @@ public type AmazonS3InternalSchemaStorage record {|
     string bucketName;
     string objectName;
     string endpoint?;
+    boolean forcePathStyle?;
 |};
 
 # Azure Blob Storage-based schema history storage configuration.
-# Using this storage backend requires importing the `ballerinax/cdc.storage.azure.blob.driver` module.
+# Using this storage backend requires importing the `ballerinax/cdc.schema.azure.blob.driver` module.
 #
 # + className - Fully-qualified class name of the Azure Blob schema history implementation
 # + connectionString - Azure Storage connection string
@@ -392,7 +398,7 @@ public type AzureBlobInternalSchemaStorage record {|
 |};
 
 # RocketMQ-based schema history storage configuration.
-# Using this storage backend requires importing the `ballerinax/cdc.storage.rocketmq.driver` module.
+# Using this storage backend requires importing the `ballerinax/cdc.schema.rocketmq.driver` module.
 #
 # + className - Fully-qualified class name of the RocketMQ schema history implementation
 # + topicName - RocketMQ topic for schema history

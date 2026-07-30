@@ -17,6 +17,108 @@
 import ballerina/test;
 
 @test:Config {groups: ["schema-history"]}
+function testJdbcSchemaHistoryMapsCustomStatements() {
+    map<string> actual = {};
+    populateSchemaHistoryConfigurations(<JdbcInternalSchemaStorage>{
+        url: "jdbc:mysql://db:3306/history",
+        username: "history-user",
+        password: "history-pass",
+        tableDdl: "CREATE TABLE history",
+        tableSelect: "SELECT * FROM history",
+        tableInsert: "INSERT INTO history VALUES (?, ?)",
+        tableDelete: "DELETE FROM history"
+    }, actual);
+    test:assertEquals(actual["schema.history.internal.jdbc.user"], "history-user");
+    test:assertEquals(actual["schema.history.internal.jdbc.password"], "history-pass");
+    test:assertEquals(actual["schema.history.internal.jdbc.schema.history.table.ddl"], "CREATE TABLE history");
+    test:assertEquals(actual["schema.history.internal.jdbc.schema.history.table.select"], "SELECT * FROM history");
+    test:assertEquals(actual["schema.history.internal.jdbc.schema.history.table.insert"], "INSERT INTO history VALUES (?, ?)");
+    test:assertEquals(actual["schema.history.internal.jdbc.schema.history.table.delete"], "DELETE FROM history");
+}
+
+@test:Config {groups: ["offset-storage"]}
+function testJdbcOffsetStorageMapsCustomStatements() {
+    map<string> actual = {};
+    populateOffsetStorageConfigurations(<JdbcOffsetStorage>{
+        url: "jdbc:mysql://db:3306/offsets",
+        username: "offset-user",
+        password: "offset-pass",
+        tableDdl: "CREATE TABLE offsets",
+        tableSelect: "SELECT * FROM offsets",
+        tableInsert: "INSERT INTO offsets VALUES (?, ?)",
+        tableDelete: "DELETE FROM offsets"
+    }, actual);
+    test:assertEquals(actual["offset.storage.jdbc.user"], "offset-user");
+    test:assertEquals(actual["offset.storage.jdbc.password"], "offset-pass");
+    test:assertEquals(actual["offset.storage.jdbc.offset.table.ddl"], "CREATE TABLE offsets");
+    test:assertEquals(actual["offset.storage.jdbc.offset.table.select"], "SELECT * FROM offsets");
+    test:assertEquals(actual["offset.storage.jdbc.offset.table.insert"], "INSERT INTO offsets VALUES (?, ?)");
+    test:assertEquals(actual["offset.storage.jdbc.offset.table.delete"], "DELETE FROM offsets");
+}
+
+@test:Config {groups: ["schema-history"]}
+function testRedisSchemaHistoryMapsOptionalSecurityAndWaitValues() {
+    map<string> actual = {};
+    populateSchemaHistoryConfigurations(<RedisInternalSchemaStorage>{
+        address: "redis:6379",
+        username: "redis-user",
+        password: "redis-pass",
+        secureSocket: {cert: "ca.pem", verifyHostName: true},
+        waitConfig: {timeout: 2.0, retryDelay: 0.5},
+        clusterEnabled: true
+    }, actual);
+    test:assertEquals(actual["schema.history.internal.redis.user"], "redis-user");
+    test:assertEquals(actual["schema.history.internal.redis.password"], "redis-pass");
+    test:assertEquals(actual["schema.history.internal.redis.ssl.truststore.type"], "PEM");
+    test:assertEquals(actual["schema.history.internal.redis.wait.enabled"], "true");
+    test:assertEquals(actual["schema.history.internal.redis.wait.retry.enabled"], "true");
+    test:assertEquals(actual["schema.history.internal.redis.wait.retry.delay.ms"], "500");
+    test:assertEquals(actual["schema.history.internal.redis.cluster.enabled"], "true");
+}
+
+@test:Config {groups: ["schema-history"]}
+function testRedisSchemaHistoryDisablesSslAndWaitByDefault() {
+    map<string> actual = {};
+    populateSchemaHistoryConfigurations(<RedisInternalSchemaStorage>{address: "redis:6379"}, actual);
+    test:assertEquals(actual["schema.history.internal.redis.ssl.enabled"], "false");
+    test:assertEquals(actual["schema.history.internal.redis.ssl.hostname.verification.enabled"], "false");
+    test:assertEquals(actual["schema.history.internal.redis.wait.enabled"], "false");
+}
+
+@test:Config {groups: ["offset-storage"]}
+function testRedisOffsetStorageMapsOptionalSecurityAndWaitValues() {
+    map<string> actual = {};
+    populateOffsetStorageConfigurations(<RedisOffsetStorage>{
+        address: "redis:6379",
+        username: "offset-user",
+        password: "offset-pass",
+        secureSocket: {
+            cert: "ca.pem",
+            key: {path: "client.jks", password: "key-pass"},
+            verifyHostName: true
+        },
+        waitConfig: {timeout: 2.0},
+        clusterEnabled: true
+    }, actual);
+    test:assertEquals(actual["offset.storage.redis.user"], "offset-user");
+    test:assertEquals(actual["offset.storage.redis.password"], "offset-pass");
+    test:assertEquals(actual["offset.storage.redis.ssl.truststore.type"], "PEM");
+    test:assertEquals(actual["offset.storage.redis.ssl.keystore.type"], "JKS");
+    test:assertEquals(actual["offset.storage.redis.wait.enabled"], "true");
+    test:assertEquals(actual["offset.storage.redis.wait.retry.enabled"], "false");
+    test:assertEquals(actual["offset.storage.redis.cluster.enabled"], "true");
+}
+
+@test:Config {groups: ["offset-storage"]}
+function testRedisOffsetStorageDisablesSslAndWaitByDefault() {
+    map<string> actual = {};
+    populateOffsetStorageConfigurations(<RedisOffsetStorage>{address: "redis:6379"}, actual);
+    test:assertEquals(actual["offset.storage.redis.ssl.enabled"], "false");
+    test:assertEquals(actual["offset.storage.redis.ssl.hostname.verification.enabled"], "false");
+    test:assertEquals(actual["offset.storage.redis.wait.enabled"], "false");
+}
+
+@test:Config {groups: ["schema-history"]}
 function testKafkaSchemaHistoryWithExtendedOptions() {
     map<string> expectedProperties = {
         "schema.history.internal": "io.debezium.storage.kafka.history.KafkaSchemaHistory",
@@ -147,6 +249,23 @@ function testS3SchemaHistory() {
 }
 
 @test:Config {groups: ["schema-history"]}
+function testS3SchemaHistoryWithPathStyleEndpoint() {
+    InternalSchemaStorage schemaStorage = {
+        bucketName: "my-bucket",
+        objectName: "schema-history",
+        region: "us-east-1",
+        endpoint: "http://localhost:9000",
+        forcePathStyle: true
+    };
+
+    map<string> actualProperties = {};
+    populateSchemaHistoryConfigurations(schemaStorage, actualProperties);
+
+    test:assertEquals(actualProperties["schema.history.internal.s3.endpoint"], "http://localhost:9000");
+    test:assertEquals(actualProperties["schema.history.internal.s3.forcePathStyle"], "true");
+}
+
+@test:Config {groups: ["schema-history"]}
 function testAzureBlobSchemaHistory() {
     map<string> expectedProperties = {
         "schema.history.internal": "io.debezium.storage.azure.blob.history.AzureBlobSchemaHistory",
@@ -191,6 +310,9 @@ function testRocketMQSchemaHistory() {
     test:assertEquals(actualProperties["schema.history.internal"],
         expectedProperties["schema.history.internal"],
         msg = "RocketMQ schema history does not match.");
+    test:assertEquals(actualProperties["schema.history.internal.rocketmq.name.srv.addr"],
+        expectedProperties["schema.history.internal.rocketmq.name.srv.addr"],
+        msg = "RocketMQ NameServer address does not match.");
 }
 
 @test:Config {groups: ["offset-storage"]}
