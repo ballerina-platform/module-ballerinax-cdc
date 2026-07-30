@@ -53,21 +53,6 @@ ballerina {
     testCoverageParam = "--code-coverage --coverage-format=xml --includes=io.ballerina.lib.cdc.*:ballerinax.cdc.*"
 }
 
-configurations.externalJars.resolutionStrategy.eachDependency { details ->
-    if ((details.requested.group == 'com.fasterxml.jackson.core' &&
-            details.requested.name != 'jackson-annotations') ||
-            (details.requested.group == 'com.fasterxml.jackson.module' &&
-            details.requested.name == 'jackson-module-blackbird')) {
-        details.useVersion fasterxmlVersion
-        details.because 'CVE GHSA-72hv-8253-57qq: force jackson upgrade'
-    }
-    if (details.requested.group == 'org.eclipse.jetty' ||
-            details.requested.group == 'org.eclipse.jetty.ee10') {
-        details.useVersion jettyVersion
-        details.because 'CVE-2026-10050 and CVE-2026-2332: force Jetty upgrade'
-    }
-}
-
 dependencies {
 
     externalJars(group: 'io.debezium', name: 'debezium-embedded', version: debeziumVersion) {
@@ -77,6 +62,7 @@ dependencies {
         // Packed separately
         exclude group: 'io.debezium', module: 'debezium-api'
         exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-jsr310'
+        exclude group: 'com.fasterxml.jackson.core'
     }
     externalJars(group: 'io.debezium', name: 'debezium-api', version: debeziumVersion) {
         transitive false
@@ -110,6 +96,18 @@ dependencies {
     externalJars(group: 'org.jctools', name: 'jctools-core', version: jctoolsVersion) {
         transitive false
     }
+    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: fasterxmlVersion) {
+        transitive false
+    }
+    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonAnnotationsVersion) {
+        transitive false
+    }
+    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: fasterxmlVersion) {
+        transitive false
+    }
+    externalJars(group: 'com.fasterxml.jackson.module', name: 'jackson-module-blackbird', version: fasterxmlVersion) {
+        transitive false
+    }
 
     externalJars(group: 'org.apache.kafka', name: 'connect-runtime', version: kafkaVersion) {
         exclude group: 'org.slf4j', module: 'slf4j-api'
@@ -120,10 +118,9 @@ dependencies {
         exclude group: 'org.glassfish.jersey.inject', module: 'jersey-hk2'
         exclude group: 'javax.xml.bind', module: 'jaxb-api'
         exclude group: 'javax.activation', module: 'activation'
-        exclude group: 'org.eclipse.jetty', module: 'jetty-server'
-        exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'
-        exclude group: 'org.eclipse.jetty', module: 'jetty-servlets'
-        exclude group: 'org.eclipse.jetty', module: 'jetty-client' // Duplicate removed
+        exclude group: 'org.eclipse.jetty'
+        exclude group: 'org.eclipse.jetty.ee10'
+        exclude group: 'com.fasterxml.jackson.core'
         exclude group: 'org.reflections', module: 'reflections'
         exclude group: 'org.apache.maven', module: 'maven-artifact'
         exclude group: 'io.swagger.core.v3', module: 'swagger-annotations'
@@ -140,7 +137,9 @@ dependencies {
     externalJars(group: 'org.apache.kafka', name: 'connect-json', version: kafkaVersion) {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'org.apache.kafka', module: 'connect-api'
+        exclude group: 'com.fasterxml.jackson.core'
         exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-jdk8'
+        exclude group: 'com.fasterxml.jackson.module', module: 'jackson-module-blackbird'
     }
     externalJars(group: 'org.apache.kafka', name: 'kafka-clients', version: kafkaVersion) {
         transitive false
