@@ -145,8 +145,8 @@ path = "./lib/maven-artifact-3.9.6.jar"
 [[platform.java21.dependency]]
 groupId = "at.yawk.lz4"
 artifactId = "lz4-java"
-version = "1.10.1"
-path = "./lib/lz4-java-1.10.1.jar"
+version = "1.11.1"
+path = "./lib/lz4-java-1.11.1.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.xerial.snappy"
@@ -163,15 +163,15 @@ path = "./lib/zstd-jni-1.5.6-10.jar"
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-core"
-version = "2.21.4"
-path = "./lib/jackson-core-2.21.4.jar"
+version = "2.21.5"
+path = "./lib/jackson-core-2.21.5.jar"
 
 # Debezium/Jackson 2.19 replaced the deprecated afterburner module with blackbird.
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.module"
 artifactId = "jackson-module-blackbird"
-version = "2.21.4"
-path = "./lib/jackson-module-blackbird-2.21.4.jar"
+version = "2.21.5"
+path = "./lib/jackson-module-blackbird-2.21.5.jar"
 
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
@@ -182,5 +182,5 @@ path = "./lib/jackson-annotations-2.21.jar"
 [[platform.java21.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-databind"
-version = "2.21.4"
-path = "./lib/jackson-databind-2.21.4.jar"
+version = "2.21.5"
+path = "./lib/jackson-databind-2.21.5.jar"
