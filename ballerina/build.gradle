@@ -17,6 +17,13 @@
  */
 
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
+
+abstract class BallerinaExecHelper {
+    @Inject abstract ExecOperations getExecOperations()
+}
 
 plugins {
     id 'io.ballerina.plugin'
@@ -183,8 +190,9 @@ tasks.register('updateTomlFiles') {
 }
 
 tasks.register('commitTomlFiles') {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     doLast {
-        project.exec {
+        execHelper.execOperations.exec {
             ignoreExitValue true
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                 commandLine 'cmd', '/c', "git commit -m \"[Automated] Update the toml files\" Ballerina.toml Dependencies.toml CompilerPlugin.toml"
@@ -199,9 +207,10 @@ def testComposeProjectName = 'ballerina-cdc-tests'
 def testComposeFile = 'tests/environment/compose.yaml'
 
 tasks.register('startTestEnvironment') {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     doLast {
         def cmd = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c'] : ['sh', '-c']
-        exec {
+        execHelper.execOperations.exec {
             commandLine cmd + ["docker compose -p ${testComposeProjectName} -f ${testComposeFile} " +
                 "up -d --wait --wait-timeout 120 mysql azurite minio rocketmq-namesrv rocketmq-broker && " +
                 "docker compose -p ${testComposeProjectName} -f ${testComposeFile} run --rm minio-init && " +
@@ -211,9 +220,10 @@ tasks.register('startTestEnvironment') {
 }
 
 tasks.register('stopTestEnvironment') {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     doLast {
         def cmd = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c'] : ['sh', '-c']
-        exec {
+        execHelper.execOperations.exec {
             commandLine cmd + ["docker compose -p ${testComposeProjectName} -f ${testComposeFile} down --volumes --remove-orphans"]
         }
     }

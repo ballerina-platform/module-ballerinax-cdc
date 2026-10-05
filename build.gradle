@@ -18,7 +18,7 @@
 
 plugins {
     id 'com.github.spotbugs-base'
-    id 'com.github.johnrengelman.shadow'
+    id 'com.gradleup.shadow'
     id 'de.undercouch.download'
     id 'net.researchgate.release'
 }
@@ -102,12 +102,22 @@ subprojects {
     }
 }
 
-tasks.register('build') {
-    dependsOn(':cdc-native:build')
-    dependsOn(':cdc-compiler-plugin:build')
-    dependsOn(':cdc-ballerina:build')
-    dependsOn(':cdc-compiler-plugin-tests:test')
-    dependsOn(':cdc-examples:build')
+if (tasks.names.contains('build')) {
+    tasks.named('build') {
+        dependsOn(':cdc-native:build')
+        dependsOn(':cdc-compiler-plugin:build')
+        dependsOn(':cdc-ballerina:build')
+        dependsOn(':cdc-compiler-plugin-tests:test')
+        dependsOn(':cdc-examples:build')
+    }
+} else {
+    tasks.register('build') {
+        dependsOn(':cdc-native:build')
+        dependsOn(':cdc-compiler-plugin:build')
+        dependsOn(':cdc-ballerina:build')
+        dependsOn(':cdc-compiler-plugin-tests:test')
+        dependsOn(':cdc-examples:build')
+    }
 }
 
 release {
