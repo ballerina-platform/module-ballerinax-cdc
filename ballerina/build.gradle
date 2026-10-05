@@ -204,7 +204,6 @@ tasks.register('startTestEnvironment') {
         exec {
             commandLine cmd + ["docker compose -p ${testComposeProjectName} -f ${testComposeFile} " +
                 "up -d --wait --wait-timeout 120 mysql azurite minio rocketmq-namesrv rocketmq-broker && " +
-                "docker compose -p ${testComposeProjectName} -f ${testComposeFile} run --rm minio-init && " +
                 "docker compose -p ${testComposeProjectName} -f ${testComposeFile} run --rm rocketmq-init"]
         }
     }
