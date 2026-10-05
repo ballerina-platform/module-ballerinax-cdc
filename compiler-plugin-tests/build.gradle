@@ -48,7 +48,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 jacoco {
-    toolVersion = "0.8.10"
+    toolVersion = "0.8.14"
 }
 
 test {
@@ -86,7 +86,7 @@ spotbugsTest {
     effort = SpotBugsEffort.MAX
     reportLevel = SpotBugsConfidence.LOW
     ignoreFailures = true
-    reportsDir = file("$project.buildDir/reports/spotbugs")
+    reportsDir = layout.buildDirectory.dir("reports/spotbugs")
     def excludeFile = file("${rootDir}/build-config/spotbugs-exclude.xml")
     if (excludeFile.exists()) {
         it.excludeFilter = excludeFile
