@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [[#9275] Add package icon for the packages missing a logo in the Integration Store](https://github.com/ballerina-platform/ballerina-library/issues/9275)
+
 ### Changed
 - Upgraded the embedded Debezium runtime to 3.5.1.Final.
 - Fixed `Listener.start()` to surface Debezium engine startup failures immediately instead of hanging forever.
