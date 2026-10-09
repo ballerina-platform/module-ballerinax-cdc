@@ -28,4 +28,16 @@
         <class name="io.ballerina.lib.cdc.Listener"/>
         <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
     </Match>
+    <!--
+        startEngine() declares throws Exception to propagate whatever checked exception
+        DebeziumEngine.Builder#build() declares (e.g. IOException); its own InterruptedException/
+        ExecutionException paths from the engine's startup future are already caught and handled
+        locally. A more specific throws type isn't available without hardcoding Debezium's internal
+        exception type, so the broad declaration here is intentional.
+    -->
+    <Match>
+        <Class name="io.ballerina.lib.cdc.Listener"/>
+        <Method name="startEngine"/>
+        <Bug pattern="THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION"/>
+    </Match>
 </FindBugsFilter>
