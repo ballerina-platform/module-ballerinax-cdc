@@ -36,6 +36,19 @@ dependencies {
     implementation("io.debezium:debezium-api:${debeziumVersion}") {
         transitive = false
     }
+
+    // debezium-api references io.debezium.DebeziumException (declared in debezium-core), but
+    // debezium-core is deliberately excluded from the runtime classpath above (transitive = false,
+    // to keep the native jar lean). SpotBugs 6.5.1's stricter class-hierarchy resolution needs that
+    // class on its analysis classpath or it fails hard (exit code 3, "classes needed for analysis
+    // were missing"); compileOnly satisfies SpotBugs without affecting the shipped jar.
+    // debezium-api references io.debezium.DebeziumException (declared in debezium-util), which
+    // isn't pulled in because debezium-api is deliberately non-transitive above (keeps the native
+    // jar lean). SpotBugs 6.5.1's stricter class-hierarchy resolution needs that class on its
+    // analysis classpath or it fails hard (exit code 3, "classes needed for analysis were missing").
+    compileOnly("io.debezium:debezium-util:${debeziumVersion}") {
+        transitive = false
+    }
 }
 
 def excludePattern = '**/module-info.java'
