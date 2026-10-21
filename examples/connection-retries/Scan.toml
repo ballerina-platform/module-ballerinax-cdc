@@ -1,0 +1,6 @@
+# ballerinax/mysql:1 ("A secure password should be used when connecting to a database") is a false positive here.
+# The database password is a required configurable (`configurable string password = ?;`) with no default value,
+# and is passed straight to the CDC listener. The flagged lines are log:print* calls and service remote functions
+# that never handle a password, so there is no hard-coded or weak credential to fix.
+[rule]
+exclude = ["ballerinax/mysql:1"]
