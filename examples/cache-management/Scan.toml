@@ -2,5 +2,8 @@
 # The database password is a required configurable (`configurable string password = ?;`) with no default value,
 # and is passed straight to the CDC listener. The flagged lines are log:print* calls and service remote functions
 # that never handle a password, so there is no hard-coded or weak credential to fix.
+# TODO: replace this rule exclusion with a targeted scan suppression (with a reason) once `bal scan` supports it
+# (planned for v0.13.0), and fix the false positives on the scan tool side: a secret-named identifier should only be
+# reported when it is assigned a fixed value.
 [rule]
 exclude = ["ballerinax/mysql:1"]
