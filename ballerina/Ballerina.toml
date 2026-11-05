@@ -145,8 +145,8 @@ path = "./lib/maven-artifact-3.9.6.jar"
 [[platform.java21.dependency]]
 groupId = "at.yawk.lz4"
 artifactId = "lz4-java"
-version = "1.11.1"
-path = "./lib/lz4-java-1.11.1.jar"
+version = "1.11.4"
+path = "./lib/lz4-java-1.11.4.jar"
 
 [[platform.java21.dependency]]
 groupId = "org.xerial.snappy"
