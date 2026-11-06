@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Fixed the Debezium engine failing to start in GraalVM native images with `Could not initialize class io.debezium.embedded.EmbeddedWorkerConfig`, by registering the Kafka OAuth JWT default classes for reflection, including the Debezium `build.version` resources, and registering the file offset store types for serialization.
+- Upgraded the bundled `snappy-java` to 1.1.10.12 to address CVE-2026-108106, CVE-2026-93451 and CVE-2026-116590.
+
+## [1.4.0]
+
+### Changed
 - Upgraded the embedded Debezium runtime to 3.5.1.Final.
 - Fixed `Listener.start()` to surface Debezium engine startup failures immediately instead of hanging forever.
 - Fixed `Listener.gracefulStop()` to wait (bounded by a timeout, escalating to a forced shutdown) for the executor to actually terminate instead of returning immediately, and to report an error rather than discard the executor if it still hasn't terminated.

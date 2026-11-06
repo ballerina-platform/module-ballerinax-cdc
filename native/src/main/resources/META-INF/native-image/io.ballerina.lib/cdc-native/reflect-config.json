@@ -54,6 +54,12 @@
   "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.util.Optional","java.util.Optional"] }]
 },
 {
+  "name":"org.apache.kafka.common.security.oauthbearer.DefaultJwtRetriever"
+},
+{
+  "name":"org.apache.kafka.common.security.oauthbearer.DefaultJwtValidator"
+},
+{
   "name":"org.apache.kafka.connect.json.JsonConverter",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
