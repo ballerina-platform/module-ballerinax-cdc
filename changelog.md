@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Fixed GraalVM native image builds failing when a dependency such as `netty-codec-http` initializes Netty at build time, by initializing slf4j at build time and `io.netty.handler.ssl.JdkSslServerContext` and `io.netty.handler.codec.compression.Zstd` at run time.
-- Upgraded the AWS S3 schema history driver to 1.1.1 and the RocketMQ schema history driver to 1.1.2, which include their own GraalVM native-image metadata.
+- Upgraded the AWS S3 schema history driver to 1.1.1, and the Azure Blob and RocketMQ schema history drivers to 1.1.2, which include their own GraalVM native-image metadata.
 
 ## [1.4.1]
 
