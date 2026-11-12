@@ -10,3 +10,5 @@
 # Binary files should be left untouched
 *.jar           binary
 
+# Ensure all Java files use LF.
+*.java eol=lf
