@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated the minimum required Ballerina distribution to 2201.14.0 (Swan Lake Update 14) with Java 25 support.
-- Upgraded the Azure Blob schema history driver to 1.2.2 and the RocketMQ schema history driver to 1.2.1, the Update 14 releases that ship Netty 4.2.
+- Upgraded the schema history drivers to their Update 14 (Java 25) releases: AWS S3 1.2.0, Azure Blob 1.2.3 and RocketMQ 1.2.2. The Azure Blob and RocketMQ drivers ship Netty 4.2.20.Final, which fixes GraalVM native image builds on Java 25.
 - Fixed GraalVM native image builds that include `ballerina/http` (for example through transactions) failing because `io.netty.handler.codec.compression.ZstdConstants` and `ZstdOptions` initialized zstd-jni at build time, by initializing these classes at run time.
 
 ## [1.4.2]
