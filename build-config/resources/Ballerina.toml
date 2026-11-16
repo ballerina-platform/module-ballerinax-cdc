@@ -2,7 +2,7 @@
 org = "ballerinax"
 name = "cdc"
 version = "@toml.version@"
-distribution = "2201.12.0"
+distribution = "2201.14.0"
 authors = ["Ballerina"]
 keywords = ["Type/Connector", "Type/Library", "Area/Database", "Vendor/Red Hat", "Debezium"]
 repository = "https://github.com/ballerina-platform/module-ballerinax-cdc"
@@ -11,175 +11,175 @@ license = ["Apache-2.0"]
 [build-options]
 observabilityIncluded = true
 
-[platform.java21]
+[platform.java25]
 graalvmCompatible=true
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.ballerina.lib.cdc"
 artifactId = "cdc-native-@project.version@"
 version = "@project.version@"
 path = "../native/build/libs/cdc-native-@project.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-api"
 version = "@debezium.version@"
 path = "./lib/debezium-api-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-config"
 version = "@debezium.version@"
 path = "./lib/debezium-config-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-util"
 version = "@debezium.version@"
 path = "./lib/debezium-util-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-connector-common"
 version = "@debezium.version@"
 path = "./lib/debezium-connector-common-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-openlineage-api"
 version = "@debezium.version@"
 path = "./lib/debezium-openlineage-api-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-embedded"
 version = "@debezium.version@"
 path = "./lib/debezium-embedded-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-storage-file"
 version = "@debezium.version@"
 path = "./lib/debezium-storage-file-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-storage-kafka"
 version = "@debezium.version@"
 path = "./lib/debezium-storage-kafka-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-storage-redis"
 version = "@debezium.version@"
 path = "./lib/debezium-storage-redis-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.debezium"
 artifactId = "debezium-storage-jdbc"
 version = "@debezium.version@"
 path = "./lib/debezium-storage-jdbc-@debezium.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "redis.clients"
 artifactId = "jedis"
 version = "@jedis.version@"
 path = "./lib/jedis-@jedis.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.smallrye.reactive"
 artifactId = "mutiny"
 version = "@mutiny.version@"
 path = "./lib/mutiny-@mutiny.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "io.smallrye.common"
 artifactId = "smallrye-common-annotation"
 version = "@smallrye.common.version@"
 path = "./lib/smallrye-common-annotation-@smallrye.common.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "org.apache.commons"
 artifactId = "commons-pool2"
 version = "@commons.pool2.version@"
 path = "./lib/commons-pool2-@commons.pool2.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "org.jctools"
 artifactId = "jctools-core"
 version = "@jctools.version@"
 path = "./lib/jctools-core-@jctools.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "kafka-clients"
 version = "@kafka.version@"
 path = "./lib/kafka-clients-@kafka.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-api"
 version = "@kafka.version@"
 path = "./lib/connect-api-@kafka.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-json"
 version = "@kafka.version@"
 path = "./lib/connect-json-@kafka.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "org.apache.kafka"
 artifactId = "connect-runtime"
 version = "@kafka.version@"
 path = "./lib/connect-runtime-@kafka.version@.jar"
 
 # Required at runtime by connect-runtime for connector version comparison (ComparableVersion).
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "org.apache.maven"
 artifactId = "maven-artifact"
 version = "@maven.artifact.version@"
 path = "./lib/maven-artifact-@maven.artifact.version@.jar"
 
 # Kafka 4.x compression codecs required at runtime by kafka-clients/connect.
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "at.yawk.lz4"
 artifactId = "lz4-java"
 version = "@lz4.version@"
 path = "./lib/lz4-java-@lz4.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "org.xerial.snappy"
 artifactId = "snappy-java"
 version = "@snappy.version@"
 path = "./lib/snappy-java-@snappy.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "com.github.luben"
 artifactId = "zstd-jni"
 version = "@zstd.version@"
 path = "./lib/zstd-jni-@zstd.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-core"
 version = "@fasterxml.version@"
 path = "./lib/jackson-core-@fasterxml.version@.jar"
 
 # Debezium/Jackson 2.19 replaced the deprecated afterburner module with blackbird.
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "com.fasterxml.jackson.module"
 artifactId = "jackson-module-blackbird"
 version = "@fasterxml.version@"
 path = "./lib/jackson-module-blackbird-@fasterxml.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-annotations"
 version = "@jackson.annotations.version@"
 path = "./lib/jackson-annotations-@jackson.annotations.version@.jar"
 
-[[platform.java21.dependency]]
+[[platform.java25.dependency]]
 groupId = "com.fasterxml.jackson.core"
 artifactId = "jackson-databind"
 version = "@fasterxml.version@"

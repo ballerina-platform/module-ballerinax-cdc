@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Updated the minimum required Ballerina distribution to 2201.14.0 (Swan Lake Update 14) with Java 25 support.
+- Upgraded the schema history drivers to their Update 14 (Java 25) releases: AWS S3 1.2.0, Azure Blob 1.2.3 and RocketMQ 1.2.2. The Azure Blob and RocketMQ drivers ship Netty 4.2.20.Final, which fixes GraalVM native image builds on Java 25.
+- Fixed GraalVM native image builds that include `ballerina/http` (for example through transactions) failing because `io.netty.handler.codec.compression.ZstdConstants` and `ZstdOptions` initialized zstd-jni at build time, by initializing these classes at run time.
+- Fixed GraalVM native image builds failing with `UnsatisfiedLinkError: netty_quiche42_linux_x86_64` when the Azure Blob schema history driver is used, by initializing the Netty QUIC and HTTP/3 packages (`io.netty.handler.codec.quic`, `io.netty.handler.codec.http3`) at run time. The driver bundles their classes for `reactor-netty-http` but not the native QUIC library.
+- Fixed GraalVM native image builds failing with "Detected an instance of Random/SplittableRandom class in the image heap" when the Azure Blob schema history driver is used, by initializing `io.netty.handler.ssl.SslContext` and its subclasses at run time. `reactor-netty`'s HTTP/3 client setup reaches `SslContext.deriveSessionIdContext`, which reads the static `SecureRandom` that `SslContext` creates.
+
+## [1.4.2]
+
+### Changed
 - Fixed GraalVM native image builds failing when a dependency such as `netty-codec-http` initializes Netty at build time, by initializing slf4j at build time and `io.netty.handler.ssl.JdkSslServerContext` and `io.netty.handler.codec.compression.Zstd` at run time.
 - Upgraded the AWS S3 schema history driver to 1.1.1, and the Azure Blob and RocketMQ schema history drivers to 1.1.2, which include their own GraalVM native-image metadata.
 
